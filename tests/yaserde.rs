@@ -7,6 +7,7 @@ use std::io::Read;
 use std::io::Write;
 use yaserde::YaSerialize;
 use yaserde::YaDeserialize;
+use itertools::izip;
 
 // request types:
 
@@ -24,7 +25,7 @@ prefix = "s",
 namespace = "s: http://www.w3.org/2003/05/soap-envelope",
 )]
 struct GetSystemDateAndTime_Body {
-    #[yaserde(rename = "GetSystemDateAndTime")]
+    #[yaserde(prefix = "tds", rename = "GetSystemDateAndTime")]
     get_system_date_and_time: GetSystemDateAndTime_GetSystemDateAndTime,
 }
 
@@ -37,7 +38,7 @@ namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
 namespace = "tt: http://www.onvif.org/ver10/schema",
 )]
 struct GetSystemDateAndTime_Envelope {
-    #[yaserde(rename = "Body")]
+    #[yaserde(prefix = "s", rename = "Body")]
     body: GetSystemDateAndTime_Body,
 }
 
@@ -212,4 +213,45 @@ fn basic_deserialization() {
     assert_eq!(system_date_and_time.utc_date_time.time.hour, 16);
     assert_eq!(system_date_and_time.utc_date_time.time.minute, 20);
     assert_eq!(system_date_and_time.utc_date_time.time.second, 9);
+}
+
+
+#[test]
+fn basic_serialization() {
+    let expected = r#"<?xml version="1.0" encoding="UTF-8"?>
+    <s:Envelope
+        xmlns:s="http://www.w3.org/2003/05/soap-envelope"
+        xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+        xmlns:tt="http://www.onvif.org/ver10/schema">
+        <s:Body>
+            <tds:GetSystemDateAndTime/>
+        </s:Body>
+    </s:Envelope>
+    "#;
+
+    let envelope: GetSystemDateAndTime_Envelope = Default::default();
+    let actual = yaserde::ser::to_string(&envelope).unwrap();
+
+    let actual_iter = xml::EventReader::new(actual.as_bytes())
+        .into_iter()
+        .filter(|e| match e {
+            // TODO: test fails because "UTF-8" != "utf-8", need to think if it is crucial
+            Ok(xml::reader::XmlEvent::StartDocument{encoding, ..}) => false,
+            _ => true
+        });
+
+    let expected_iter = xml::EventReader::new(expected.as_bytes())
+        .into_iter()
+        .filter(|e| match e {
+            Ok(xml::reader::XmlEvent::StartDocument{version, ..}) => false,
+            Ok(xml::reader::XmlEvent::Whitespace(_)) => false, // Remove indents from expected string
+            _ => true
+        });
+
+    for (a, e) in izip!(actual_iter, expected_iter) {
+        println!("{:?}", a);
+        println!("{:?}", e);
+
+        assert_eq!(a, e);
+    }
 }
