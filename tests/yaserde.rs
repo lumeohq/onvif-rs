@@ -9,7 +9,7 @@ use yaserde::YaSerialize;
 use yaserde::YaDeserialize;
 use itertools::izip;
 
-// request-specific types:
+// Types that are specific to GetSystemDateAndTime request.
 mod GetSystemDateAndTimeRequest {
 	use std::io::Write;
 	use yaserde::YaSerialize;
@@ -47,14 +47,12 @@ mod GetSystemDateAndTimeRequest {
 }
 
 
-// response types:
-
 #[derive(Default, PartialEq, Debug, YaDeserialize)]
 #[yaserde(
 prefix = "tt",
 namespace = "tt: http://www.onvif.org/ver10/schema"
 )]
-struct TimeZone {
+pub struct TimeZone {
     #[yaserde(prefix = "tt", rename = "TZ")]
     tz: String,
 }
@@ -64,7 +62,7 @@ struct TimeZone {
 prefix = "tt",
 namespace = "tt: http://www.onvif.org/ver10/schema"
 )]
-struct Time {
+pub struct Time {
     #[yaserde(prefix = "tt", rename = "Hour")]
     hour: i32,
     #[yaserde(prefix = "tt", rename = "Minute")]
@@ -78,7 +76,7 @@ struct Time {
 prefix = "tt",
 namespace = "tt: http://www.onvif.org/ver10/schema"
 )]
-struct Date {
+pub struct Date {
     #[yaserde(prefix = "tt", rename = "Year")]
     year: i32,
     #[yaserde(prefix = "tt", rename = "Month")]
@@ -92,7 +90,7 @@ struct Date {
 prefix = "tt",
 namespace = "tt: http://www.onvif.org/ver10/schema"
 )]
-struct DateTime {
+pub struct DateTime {
     #[yaserde(rename = "Time")]
     time: Time,
     #[yaserde(rename = "Date")]
@@ -105,7 +103,7 @@ prefix = "tds",
 namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
 namespace = "tt: http://www.onvif.org/ver10/schema"
 )]
-struct SystemDateAndTime {
+pub struct SystemDateAndTime {
     #[yaserde(prefix = "tt", rename = "DateTimeType")]
     date_time_type: String,
     #[yaserde(prefix = "tt", rename = "DaylightSavings")]
@@ -116,35 +114,42 @@ struct SystemDateAndTime {
     utc_date_time: DateTime,
 }
 
-#[derive(Default, PartialEq, Debug, YaDeserialize)]
-#[yaserde(
-prefix = "tds",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
-)]
-struct GetSystemDateAndTimeResponse {
-    #[yaserde(rename = "SystemDateAndTime")]
-    system_date_and_time: SystemDateAndTime,
-}
+// Types that are specific to GetSystemDateAndTime response.
+mod GetSystemDateAndTimeResponse {
+	use std::io::Read;
+	use yaserde::YaDeserialize;
+	use crate::SystemDateAndTime;
 
-#[derive(Default, PartialEq, Debug, YaDeserialize)]
-#[yaserde(
-prefix = "s",
-namespace = "s: http://www.w3.org/2003/05/soap-envelope"
-)]
-struct Response_Body {
-    #[yaserde(rename = "GetSystemDateAndTimeResponse")]
-    get_system_date_and_time_response: GetSystemDateAndTimeResponse,
-}
+	#[derive(Default, PartialEq, Debug, YaDeserialize)]
+	#[yaserde(
+	root = "Envelope",
+	prefix = "s",
+	namespace = "s: http://www.w3.org/2003/05/soap-envelope"
+	)]
+	pub struct Envelope {
+		#[yaserde(rename = "Body")]
+		pub body: Body,
+	}
 
-#[derive(Default, PartialEq, Debug, YaDeserialize)]
-#[yaserde(
-root = "Envelope",
-prefix = "s",
-namespace = "s: http://www.w3.org/2003/05/soap-envelope"
-)]
-struct Response_Envelope {
-    #[yaserde(rename = "Body")]
-    body: Response_Body,
+	#[derive(Default, PartialEq, Debug, YaDeserialize)]
+	#[yaserde(
+	prefix = "s",
+	namespace = "s: http://www.w3.org/2003/05/soap-envelope"
+	)]
+	pub struct Body {
+		#[yaserde(rename = "GetSystemDateAndTimeResponse")]
+		pub get_system_date_and_time_response: GetSystemDateAndTimeResponse,
+	}
+
+	#[derive(Default, PartialEq, Debug, YaDeserialize)]
+	#[yaserde(
+	prefix = "tds",
+	namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+	)]
+	pub struct GetSystemDateAndTimeResponse {
+		#[yaserde(rename = "SystemDateAndTime")]
+		pub system_date_and_time: SystemDateAndTime,
+	}
 }
 
 #[test]
@@ -201,7 +206,7 @@ fn basic_deserialization() {
     "#;
 
 
-    let envelope: Response_Envelope = yaserde::de::from_str(&response).unwrap();
+    let envelope: GetSystemDateAndTimeResponse::Envelope = yaserde::de::from_str(&response).unwrap();
     let system_date_and_time = envelope.body
         .get_system_date_and_time_response
         .system_date_and_time;
