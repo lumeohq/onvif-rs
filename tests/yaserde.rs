@@ -9,37 +9,41 @@ use yaserde::YaSerialize;
 use yaserde::YaDeserialize;
 use itertools::izip;
 
-// request types:
+// request-specific types:
+mod GetSystemDateAndTimeRequest {
+	use std::io::Write;
+	use yaserde::YaSerialize;
 
-#[derive(Default, PartialEq, Debug, YaSerialize)]
-#[yaserde(
-prefix = "tds",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
-)]
-struct GetSystemDateAndTime_GetSystemDateAndTime {
-}
+	#[derive(Default, PartialEq, Debug, YaSerialize)]
+	#[yaserde(
+		root = "Envelope",
+		prefix = "s",
+		namespace = "s: http://www.w3.org/2003/05/soap-envelope",
+		namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
+		namespace = "tt: http://www.onvif.org/ver10/schema",
+	)]
+	pub struct Envelope {
+		#[yaserde(prefix = "s", rename = "Body")]
+		body: Body,
+	}
 
-#[derive(Default, PartialEq, Debug, YaSerialize)]
-#[yaserde(
-prefix = "s",
-namespace = "s: http://www.w3.org/2003/05/soap-envelope",
-)]
-struct GetSystemDateAndTime_Body {
-    #[yaserde(prefix = "tds", rename = "GetSystemDateAndTime")]
-    get_system_date_and_time: GetSystemDateAndTime_GetSystemDateAndTime,
-}
+	#[derive(Default, PartialEq, Debug, YaSerialize)]
+	#[yaserde(
+		prefix = "s",
+		namespace = "s: http://www.w3.org/2003/05/soap-envelope",
+	)]
+	pub struct Body {
+		#[yaserde(prefix = "tds", rename = "GetSystemDateAndTime")]
+		get_system_date_and_time: GetSystemDateAndTime,
+	}
 
-#[derive(Default, PartialEq, Debug, YaSerialize)]
-#[yaserde(
-root = "Envelope",
-prefix = "s",
-namespace = "s: http://www.w3.org/2003/05/soap-envelope",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
-namespace = "tt: http://www.onvif.org/ver10/schema",
-)]
-struct GetSystemDateAndTime_Envelope {
-    #[yaserde(prefix = "s", rename = "Body")]
-    body: GetSystemDateAndTime_Body,
+	#[derive(Default, PartialEq, Debug, YaSerialize)]
+	#[yaserde(
+		prefix = "tds",
+		namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+	)]
+	pub struct GetSystemDateAndTime {
+	}
 }
 
 
@@ -229,7 +233,7 @@ fn basic_serialization() {
     </s:Envelope>
     "#;
 
-    let envelope: GetSystemDateAndTime_Envelope = Default::default();
+    let envelope: GetSystemDateAndTimeRequest::Envelope = Default::default();
     let actual = yaserde::ser::to_string(&envelope).unwrap();
 
     let actual_iter = xml::EventReader::new(actual.as_bytes())
