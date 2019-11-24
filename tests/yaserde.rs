@@ -16,8 +16,8 @@ mod OnvifBasicTypes {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	prefix = "tt",
-	namespace = "tt: http://www.onvif.org/ver10/schema"
+		prefix = "tt",
+		namespace = "tt: http://www.onvif.org/ver10/schema"
 	)]
 	pub struct TimeZone {
 		#[yaserde(prefix = "tt", rename = "TZ")]
@@ -26,8 +26,8 @@ mod OnvifBasicTypes {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	prefix = "tt",
-	namespace = "tt: http://www.onvif.org/ver10/schema"
+		prefix = "tt",
+		namespace = "tt: http://www.onvif.org/ver10/schema"
 	)]
 	pub struct Time {
 		// TODO: use more specific types that allow range validation.
@@ -41,8 +41,8 @@ mod OnvifBasicTypes {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	prefix = "tt",
-	namespace = "tt: http://www.onvif.org/ver10/schema"
+		prefix = "tt",
+		namespace = "tt: http://www.onvif.org/ver10/schema"
 	)]
 	pub struct Date {
 		// TODO: use more specific types that allow range validation.
@@ -56,8 +56,8 @@ mod OnvifBasicTypes {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	prefix = "tt",
-	namespace = "tt: http://www.onvif.org/ver10/schema"
+		prefix = "tt",
+		namespace = "tt: http://www.onvif.org/ver10/schema"
 	)]
 	pub struct DateTime {
 		#[yaserde(rename = "Time")]
@@ -68,9 +68,9 @@ mod OnvifBasicTypes {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	prefix = "tds",
-	namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
-	namespace = "tt: http://www.onvif.org/ver10/schema"
+		prefix = "tds",
+		namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
+		namespace = "tt: http://www.onvif.org/ver10/schema"
 	)]
 	pub struct SystemDateAndTime {
 		#[yaserde(prefix = "tt", rename = "DateTimeType")]
@@ -131,9 +131,9 @@ mod GetSystemDateAndTimeResponse {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	root = "Envelope",
-	prefix = "s",
-	namespace = "s: http://www.w3.org/2003/05/soap-envelope"
+		root = "Envelope",
+		prefix = "s",
+		namespace = "s: http://www.w3.org/2003/05/soap-envelope"
 	)]
 	pub struct Envelope {
 		#[yaserde(rename = "Body")]
@@ -142,8 +142,8 @@ mod GetSystemDateAndTimeResponse {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	prefix = "s",
-	namespace = "s: http://www.w3.org/2003/05/soap-envelope"
+		prefix = "s",
+		namespace = "s: http://www.w3.org/2003/05/soap-envelope"
 	)]
 	pub struct Body {
 		#[yaserde(rename = "GetSystemDateAndTimeResponse")]
@@ -152,8 +152,8 @@ mod GetSystemDateAndTimeResponse {
 
 	#[derive(Default, PartialEq, Debug, YaDeserialize)]
 	#[yaserde(
-	prefix = "tds",
-	namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+		prefix = "tds",
+		namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
 	)]
 	pub struct GetSystemDateAndTimeResponse {
 		#[yaserde(rename = "SystemDateAndTime")]
