@@ -1,6 +1,7 @@
 use super::*;
 
 use itertools::izip;
+use onvif as tt;
 
 
 #[test]
@@ -114,4 +115,28 @@ fn basic_serialization() {
 
         assert_eq!(a, e);
     }
+}
+
+
+#[test]
+fn extend_base_deserialization() {
+    let ser = r#"
+    <tt:VideoSourceConfiguration token="V_SRC_CFG_000" xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:Name>V_SRC_CFG_000</tt:Name>
+        <tt:UseCount>2</tt:UseCount>
+        <tt:SourceToken>V_SRC_000</tt:SourceToken>
+        <tt:Bounds height="720" width="1280" y="0" x="0"/>
+    </tt:VideoSourceConfiguration>
+    "#;
+
+    let des: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
+
+    assert_eq!(des.token, "V_SRC_CFG_000");
+    assert_eq!(des.name0, "V_SRC_CFG_000");
+    assert_eq!(des.use_count, 2);
+    assert_eq!(des.source_token, "V_SRC_000");
+    assert_eq!(des.bounds.x, 0);
+    assert_eq!(des.bounds.y, 0);
+    assert_eq!(des.bounds.width, 1280);
+    assert_eq!(des.bounds.height, 720);
 }
