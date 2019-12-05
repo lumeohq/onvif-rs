@@ -38,7 +38,7 @@ pub mod get_system_date_and_time_request {
 pub mod get_system_date_and_time_response {
     use std::io::Read;
     use yaserde::YaDeserialize;
-    use crate::schema::onvif::SystemDateAndTime;
+    use crate::schema::onvif as tt;
 
     #[derive(Default, PartialEq, Debug, YaDeserialize)]
     #[yaserde(
@@ -68,6 +68,6 @@ pub mod get_system_date_and_time_response {
     )]
     pub struct GetSystemDateAndTimeResponse {
         #[yaserde(rename = "SystemDateAndTime")]
-        pub system_date_and_time: SystemDateAndTime,
+        pub system_date_and_time: tt::SystemDateAndTime,
     }
 }

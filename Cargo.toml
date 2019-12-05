@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 log = "0.4.8"
 xml-rs = "0.8.0"
-yaserde = "0.3.7"
-yaserde_derive = "0.3.7"
+yaserde = "0.3.8"
+yaserde_derive = "0.3.8"
 itertools = "0.8.1"
