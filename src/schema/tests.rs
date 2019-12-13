@@ -4,6 +4,18 @@ use itertools::izip;
 use onvif as tt;
 
 
+pub struct FakeTransport {
+    pub response: String
+}
+
+
+impl transport::Transport for FakeTransport {
+    fn request(&mut self, _message: &str) -> Option<String> {
+        Some(self.response.clone())
+    }
+}
+
+
 #[test]
 fn basic_deserialization() {
     let response = r#"
@@ -106,4 +118,61 @@ fn extend_base_deserialization() {
     assert_eq!(des.bounds.y, 0);
     assert_eq!(des.bounds.width, 1280);
     assert_eq!(des.bounds.height, 720);
+}
+
+
+#[test]
+fn operation_get_system_date_and_time() {
+    let req: devicemgmt::GetSystemDateAndTime = Default::default();
+
+    let mut transport = FakeTransport { response: r#"
+            <tds:GetSystemDateAndTimeResponse
+                        xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+                        xmlns:tt="http://www.onvif.org/ver10/schema">
+                <tds:SystemDateAndTime>
+                    <tt:DateTimeType>NTP</tt:DateTimeType>
+                    <tt:DaylightSavings>false</tt:DaylightSavings>
+                    <tt:TimeZone>
+                        <tt:TZ>PST7PDT</tt:TZ>
+                    </tt:TimeZone>
+                    <tt:UTCDateTime>
+                        <tt:Time>
+                            <tt:Hour>8</tt:Hour>
+                            <tt:Minute>5</tt:Minute>
+                            <tt:Second>40</tt:Second>
+                        </tt:Time>
+                        <tt:Date>
+                            <tt:Year>2019</tt:Year>
+                            <tt:Month>11</tt:Month>
+                            <tt:Day>21</tt:Day>
+                        </tt:Date>
+                    </tt:UTCDateTime>
+                </tds:SystemDateAndTime>
+            </tds:GetSystemDateAndTimeResponse>"#.into() };
+
+    let resp = devicemgmt::get_system_date_and_time(&mut transport, &req).unwrap();
+
+    assert_eq!(resp.system_date_and_time.utc_date_time.time.second, 40);
+}
+
+
+#[test]
+fn operation_get_device_information(){
+    let req: devicemgmt::GetDeviceInformation = Default::default();
+
+    let mut transport = FakeTransport { response: r#"
+        <tds:GetDeviceInformationResponse
+                    xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+                    xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tds:Manufacturer>Somebody</tds:Manufacturer>
+            <tds:Model>IPCamera</tds:Model>
+            <tds:FirmwareVersion>1.5</tds:FirmwareVersion>
+            <tds:SerialNumber>a12b34</tds:SerialNumber>
+            <tds:HardwareId>2.0</tds:HardwareId>
+        </tds:GetDeviceInformationResponse>
+    "#.into() };
+
+    let resp = devicemgmt::get_device_information(&mut transport, &req).unwrap();
+
+    assert_eq!(resp.manufacturer, "Somebody");
 }

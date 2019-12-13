@@ -52,6 +52,7 @@
 use std::io::{Read, Write};
 use yaserde::{YaSerialize, YaDeserialize};
 use crate::schema::onvif as tt;
+use super::transport;
 
 
 
@@ -91,7 +92,7 @@ prefix = "tds",
 namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
 )]
 pub struct GetSystemDateAndTimeResponse {
-    #[yaserde(rename = "SystemDateAndTime")]
+    #[yaserde(prefix = "tds", rename = "SystemDateAndTime")]
     pub system_date_and_time: tt::SystemDateAndTime,
 }
 
@@ -120,8 +121,8 @@ pub struct GetSystemDateAndTimeResponse {
 // indication of NTP time (if applicable) through the GetSystemDateAndTime command.
 // A device shall provide the UTCDateTime information.
 
-pub fn get_system_date_and_time(_request: &GetSystemDateAndTime) -> Option<GetSystemDateAndTimeResponse> {
-    unimplemented!()
+pub fn get_system_date_and_time<T: transport::Transport>(transport: &mut T, request: &GetSystemDateAndTime) -> Option<GetSystemDateAndTimeResponse> {
+    transport::request(transport, request)
 }
 
 
@@ -183,23 +184,23 @@ namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
 )]
 pub struct GetDeviceInformationResponse {
     // The manufactor of the device.
-    #[yaserde(rename = "Manufacturer")]
+    #[yaserde(prefix = "tds", rename = "Manufacturer")]
     pub manufacturer: String,
 
     // The device model.
-    #[yaserde(rename = "Model")]
+    #[yaserde(prefix = "tds", rename = "Model")]
     pub model: String,
 
     // The firmware version in the device.
-    #[yaserde(rename = "FirmwareVersion")]
+    #[yaserde(prefix = "tds", rename = "FirmwareVersion")]
     pub firmware_version: String,
 
     // The serial number of the device.
-    #[yaserde(rename = "SerialNumber")]
+    #[yaserde(prefix = "tds", rename = "SerialNumber")]
     pub serial_number: String,
 
     // The hardware ID of the device.
-    #[yaserde(rename = "HardwareId")]
+    #[yaserde(prefix = "tds", rename = "HardwareId")]
     pub hardware_id: String,
 }
 
@@ -219,6 +220,6 @@ pub struct GetDeviceInformationResponse {
 //    </wsdl:message>
 
 // This operation gets basic device information from the device.
-pub fn get_device_information(_request: &GetDeviceInformation) -> Option<GetDeviceInformationResponse> {
-    unimplemented!()
+pub fn get_device_information<T: transport::Transport>(transport: &mut T, request: &GetDeviceInformation) -> Option<GetDeviceInformationResponse> {
+    transport::request(transport, request)
 }
