@@ -1,23 +1,15 @@
 use std::io::{Read, Write};
-use yaserde::{YaSerialize, YaDeserialize};
-
+use yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-prefix = "tt",
-namespace = "tt: http://www.onvif.org/ver10/schema"
-)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct TimeZone {
     #[yaserde(prefix = "tt", rename = "TZ")]
     pub tz: String,
 }
 
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-prefix = "tt",
-namespace = "tt: http://www.onvif.org/ver10/schema"
-)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Time {
     // TODO: use more specific types that allow range validation.
     #[yaserde(prefix = "tt", rename = "Hour")]
@@ -28,12 +20,8 @@ pub struct Time {
     pub second: i32,
 }
 
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-prefix = "tt",
-namespace = "tt: http://www.onvif.org/ver10/schema"
-)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Date {
     // TODO: use more specific types that allow range validation.
     #[yaserde(prefix = "tt", rename = "Year")]
@@ -44,12 +32,8 @@ pub struct Date {
     pub day: i32,
 }
 
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-prefix = "tt",
-namespace = "tt: http://www.onvif.org/ver10/schema"
-)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct DateTime {
     #[yaserde(rename = "Time")]
     pub time: Time,
@@ -57,12 +41,11 @@ pub struct DateTime {
     pub date: Date,
 }
 
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
-prefix = "tds",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
-namespace = "tt: http://www.onvif.org/ver10/schema"
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
+    namespace = "tt: http://www.onvif.org/ver10/schema"
 )]
 pub struct SystemDateAndTime {
     #[yaserde(prefix = "tt", rename = "DateTimeType")]
@@ -75,8 +58,6 @@ pub struct SystemDateAndTime {
     pub utc_date_time: DateTime,
 }
 
-
-
 //<xs:complexType name="IntRectangle">
 //    <xs:attribute name="x" type="xs:int" use="required"/>
 //    <xs:attribute name="y" type="xs:int" use="required"/>
@@ -85,10 +66,7 @@ pub struct SystemDateAndTime {
 //</xs:complexType>
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-prefix = "tt",
-namespace = "tt: http://www.onvif.org/ver10/schema"
-)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct IntRectangle {
     #[yaserde(attribute)]
     pub x: i32,
@@ -99,7 +77,6 @@ pub struct IntRectangle {
     #[yaserde(attribute)]
     pub height: i32,
 }
-
 
 // Type VideoSourceConfiguration extends ConfigurationEntity
 
@@ -123,10 +100,7 @@ pub struct IntRectangle {
 //</xs:complexType>
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-prefix = "tt",
-namespace = "tt: http://www.onvif.org/ver10/schema"
-)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceConfiguration {
     #[yaserde(attribute)]
     pub token: String,

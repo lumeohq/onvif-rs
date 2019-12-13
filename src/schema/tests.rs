@@ -3,18 +3,15 @@ use super::*;
 use itertools::izip;
 use onvif as tt;
 
-
 pub struct FakeTransport {
-    pub response: String
+    pub response: String,
 }
-
 
 impl transport::Transport for FakeTransport {
     fn request(&mut self, _message: &str) -> Option<String> {
         Some(self.response.clone())
     }
 }
-
 
 #[test]
 fn basic_deserialization() {
@@ -45,8 +42,8 @@ fn basic_deserialization() {
             </tds:GetSystemDateAndTimeResponse>
     "#;
 
-
-    let response: devicemgmt::GetSystemDateAndTimeResponse = yaserde::de::from_str(&response).unwrap();
+    let response: devicemgmt::GetSystemDateAndTimeResponse =
+        yaserde::de::from_str(&response).unwrap();
     let system_date_and_time = response.system_date_and_time;
 
     println!("{:#?}", system_date_and_time);
@@ -62,7 +59,6 @@ fn basic_deserialization() {
     assert_eq!(system_date_and_time.utc_date_time.time.second, 9);
 }
 
-
 #[test]
 fn basic_serialization() {
     let expected = r#"<?xml version="1.0" encoding="UTF-8"?>
@@ -76,16 +72,16 @@ fn basic_serialization() {
         .into_iter()
         .filter(|e| match e {
             // TODO: test fails because "UTF-8" != "utf-8", need to think if it is crucial
-            Ok(xml::reader::XmlEvent::StartDocument{..}) => false,
-            _ => true
+            Ok(xml::reader::XmlEvent::StartDocument { .. }) => false,
+            _ => true,
         });
 
     let expected_iter = xml::EventReader::new(expected.as_bytes())
         .into_iter()
         .filter(|e| match e {
-            Ok(xml::reader::XmlEvent::StartDocument{..}) => false,
+            Ok(xml::reader::XmlEvent::StartDocument { .. }) => false,
             Ok(xml::reader::XmlEvent::Whitespace(_)) => false, // Remove indents from expected string
-            _ => true
+            _ => true,
         });
 
     for (a, e) in izip!(actual_iter, expected_iter) {
@@ -95,7 +91,6 @@ fn basic_serialization() {
         assert_eq!(a, e);
     }
 }
-
 
 #[test]
 fn extend_base_deserialization() {
@@ -120,12 +115,12 @@ fn extend_base_deserialization() {
     assert_eq!(des.bounds.height, 720);
 }
 
-
 #[test]
 fn operation_get_system_date_and_time() {
     let req: devicemgmt::GetSystemDateAndTime = Default::default();
 
-    let mut transport = FakeTransport { response: r#"
+    let mut transport = FakeTransport {
+        response: r#"
             <tds:GetSystemDateAndTimeResponse
                         xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
                         xmlns:tt="http://www.onvif.org/ver10/schema">
@@ -148,19 +143,21 @@ fn operation_get_system_date_and_time() {
                         </tt:Date>
                     </tt:UTCDateTime>
                 </tds:SystemDateAndTime>
-            </tds:GetSystemDateAndTimeResponse>"#.into() };
+            </tds:GetSystemDateAndTimeResponse>"#
+            .into(),
+    };
 
     let resp = devicemgmt::get_system_date_and_time(&mut transport, &req).unwrap();
 
     assert_eq!(resp.system_date_and_time.utc_date_time.time.second, 40);
 }
 
-
 #[test]
-fn operation_get_device_information(){
+fn operation_get_device_information() {
     let req: devicemgmt::GetDeviceInformation = Default::default();
 
-    let mut transport = FakeTransport { response: r#"
+    let mut transport = FakeTransport {
+        response: r#"
         <tds:GetDeviceInformationResponse
                     xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
                     xmlns:tt="http://www.onvif.org/ver10/schema">
@@ -170,7 +167,9 @@ fn operation_get_device_information(){
             <tds:SerialNumber>a12b34</tds:SerialNumber>
             <tds:HardwareId>2.0</tds:HardwareId>
         </tds:GetDeviceInformationResponse>
-    "#.into() };
+    "#
+        .into(),
+    };
 
     let resp = devicemgmt::get_device_information(&mut transport, &req).unwrap();
 

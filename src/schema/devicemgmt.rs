@@ -23,7 +23,6 @@
 //
 // So according to the spec we will use only single-part messages.
 
-
 // Quote from ONVIF core spec (5.6.2 One-way operation type):
 //     <operation name=”’Operation_Name’”>
 //         <input message=”’prefix’:’Operation_Name’”/>
@@ -48,13 +47,10 @@
 //  - event.wsdl. It is a little bit more complex case for code generation.
 //  - everything else. Simpler case. Let current file (devicegmt.rs) be an example of this group.
 
-
-use std::io::{Read, Write};
-use yaserde::{YaSerialize, YaDeserialize};
-use crate::schema::onvif as tt;
 use super::transport;
-
-
+use crate::schema::onvif as tt;
+use std::io::{Read, Write};
+use yaserde::{YaDeserialize, YaSerialize};
 
 //    <xs:element name="GetSystemDateAndTime">
 //        <xs:complexType>
@@ -64,12 +60,10 @@ use super::transport;
 
 #[derive(Default, PartialEq, Debug, YaSerialize)]
 #[yaserde(
-prefix = "tds",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
 )]
-pub struct GetSystemDateAndTime {
-}
-
+pub struct GetSystemDateAndTime {}
 
 //    <xs:element name="GetSystemDateAndTimeResponse">
 //        <xs:complexType>
@@ -88,14 +82,13 @@ pub struct GetSystemDateAndTime {
 // and time in UTC and also local system date and time.
 #[derive(Default, PartialEq, Debug, YaDeserialize)]
 #[yaserde(
-prefix = "tds",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
 )]
 pub struct GetSystemDateAndTimeResponse {
     #[yaserde(prefix = "tds", rename = "SystemDateAndTime")]
     pub system_date_and_time: tt::SystemDateAndTime,
 }
-
 
 //    <wsdl:operation name="GetSystemDateAndTime">
 //        <wsdl:documentation>This operation gets the device system date and time. The device shall support the return of
@@ -115,19 +108,17 @@ pub struct GetSystemDateAndTimeResponse {
 //        <wsdl:part name="parameters" element="tds:GetSystemDateAndTimeResponse"/>
 //    </wsdl:message>
 
-
 // This operation gets the device system date and time. The device shall support the return of
 // the daylight saving setting and of the manual system date and time (if applicable) or
 // indication of NTP time (if applicable) through the GetSystemDateAndTime command.
 // A device shall provide the UTCDateTime information.
 
-pub fn get_system_date_and_time<T: transport::Transport>(transport: &mut T, request: &GetSystemDateAndTime) -> Option<GetSystemDateAndTimeResponse> {
+pub fn get_system_date_and_time<T: transport::Transport>(
+    transport: &mut T,
+    request: &GetSystemDateAndTime,
+) -> Option<GetSystemDateAndTimeResponse> {
     transport::request(transport, request)
 }
-
-
-
-
 
 //    <xs:element name="GetDeviceInformation">
 //        <xs:complexType>
@@ -137,12 +128,10 @@ pub fn get_system_date_and_time<T: transport::Transport>(transport: &mut T, requ
 
 #[derive(Default, PartialEq, Debug, YaSerialize)]
 #[yaserde(
-prefix = "tds",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
 )]
-pub struct GetDeviceInformation {
-}
-
+pub struct GetDeviceInformation {}
 
 //    <xs:element name="GetDeviceInformationResponse">
 //        <xs:complexType>
@@ -176,11 +165,10 @@ pub struct GetDeviceInformation {
 //        </xs:complexType>
 //    </xs:element>
 
-
 #[derive(Default, PartialEq, Debug, YaDeserialize)]
 #[yaserde(
-prefix = "tds",
-namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
 )]
 pub struct GetDeviceInformationResponse {
     // The manufactor of the device.
@@ -204,7 +192,6 @@ pub struct GetDeviceInformationResponse {
     pub hardware_id: String,
 }
 
-
 //    <wsdl:operation name="GetDeviceInformation">
 //        <wsdl:documentation>This operation gets basic device information from the device.</wsdl:documentation>
 //        <wsdl:input message="tds:GetDeviceInformationRequest"/>
@@ -220,6 +207,9 @@ pub struct GetDeviceInformationResponse {
 //    </wsdl:message>
 
 // This operation gets basic device information from the device.
-pub fn get_device_information<T: transport::Transport>(transport: &mut T, request: &GetDeviceInformation) -> Option<GetDeviceInformationResponse> {
+pub fn get_device_information<T: transport::Transport>(
+    transport: &mut T,
+    request: &GetDeviceInformation,
+) -> Option<GetDeviceInformationResponse> {
     transport::request(transport, request)
 }

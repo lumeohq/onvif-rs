@@ -1,5 +1,5 @@
-pub mod onvif;
 pub mod devicemgmt;
+pub mod onvif;
 
 #[cfg(test)]
 mod tests;
