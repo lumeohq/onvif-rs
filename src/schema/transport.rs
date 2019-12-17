@@ -1,24 +1,30 @@
 use yaserde::{YaDeserialize, YaSerialize};
 
+#[derive(Debug)]
+pub enum Error {
+    Serialization(String),
+    Http(String),
+    Soap(String),
+    Onvif(String),
+}
+
 pub trait Transport {
-    fn request(&mut self, message: &str) -> Option<String>;
+    fn request(&mut self, message: &str) -> Result<String, Error>;
 }
 
 pub fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
     transport: &mut T,
     request: &R,
-) -> Option<S> {
-    // TODO: process all kinds of faults: HTTP, SOAP, ONVIF
+) -> Result<S, Error> {
+    let ser = |obj: &R| yaserde::ser::to_string(obj).map_err(|e| Error::Serialization(e));
 
-    if let Ok(xml_text) = yaserde::ser::to_string(request) {
-        if let Some(resp_text) = transport.request(&crop_xml_declaration(&xml_text)) {
-            if let Ok(val) = yaserde::de::from_str(&resp_text) {
-                return Some(val);
-            }
-        }
-    }
+    let de = |s: &str| yaserde::de::from_str(s).map_err(|e| Error::Serialization(e));
 
-    None
+    ser(&request).and_then(|serialized| {
+        transport
+            .request(&crop_xml_declaration(&serialized))
+            .and_then(|response| de(&response))
+    })
 }
 
 fn crop_xml_declaration(xml: &str) -> String {

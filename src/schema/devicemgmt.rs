@@ -116,7 +116,7 @@ pub struct GetSystemDateAndTimeResponse {
 pub fn get_system_date_and_time<T: transport::Transport>(
     transport: &mut T,
     request: &GetSystemDateAndTime,
-) -> Option<GetSystemDateAndTimeResponse> {
+) -> Result<GetSystemDateAndTimeResponse, transport::Error> {
     transport::request(transport, request)
 }
 
@@ -210,6 +210,6 @@ pub struct GetDeviceInformationResponse {
 pub fn get_device_information<T: transport::Transport>(
     transport: &mut T,
     request: &GetDeviceInformation,
-) -> Option<GetDeviceInformationResponse> {
+) -> Result<GetDeviceInformationResponse, transport::Error> {
     transport::request(transport, request)
 }

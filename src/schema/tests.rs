@@ -8,8 +8,8 @@ pub struct FakeTransport {
 }
 
 impl transport::Transport for FakeTransport {
-    fn request(&mut self, _message: &str) -> Option<String> {
-        Some(self.response.clone())
+    fn request(&mut self, _message: &str) -> Result<String, transport::Error> {
+        Ok(self.response.clone())
     }
 }
 
