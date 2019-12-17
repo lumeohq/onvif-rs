@@ -106,7 +106,7 @@ fn extend_base_deserialization() {
     let des: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
 
     assert_eq!(des.token, "V_SRC_CFG_000");
-    assert_eq!(des.name0, "V_SRC_CFG_000");
+    assert_eq!(des.name, "V_SRC_CFG_000");
     assert_eq!(des.use_count, 2);
     assert_eq!(des.source_token, "V_SRC_000");
     assert_eq!(des.bounds.x, 0);

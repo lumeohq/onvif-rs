@@ -105,7 +105,7 @@ pub struct VideoSourceConfiguration {
     #[yaserde(attribute)]
     pub token: String,
     #[yaserde(prefix = "tt", rename = "Name")]
-    pub name0: String,
+    pub name: String,
     #[yaserde(prefix = "tt", rename = "UseCount")]
     pub use_count: i32,
     #[yaserde(prefix = "tt", rename = "SourceToken")]
