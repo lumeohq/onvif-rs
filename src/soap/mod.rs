@@ -8,6 +8,7 @@ pub enum Error {
     EnvelopeNotFound,
     BodyNotFound,
     BodyIsEmpty,
+    InternalError(String),
 }
 
 #[derive(Debug)]
@@ -16,11 +17,8 @@ pub struct Response {
     fault: Option<fault::Fault>,
 }
 
-pub fn soap(xml: &str) -> Option<String> {
-    let app_data = match xmltree::Element::parse(xml.as_bytes()) {
-        Ok(v) => v,
-        Err(_) => return None,
-    };
+pub fn soap(xml: &str) -> Result<String, Error> {
+    let app_data = parse(xml)?;
 
     let mut namespaces = app_data
         .namespaces
@@ -37,16 +35,15 @@ pub fn soap(xml: &str) -> Option<String> {
     envelope.prefix = Some("s".to_string());
     envelope.children.push(body);
 
-    Some(xml_element_to_string(&envelope))
+    xml_element_to_string(&envelope)
 }
 
 pub fn unsoap(xml: &str) -> Result<Response, Error> {
-    let envelope = match xmltree::Element::parse(xml.as_bytes()) {
-        Ok(envelope) => match envelope.name.as_ref() {
-            "Envelope" => Ok(envelope),
-            _ => Err(Error::EnvelopeNotFound),
-        },
-        _ => Err(Error::ParseError),
+    let root = parse(xml)?;
+
+    let envelope = match root.name.as_ref() {
+        "Envelope" => Ok(root),
+        _ => Err(Error::EnvelopeNotFound),
     }?;
 
     let body = match envelope.get_child("Body") {
@@ -55,11 +52,13 @@ pub fn unsoap(xml: &str) -> Result<Response, Error> {
     }?;
 
     let response = match body.children.first() {
-        Some(app_data) => Ok(xml_element_to_string(&app_data)),
+        Some(app_data) => xml_element_to_string(&app_data),
         _ => Err(Error::BodyIsEmpty),
     }?;
 
-    let fault = body.get_child("Fault").and_then(|elem| get_fault(elem));
+    let fault = body
+        .get_child("Fault")
+        .and_then(|elem| get_fault(elem).ok());
 
     Ok(Response {
         response: Some(response),
@@ -67,15 +66,20 @@ pub fn unsoap(xml: &str) -> Result<Response, Error> {
     })
 }
 
-fn xml_element_to_string(el: &xmltree::Element) -> String {
-    // TODO: process errors
-    let mut out = vec![];
-    el.write(&mut out).unwrap();
-    String::from_utf8(out).unwrap()
+fn parse(xml: &str) -> Result<xmltree::Element, Error> {
+    xmltree::Element::parse(xml.as_bytes()).map_err(|_| Error::ParseError)
 }
 
-fn get_fault(envelope: &xmltree::Element) -> Option<fault::Fault> {
-    yaserde::de::from_str(&xml_element_to_string(envelope)).ok()
+fn xml_element_to_string(el: &xmltree::Element) -> Result<String, Error> {
+    let mut out = vec![];
+    el.write(&mut out)
+        .map_err(|_| Error::InternalError("Could not write XML element".to_string()))?;
+    String::from_utf8(out).map_err(|e| Error::InternalError(e.to_string()))
+}
+
+fn get_fault(envelope: &xmltree::Element) -> Result<fault::Fault, Error> {
+    let string = xml_element_to_string(envelope)?;
+    yaserde::de::from_str(&string).map_err(|e| Error::InternalError(e))
 }
 
 #[cfg(test)]
