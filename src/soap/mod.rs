@@ -1,3 +1,5 @@
+pub mod fault;
+
 const SOAP_URI: &str = "http://www.w3.org/2003/05/soap-envelope";
 
 #[derive(Debug)]
@@ -11,7 +13,7 @@ pub enum Error {
 #[derive(Debug)]
 pub struct Response {
     response: Option<String>,
-    fault: Option<Fault>,
+    fault: Option<fault::Fault>,
 }
 
 pub fn soap(xml: &str) -> Option<String> {
@@ -70,6 +72,10 @@ fn xml_element_to_string(el: &xmltree::Element) -> String {
     let mut out = vec![];
     el.write(&mut out).unwrap();
     String::from_utf8(out).unwrap()
+}
+
+fn get_fault(envelope: &xmltree::Element) -> Option<fault::Fault> {
+    yaserde::de::from_str(&xml_element_to_string(envelope)).ok()
 }
 
 #[cfg(test)]
@@ -164,12 +170,42 @@ mod tests {
         assert_eq!(parsed.title, "Such book");
         assert_eq!(parsed.pages, 42);
     }
-}
 
-// TODO: process faults
-#[derive(Debug)]
-pub struct Fault;
+    #[test]
+    fn test_get_fault() {
+        let response = r#"
+            <?xml version="1.0" ?>
+            <soapenv:Fault
+                xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
+                xmlns:ter="http://www.onvif.org/ver10/error"
+                xmlns:xs="http://www.w3.org/2000/10/XMLSchema">
+                <soapenv:Code>
+                    <soapenv:Value>fault code</soapenv:Value>
+                    <soapenv:Subcode>
+                        <soapenv:Value>ter:fault subcode</soapenv:Value>
+                        <soapenv:Subcode>
+                            <soapenv:Value>ter:fault subcode</soapenv:Value>
+                        </soapenv:Subcode>
+                    </soapenv:Subcode>
+                </soapenv:Code>
+                <soapenv:Reason>
+                    <soapenv:Text xml:lang="en">fault reason 1</soapenv:Text>
+                    <soapenv:Text xml:lang="en">fault reason 2</soapenv:Text>
+                </soapenv:Reason>
+                <soapenv:Node>http://www.w3.org/2003/05/soap-envelope/node/ultimateReceiver</soapenv:Node>
+                <soapenv:Role>http://www.w3.org/2003/05/soap-envelope/role/ultimateReceiver</soapenv:Role>
+                <soapenv:Detail>
+                    <soapenv:Text>fault detail</soapenv:Text>
+                </soapenv:Detail>
+            </soapenv:Fault>
+        "#;
 
-fn get_fault(_envelope: &xmltree::Element) -> Option<Fault> {
-    None
+        let envelope = xmltree::Element::parse(response.as_bytes()).unwrap();
+
+        let fault = get_fault(&envelope).unwrap();
+
+        assert_eq!(fault.code.value, "fault code");
+        assert_eq!(fault.code.subcode.unwrap().value, "ter:fault subcode");
+        assert_eq!(fault.reason.text, vec!["fault reason 1", "fault reason 2"]);
+    }
 }
