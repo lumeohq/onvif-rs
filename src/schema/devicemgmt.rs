@@ -1,3 +1,5 @@
+// Based on devicemgmt.wsdl.xml
+
 // This file is an example of how generated code will look like. It contains some comments
 // to see the relation between xml's and Rust code.
 
