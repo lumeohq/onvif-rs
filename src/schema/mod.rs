@@ -13,6 +13,8 @@ pub mod actionengine;
 pub mod advancedsecurity;
 pub mod analytics;
 pub mod authenticationbehavior;
+pub mod b_2;
+pub mod bf_2;
 pub mod credential;
 pub mod deviceio;
 pub mod devicemgmt;
@@ -29,8 +31,10 @@ pub mod recording;
 pub mod replay;
 pub mod schedule;
 pub mod search;
+pub mod t_1;
 pub mod thermal;
 pub mod uplink;
+pub mod ws_addr;
 
 #[cfg(test)]
 mod tests;

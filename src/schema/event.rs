@@ -11,8 +11,8 @@
 // <xs:import namespace="http://docs.oasis-open.org/wsn/b-2" schemaLocation="http://docs.oasis-open.org/wsn/b-2.xsd"/>
 
 use crate::schema::onvif as tt;
-// TODO: wsa (http://www.w3.org/2005/08/addressing) - ?
-// TODO: wstop (http://docs.oasis-open.org/wsn/t-1) - ?
-// TODO: wsnt (http://docs.oasis-open.org/wsn/b-2.xsd) - ?
+use crate::schema::ws_addr as wsa;
+use crate::schema::t_1 as wstop;
+use crate::schema::b_2 as wsnt;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
