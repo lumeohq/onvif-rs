@@ -116,6 +116,45 @@ fn extend_base_deserialization() {
 }
 
 #[test]
+fn choice_deserialization() {
+    let ser = r#"
+    <tt:ColorOptions xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:ColorspaceRange>
+            <X>0.1</X>
+            <Y>0.2</Y>
+            <Z>0.3</Z>
+            <Colorspace>http://my.color.space</Colorspace>
+        </tt:ColorspaceRange>
+        <tt:ColorspaceRange>
+            <X>0.5</X>
+            <Y>0.6</Y>
+            <Z>0.7</Z>
+            <Colorspace>http://my.color.space</Colorspace>
+        </tt:ColorspaceRange>
+    </tt:ColorOptions>
+    "#;
+
+    let des: tt::ColorOptions = yaserde::de::from_str(&ser).unwrap();
+
+    match des {
+        tt::ColorOptions::ColorspaceRange(colors) => {
+            assert_eq!(colors.len(), 2);
+
+            assert_eq!(colors[0].x, 0.1);
+            assert_eq!(colors[0].y, 0.2);
+            assert_eq!(colors[0].z, 0.3);
+            assert_eq!(colors[0].colorspace, String::from("http://my.color.space"));
+
+            assert_eq!(colors[1].x, 0.5);
+            assert_eq!(colors[1].y, 0.6);
+            assert_eq!(colors[1].z, 0.7);
+            assert_eq!(colors[1].colorspace, String::from("http://my.color.space"));
+        },
+        _ => panic!("Wrong variant")
+    }
+}
+
+#[test]
 fn operation_get_system_date_and_time() {
     let req: devicemgmt::GetSystemDateAndTime = Default::default();
 

@@ -113,3 +113,72 @@ pub struct VideoSourceConfiguration {
     #[yaserde(prefix = "tt", rename = "Bounds")]
     pub bounds: IntRectangle,
 }
+
+
+// "Color" type is defined in common.xsd and included into onvif.xsd
+// <xs:complexType name="Color">
+//     <xs:sequence>
+//         <xs:element name="X" type="tt:FloatRange"/>
+//         <xs:element name="Y" type="tt:FloatRange"/>
+//         <xs:element name="Z" type="tt:FloatRange"/>
+//         <xs:element name="Colorspace" type="xs:anyURI" />
+//     </xs:sequence>
+// </xs:complexType>
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct Color {
+    #[yaserde(prefix = "tt", rename = "X")]
+    pub x: f32,
+    #[yaserde(prefix = "tt", rename = "Y")]
+    pub y: f32,
+    #[yaserde(prefix = "tt", rename = "Z")]
+    pub z: f32,
+    #[yaserde(prefix = "tt", rename = "Colorspace")]
+    pub colorspace: String,
+}
+
+
+// "ColorspaceRange" type is defined in onvif.xsd
+// <xs:complexType name="ColorspaceRange">
+//     <xs:sequence>
+//         <xs:element name="X" type="tt:FloatRange"/>
+//         <xs:element name="Y" type="tt:FloatRange"/>
+//         <xs:element name="Z" type="tt:FloatRange"/>
+//         <xs:element name="Colorspace" type="xs:anyURI" />
+//     </xs:sequence>
+// </xs:complexType>
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct ColorspaceRange {
+    #[yaserde(prefix = "tt", rename = "X")]
+    pub x: f32,
+    #[yaserde(prefix = "tt", rename = "Y")]
+    pub y: f32,
+    #[yaserde(prefix = "tt", rename = "Z")]
+    pub z: f32,
+    #[yaserde(prefix = "tt", rename = "Colorspace")]
+    pub colorspace: String,
+}
+
+// <xs:complexType name="ColorOptions">
+//     <xs:choice>
+//         <xs:element name="ColorList" type="tt:Color" maxOccurs="unbounded" />
+//         <xs:element name="ColorspaceRange" type="tt:ColorspaceRange" maxOccurs="unbounded" />
+//     </xs:choice>
+//     <xs:anyAttribute processContents="lax"/>
+// </xs:complexType>
+
+#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub enum ColorOptions {
+    ColorList(Vec<Color>),
+    ColorspaceRange(Vec<ColorspaceRange>),
+}
+
+impl Default for ColorOptions {
+    fn default() -> ColorOptions {
+        ColorOptions::ColorList(vec![])
+    }
+}
