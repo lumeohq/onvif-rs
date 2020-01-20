@@ -5,6 +5,7 @@ pub mod onvif;
 pub mod radiometry;
 pub mod rules;
 pub mod types;
+pub mod duration;
 
 // wsdl:
 pub mod accesscontrol;

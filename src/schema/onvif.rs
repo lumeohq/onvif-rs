@@ -201,3 +201,30 @@ impl Default for ColorOptions {
         ColorOptions::ColorList(vec![])
     }
 }
+
+
+// A type that uses xs:duration (annotations removed)
+//
+//<xs:complexType name="MediaUri">
+//    <xs:sequence>
+//        <xs:element name="Uri" type="xs:anyURI" />
+//        <xs:element name="InvalidAfterConnect" type="xs:boolean" />
+//        <xs:element name="InvalidAfterReboot" type="xs:boolean" />
+//        <xs:element name="Timeout" type="xs:duration" />
+//        <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+//    </xs:sequence>
+//    <xs:anyAttribute processContents="lax"/>
+//</xs:complexType>
+
+#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct MediaUri {
+    #[yaserde(prefix = "tt", rename = "Uri")]
+    pub uri: String,
+    #[yaserde(prefix = "tt", rename = "InvalidAfterConnect")]
+    pub invalid_after_connect: bool,
+    #[yaserde(prefix = "tt", rename = "InvalidAfterReboot")]
+    pub invalid_after_reboot: bool,
+    #[yaserde(prefix = "tt", rename = "Timeout")]
+    pub timeout: crate::schema::duration::Duration,
+}

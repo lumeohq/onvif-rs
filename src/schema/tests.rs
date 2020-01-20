@@ -187,6 +187,25 @@ fn choice_deserialization() {
 }
 
 #[test]
+fn duration_deserialization() {
+    let ser = r#"
+    <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:Uri>http://a/b/c</tt:Uri>
+        <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
+        <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
+        <tt:Timeout>PT60S</tt:Timeout>
+    </tt:MediaUri>
+    "#;
+
+    let des: tt::MediaUri = yaserde::de::from_str(&ser).unwrap();
+
+    assert_eq!(des.uri, "http://a/b/c".to_string());
+    assert_eq!(des.invalid_after_connect, false);
+    assert_eq!(des.invalid_after_reboot, true);
+    assert_eq!(des.timeout.seconds, 60.0);
+}
+
+#[test]
 fn operation_get_system_date_and_time() {
     let req: devicemgmt::GetSystemDateAndTime = Default::default();
 
