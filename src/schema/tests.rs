@@ -187,6 +187,33 @@ fn choice_deserialization() {
 }
 
 #[test]
+fn duration_serialization() {
+    let model = tt::MediaUri {
+        uri: "http://a/b/c".to_string(),
+        invalid_after_connect: false,
+        invalid_after_reboot: true,
+        timeout: crate::schema::duration::Duration {
+            seconds: 60.0,
+            .. Default::default()
+        }
+    };
+
+    let expected = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:Uri>http://a/b/c</tt:Uri>
+        <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
+        <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
+        <tt:Timeout>PT60S</tt:Timeout>
+    </tt:MediaUri>
+    "#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    assert_xml_eq(actual.as_str(), expected);
+}
+
+#[test]
 fn duration_deserialization() {
     let ser = r#"
     <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">

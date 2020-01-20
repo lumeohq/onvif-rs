@@ -289,12 +289,12 @@ impl YaSerialize for Duration {
         // TODO: this should be simplified since yaserde 0.3.11
         if let Some(override_name) = writer.get_start_event_name() {
             writer
-                .write(xml::writer::XmlEvent::start_element("tt:Name"))
+                .write(xml::writer::XmlEvent::start_element(override_name.as_str()))
                 .map_err(|_e| "Start element write failed".to_string())
         } else {
             if !writer.skip_start_end() {
                 writer
-                    .write(xml::writer::XmlEvent::start_element("tt:Name"))
+                    .write(xml::writer::XmlEvent::start_element("Duration"))
                     .map_err(|_e| "Start element write failed".to_string())?;
             }
 
