@@ -16,6 +16,7 @@
 // <xs:import namespace="http://www.w3.org/2004/08/xop/include" schemaLocation="http://www.w3.org/2004/08/xop/include"/>
 
 use crate::schema::common as tt;
+use crate::schema::types as types;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
 
@@ -123,7 +124,7 @@ pub struct VideoSourceConfiguration {
     #[yaserde(attribute)]
     pub token: String,
     #[yaserde(prefix = "tt", rename = "Name")]
-    pub name: String,
+    pub name: types::Name,
     #[yaserde(prefix = "tt", rename = "UseCount")]
     pub use_count: i32,
     #[yaserde(prefix = "tt", rename = "SourceToken")]

@@ -106,13 +106,45 @@ fn extend_base_deserialization() {
     let des: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
 
     assert_eq!(des.token, "V_SRC_CFG_000");
-    assert_eq!(des.name, "V_SRC_CFG_000");
+    assert_eq!(des.name, types::Name("V_SRC_CFG_000".to_string()));
     assert_eq!(des.use_count, 2);
     assert_eq!(des.source_token, "V_SRC_000");
     assert_eq!(des.bounds.x, 0);
     assert_eq!(des.bounds.y, 0);
     assert_eq!(des.bounds.width, 1280);
     assert_eq!(des.bounds.height, 720);
+}
+
+#[test]
+fn extend_base_serialization() {
+    let model = tt::VideoSourceConfiguration {
+        token: "123abc".to_string(),
+        name: types::Name("MyName".to_string()),
+        use_count: 2,
+        source_token: "456cde".to_string(),
+        bounds: tt::IntRectangle {
+            x: 1,
+            y: 2,
+            width: 3,
+            height: 4,
+        },
+    };
+
+    let expected = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:VideoSourceConfiguration xmlns:tt="http://www.onvif.org/ver10/schema" token="123abc">
+        <tt:Name>MyName</tt:Name>
+        <tt:UseCount>2</tt:UseCount>
+        <tt:SourceToken>456cde</tt:SourceToken>
+        <tt:Bounds x="1" y="2" width="3" height="4" />
+    </tt:VideoSourceConfiguration>"#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    println!("actual: {}", actual);
+    println!("expected: {}", expected);
+
+    assert_xml_eq(actual.as_str(), expected);
 }
 
 #[test]
@@ -213,4 +245,21 @@ fn operation_get_device_information() {
     let resp = devicemgmt::get_device_information(&mut transport, &req).unwrap();
 
     assert_eq!(resp.manufacturer, "Somebody");
+}
+
+fn assert_xml_eq(actual: &str, expected: &str) -> () {
+    for (a, e) in izip!(without_whitespaces(actual), without_whitespaces(expected)) {
+        assert_eq!(a, e);
+    }
+}
+
+fn without_whitespaces<'a>(
+    expected: &'a str,
+) -> impl Iterator<Item = Result<xml::reader::XmlEvent, xml::reader::Error>> + 'a {
+    xml::EventReader::new(expected.as_bytes())
+        .into_iter()
+        .filter(|e| match e {
+            Ok(xml::reader::XmlEvent::Whitespace(_)) => false,
+            _ => true,
+        })
 }
