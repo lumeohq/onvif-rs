@@ -150,7 +150,7 @@ fn extend_base_serialization() {
 #[test]
 fn choice_deserialization() {
     let ser = r#"
-    <tt:ColorOptions xmlns:tt="http://www.onvif.org/ver10/schema">
+    <tt:ColorOptions attr_name="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
         <tt:ColorspaceRange>
             <X>0.1</X>
             <Y>0.2</Y>
@@ -168,8 +168,8 @@ fn choice_deserialization() {
 
     let des: tt::ColorOptions = yaserde::de::from_str(&ser).unwrap();
 
-    match des {
-        tt::ColorOptions::ColorspaceRange(colors) => {
+    match des.choice {
+        tt::ColorOptionsChoice::ColorspaceRange(colors) => {
             assert_eq!(colors.len(), 2);
 
             assert_eq!(colors[0].x, 0.1);
@@ -184,6 +184,56 @@ fn choice_deserialization() {
         },
         _ => panic!("Wrong variant")
     }
+
+    assert_eq!(des.any_attribute, Some(("attr_name".to_string(), "attr_value".to_string())));
+}
+
+#[test]
+fn choice_serialization() {
+    let model = tt::ColorOptions {
+        choice: tt::ColorOptionsChoice::ColorspaceRange(vec![
+            tt::ColorspaceRange {
+                x: 0.1,
+                y: 0.2,
+                z: 0.3,
+                colorspace: "http://my.color.space".to_string()
+            },
+            tt::ColorspaceRange {
+                x: 0.5,
+                y: 0.6,
+                z: 0.7,
+                colorspace: "http://my.color.space".to_string()
+            }
+        ]),
+        any_attribute: Some(("attr_name".to_string(), "attr_value".to_string()))
+    };
+
+    // TODO: "ColorspaceRange" must be "tt:ColorspaceRange", fixed in yaserde 0.3.11
+
+    let expected = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:ColorOptions attr_name="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
+        <ColorspaceRange>
+            <tt:X>0.1</tt:X>
+            <tt:Y>0.2</tt:Y>
+            <tt:Z>0.3</tt:Z>
+            <tt:Colorspace>http://my.color.space</tt:Colorspace>
+        </ColorspaceRange>
+        <ColorspaceRange>
+            <tt:X>0.5</tt:X>
+            <tt:Y>0.6</tt:Y>
+            <tt:Z>0.7</tt:Z>
+            <tt:Colorspace>http://my.color.space</tt:Colorspace>
+        </ColorspaceRange>
+    </tt:ColorOptions>
+    "#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    println!("actual: {}", actual);
+    println!("expected: {}", expected);
+
+    assert_xml_eq(actual.as_str(), expected);
 }
 
 #[test]

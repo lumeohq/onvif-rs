@@ -190,15 +190,70 @@ pub struct ColorspaceRange {
 // </xs:complexType>
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub enum ColorOptions {
+pub enum ColorOptionsChoice {
     ColorList(Vec<Color>),
     ColorspaceRange(Vec<ColorspaceRange>),
 }
 
-impl Default for ColorOptions {
-    fn default() -> ColorOptions {
-        ColorOptions::ColorList(vec![])
+impl Default for ColorOptionsChoice {
+    fn default() -> ColorOptionsChoice {
+        ColorOptionsChoice::ColorList(vec![])
+    }
+}
+
+#[derive(Default, PartialEq, Debug)]
+pub struct ColorOptions {
+    pub choice: ColorOptionsChoice,
+    pub any_attribute: Option<(String, String)>,
+}
+
+fn get_attr<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Option<&Vec<xml::attribute::OwnedAttribute>> {
+    match reader.peek() {
+        Ok(xml::reader::XmlEvent::StartElement { ref attributes, .. }) => Some(attributes),
+        _ => None
+    }
+}
+
+impl YaDeserialize for ColorOptions {
+    fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
+        match reader.peek() {
+            Ok(xml::reader::XmlEvent::StartElement { .. }) => {
+                let attr = get_attr(reader)
+                    .and_then(|a| a
+                        .first()
+                        .map(|a| (a.name.local_name.clone(), a.value.clone())));
+
+                Ok(ColorOptions {
+                    choice: ColorOptionsChoice::deserialize(reader)?,
+                    any_attribute: attr
+                })
+            },
+            _ => Err("Start element not found".to_string())
+        }
+    }
+}
+
+impl YaSerialize for ColorOptions {
+    fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
+        let mut start = xml::writer::XmlEvent::start_element("tt:ColorOptions")
+            .ns("tt", "http://www.onvif.org/ver10/schema");
+
+        if let Some((ref name, ref value)) = self.any_attribute {
+            start = start.attr(xml::name::Name {
+                local_name: name.as_str(),
+                prefix: None,
+                namespace: None,
+            }, value.as_str());
+        }
+
+        writer.write(start).map_err(|_| "Could not serialize start element")?;
+        writer.set_skip_start_end(true);
+
+        self.choice.serialize(writer)?;
+
+        writer.write(xml::writer::XmlEvent::end_element()).map_err(|_| "Could not serialize end element")?;
+
+        Ok(())
     }
 }
 
