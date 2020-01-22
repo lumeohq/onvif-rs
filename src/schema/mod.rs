@@ -1,5 +1,6 @@
 // xsd:
 pub mod common;
+pub mod duration;
 #[allow(unused_imports)]
 pub mod metadatastream;
 pub mod onvif;
@@ -8,7 +9,6 @@ pub mod radiometry;
 #[allow(unused_imports)]
 pub mod rules;
 pub mod types;
-pub mod duration;
 
 // wsdl:
 #[allow(unused_imports)]

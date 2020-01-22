@@ -10,7 +10,7 @@
 // <xs:import namespace="http://www.onvif.org/ver10/pacs" schemaLocation="../../pacs/types.xsd"/>
 // <xs:import namespace="http://www.onvif.org/ver10/schema" schemaLocation="../../schema/onvif.xsd"/>
 
-use crate::schema::types as pt;
 use crate::schema::onvif as tt;
+use crate::schema::types as pt;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};

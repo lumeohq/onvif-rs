@@ -19,7 +19,6 @@ use crate::schema::common::*;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
 
-
 //<xs:simpleType name="Name">
 //    <xs:annotation>
 //        <xs:documentation>User readable name. Length up to 64 characters.</xs:documentation>
@@ -30,7 +29,7 @@ use yaserde::{YaDeserialize, YaSerialize};
 //</xs:simpleType>
 
 #[derive(Default, PartialEq, Debug)]
-pub struct Name (pub String);
+pub struct Name(pub String);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -145,7 +144,6 @@ pub struct VideoSourceConfiguration {
     pub bounds: IntRectangle,
 }
 
-
 // "ColorspaceRange" type is defined in onvif.xsd
 // <xs:complexType name="ColorspaceRange">
 //     <xs:sequence>
@@ -195,10 +193,12 @@ pub struct ColorOptions {
     pub any_attribute: Option<(String, String)>,
 }
 
-fn get_attr<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Option<&Vec<xml::attribute::OwnedAttribute>> {
+fn get_attr<R: Read>(
+    reader: &mut yaserde::de::Deserializer<R>,
+) -> Option<&Vec<xml::attribute::OwnedAttribute>> {
     match reader.peek() {
         Ok(xml::reader::XmlEvent::StartElement { ref attributes, .. }) => Some(attributes),
-        _ => None
+        _ => None,
     }
 }
 
@@ -206,17 +206,17 @@ impl YaDeserialize for ColorOptions {
     fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
         match reader.peek() {
             Ok(xml::reader::XmlEvent::StartElement { .. }) => {
-                let attr = get_attr(reader)
-                    .and_then(|a| a
-                        .first()
-                        .map(|a| (a.name.local_name.clone(), a.value.clone())));
+                let attr = get_attr(reader).and_then(|a| {
+                    a.first()
+                        .map(|a| (a.name.local_name.clone(), a.value.clone()))
+                });
 
                 Ok(ColorOptions {
                     choice: ColorOptionsChoice::deserialize(reader)?,
-                    any_attribute: attr
+                    any_attribute: attr,
                 })
-            },
-            _ => Err("Start element not found".to_string())
+            }
+            _ => Err("Start element not found".to_string()),
         }
     }
 }
@@ -227,24 +227,30 @@ impl YaSerialize for ColorOptions {
             .ns("tt", "http://www.onvif.org/ver10/schema");
 
         if let Some((ref name, ref value)) = self.any_attribute {
-            start = start.attr(xml::name::Name {
-                local_name: name.as_str(),
-                prefix: None,
-                namespace: None,
-            }, value.as_str());
+            start = start.attr(
+                xml::name::Name {
+                    local_name: name.as_str(),
+                    prefix: None,
+                    namespace: None,
+                },
+                value.as_str(),
+            );
         }
 
-        writer.write(start).map_err(|_| "Could not serialize start element")?;
+        writer
+            .write(start)
+            .map_err(|_| "Could not serialize start element")?;
         writer.set_skip_start_end(true);
 
         self.choice.serialize(writer)?;
 
-        writer.write(xml::writer::XmlEvent::end_element()).map_err(|_| "Could not serialize end element")?;
+        writer
+            .write(xml::writer::XmlEvent::end_element())
+            .map_err(|_| "Could not serialize end element")?;
 
         Ok(())
     }
 }
-
 
 // A type that uses xs:duration (annotations removed)
 //
@@ -272,7 +278,6 @@ pub struct MediaUri {
     pub timeout: crate::schema::duration::Duration,
 }
 
-
 impl YaDeserialize for Name {
     fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
         if let Ok(xml::reader::XmlEvent::StartElement { .. }) = reader.peek() {
@@ -281,7 +286,7 @@ impl YaDeserialize for Name {
             return Err("Start element not found".to_string());
         }
 
-        if let Ok(xml::reader::XmlEvent::Characters (ref text)) = reader.peek() {
+        if let Ok(xml::reader::XmlEvent::Characters(ref text)) = reader.peek() {
             if text.len() > 64 {
                 Err(format!("Max length exceeded: {}", text.len()))
             } else {

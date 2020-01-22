@@ -8,7 +8,6 @@
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
 
-
 // <xs:complexType name="Color">
 //     <xs:sequence>
 //         <xs:element name="X" type="tt:FloatRange"/>
