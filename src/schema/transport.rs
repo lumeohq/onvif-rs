@@ -16,9 +16,9 @@ pub fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
     transport: &mut T,
     request: &R,
 ) -> Result<S, Error> {
-    let ser = |obj: &R| yaserde::ser::to_string(obj).map_err(|e| Error::Serialization(e));
+    let ser = |obj: &R| yaserde::ser::to_string(obj).map_err(Error::Serialization);
 
-    let de = |s: &str| yaserde::de::from_str(s).map_err(|e| Error::Serialization(e));
+    let de = |s: &str| yaserde::de::from_str(s).map_err(Error::Serialization);
 
     ser(&request).and_then(|serialized| {
         transport

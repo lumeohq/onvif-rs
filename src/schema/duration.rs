@@ -77,7 +77,7 @@ impl Duration {
     // converts months & years to days.
 
     pub fn from_lexical_representation(s: &str) -> Result<Duration, &'static str> {
-        fn fill_component(context: &mut ParsingContext, component: &mut u64, idx: i32, name: &str, symbol: char) -> Option<&'static str> {
+        fn fill_component(context: &mut ParsingContext, component: &mut u64, idx: i32, _name: &str, _symbol: char) -> Option<&'static str> {
             if context.number_is_empty {
                 return Some("No value is specified for years, so 'Y' must not be present");
             }
@@ -160,10 +160,8 @@ impl Duration {
                             return Err(e);
                         }
                     }
-                    else {
-                        if let Some(e) = fill_component(&mut context, &mut dur.months, 2, "months", 'M') {
-                            return Err(e);
-                        }
+                    else if let Some(e) = fill_component(&mut context, &mut dur.months, 2, "months", 'M') {
+                        return Err(e);
                     }
                 }
                 'D' => if let Some(e) = fill_component(&mut context, &mut dur.days, 3, "days", 'D') {
