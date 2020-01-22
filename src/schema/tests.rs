@@ -106,7 +106,7 @@ fn extend_base_deserialization() {
     let des: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
 
     assert_eq!(des.token, "V_SRC_CFG_000");
-    assert_eq!(des.name, types::Name("V_SRC_CFG_000".to_string()));
+    assert_eq!(des.name, tt::Name("V_SRC_CFG_000".to_string()));
     assert_eq!(des.use_count, 2);
     assert_eq!(des.source_token, "V_SRC_000");
     assert_eq!(des.bounds.x, 0);
@@ -119,7 +119,7 @@ fn extend_base_deserialization() {
 fn extend_base_serialization() {
     let model = tt::VideoSourceConfiguration {
         token: "123abc".to_string(),
-        name: types::Name("MyName".to_string()),
+        name: tt::Name("MyName".to_string()),
         use_count: 2,
         source_token: "456cde".to_string(),
         bounds: tt::IntRectangle {
