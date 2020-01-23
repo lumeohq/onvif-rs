@@ -4,4 +4,4 @@ extern crate log;
 extern crate yaserde_derive;
 
 pub mod schema;
-mod soap;
+pub mod soap;

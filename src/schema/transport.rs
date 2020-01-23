@@ -1,10 +1,13 @@
 use yaserde::{YaDeserialize, YaSerialize};
 
+use crate::soap;
+use reqwest;
+
 #[derive(Debug)]
 pub enum Error {
     Serialization(String),
-    Http(String),
-    Soap(String),
+    Http(reqwest::Error),
+    Soap(soap::Error),
     Onvif(String),
 }
 
