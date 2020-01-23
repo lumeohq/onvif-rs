@@ -9,11 +9,11 @@ pub enum Error {
 }
 
 pub trait Transport {
-    fn request(&mut self, message: &str) -> Result<String, Error>;
+    fn request(&self, message: &str) -> Result<String, Error>;
 }
 
 pub fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
-    transport: &mut T,
+    transport: &T,
     request: &R,
 ) -> Result<S, Error> {
     let ser = |obj: &R| yaserde::ser::to_string(obj).map_err(|e| Error::Serialization(e));
