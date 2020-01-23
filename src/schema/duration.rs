@@ -85,14 +85,14 @@ impl Duration {
             name: &str,
             symbol: char,
         ) -> Result<(), String> {
-            if context.number_is_empty {
+            if context.is_number_empty {
                 return Err(format!(
                     "No value is specified for {}, so '{}' must not be present",
                     name, symbol
                 ));
             }
 
-            if context.dot_found {
+            if context.is_dot_found {
                 return Err("Only the seconds can be expressed as a decimal".into());
             }
 
@@ -103,7 +103,7 @@ impl Duration {
             *component = context.number;
             context.last_filled_component = idx;
             context.number = 0;
-            context.number_is_empty = true;
+            context.is_number_empty = true;
 
             Ok(())
         }
@@ -112,11 +112,11 @@ impl Duration {
             context: &mut ParsingContext,
             seconds: &mut f64,
         ) -> Result<(), &'static str> {
-            if context.number_is_empty {
+            if context.is_number_empty {
                 return Err("No value is specified for seconds, so 'S' must not be present");
             }
 
-            if context.dot_found && context.denom == 1 {
+            if context.is_dot_found && context.denom == 1 {
                 return Err("At least one digit must follow the decimal point if it appears");
             }
 
@@ -127,7 +127,7 @@ impl Duration {
             *seconds = context.number as f64 + context.numer as f64 / context.denom as f64;
             context.last_filled_component = 6;
             context.number = 0;
-            context.number_is_empty = true;
+            context.is_number_empty = true;
 
             Ok(())
         }
@@ -145,13 +145,13 @@ impl Duration {
                 }
                 'P' => {
                     if i == 0 || i == 1 && dur.is_negative {
-                        context.p_found = true;
+                        context.is_p_found = true;
                     } else {
                         return Err("Symbol 'P' occurred at the wrong position".into());
                     }
                 }
                 'T' => {
-                    if context.t_found {
+                    if context.is_t_found {
                         return Err("Symbol 'T' occurred twice".into());
                     }
 
@@ -159,7 +159,7 @@ impl Duration {
                         return Err("Symbol 'T' occurred after a number".into());
                     }
 
-                    context.t_found = true;
+                    context.is_t_found = true;
                     context.last_filled_component = 3;
                 }
 
@@ -168,7 +168,7 @@ impl Duration {
                     fill_component(&mut context, &mut dur.years, 1, "years", 'Y')?;
                 }
                 'M' => {
-                    if context.t_found {
+                    if context.is_t_found {
                         fill_component(&mut context, &mut dur.minutes, 5, "minutes", 'M')?;
                     } else {
                         fill_component(&mut context, &mut dur.months, 2, "months", 'M')?;
@@ -178,13 +178,13 @@ impl Duration {
                     fill_component(&mut context, &mut dur.days, 3, "days", 'D')?;
                 }
                 'H' => {
-                    if !context.t_found {
+                    if !context.is_t_found {
                         return Err("No symbol 'T' found before hours components".into());
                     }
                     fill_component(&mut context, &mut dur.hours, 4, "hours", 'H')?;
                 }
                 'S' => {
-                    if !context.t_found {
+                    if !context.is_t_found {
                         return Err("No symbol 'T' found before seconds components".into());
                     }
                     fill_seconds(&mut context, &mut dur.seconds)?;
@@ -192,22 +192,22 @@ impl Duration {
 
                 // Number:
                 '.' => {
-                    if context.dot_found {
+                    if context.is_dot_found {
                         return Err("Dot occurred twice".into());
                     }
 
-                    if context.number_is_empty {
+                    if context.is_number_empty {
                         return Err("No digits before dot".into());
                     }
 
-                    context.dot_found = true;
+                    context.is_dot_found = true;
                 }
                 digit => {
                     if !digit.is_digit(10) {
                         return Err("Incorrect character occurred".into());
                     }
 
-                    if context.dot_found {
+                    if context.is_dot_found {
                         context.numer *= 10;
                         context.numer +=
                             digit.to_digit(10).expect("error converting a digit") as u64;
@@ -216,7 +216,7 @@ impl Duration {
                         context.number *= 10;
                         context.number +=
                             digit.to_digit(10).expect("error converting a digit") as u64;
-                        context.number_is_empty = false;
+                        context.is_number_empty = false;
                     }
                 }
             }
@@ -226,7 +226,7 @@ impl Duration {
             return Err("Number at the end of the string".into());
         }
 
-        if !context.p_found {
+        if !context.is_p_found {
             return Err("'P' must always be present".into());
         }
 
@@ -234,7 +234,7 @@ impl Duration {
             return Err("At least one number and designator are required".into());
         }
 
-        if context.last_filled_component <= 3 && context.t_found {
+        if context.last_filled_component <= 3 && context.is_t_found {
             return Err("No time items are present, so 'T' must not be present".into());
         }
 
@@ -243,14 +243,14 @@ impl Duration {
 }
 
 struct ParsingContext {
-    p_found: bool,              // Is 'P' found in the string.
-    t_found: bool,              // Is 'T' delimiter occurred.
+    is_p_found: bool,           // Is 'P' found in the string.
+    is_t_found: bool,           // Is 'T' delimiter occurred.
     last_filled_component: i32, // 1 to 6 for Year to Minute.
 
     number: u64,
-    number_is_empty: bool,
+    is_number_empty: bool,
 
-    dot_found: bool,
+    is_dot_found: bool,
     // Numerator and denominator of seconds fraction part.
     numer: u64,
     denom: u64,
@@ -259,14 +259,14 @@ struct ParsingContext {
 impl ParsingContext {
     pub fn new() -> ParsingContext {
         ParsingContext {
-            p_found: false,
-            t_found: false,
+            is_p_found: false,
+            is_t_found: false,
             last_filled_component: 0,
 
             number: 0,
-            number_is_empty: true,
+            is_number_empty: true,
 
-            dot_found: false,
+            is_dot_found: false,
             numer: 0,
             denom: 1,
         }
