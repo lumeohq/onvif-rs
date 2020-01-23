@@ -3,7 +3,7 @@ use yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(Default, PartialEq, Debug)]
 pub struct Duration {
-    pub negative: bool,
+    pub is_negative: bool,
 
     pub years: u64,
     pub months: u64,
@@ -16,7 +16,7 @@ pub struct Duration {
 
 impl Duration {
     pub fn to_lexical_representation(&self) -> String {
-        let mut s = if self.negative {
+        let mut s = if self.is_negative {
             "-P".to_string()
         } else {
             "P".to_string()
@@ -84,44 +84,49 @@ impl Duration {
             idx: i32,
             _name: &str,
             _symbol: char,
-        ) -> Option<&'static str> {
+        ) -> Result<(), &'static str> {
             if context.number_is_empty {
-                return Some("No value is specified for years, so 'Y' must not be present");
+                return Err("No value is specified for years, so 'Y' must not be present");
             }
 
             if context.dot_found {
-                return Some("Only the seconds can be expressed as a decimal");
+                return Err("Only the seconds can be expressed as a decimal");
             }
 
             if context.last_filled_component >= idx {
-                return Some("Bad order of duration components");
+                return Err("Bad order of duration components");
             }
 
             *component = context.number;
             context.last_filled_component = idx;
             context.number = 0;
             context.number_is_empty = true;
-            None
+
+            Ok(())
         }
 
-        fn fill_seconds(context: &mut ParsingContext, seconds: &mut f64) -> Option<&'static str> {
+        fn fill_seconds(
+            context: &mut ParsingContext,
+            seconds: &mut f64,
+        ) -> Result<(), &'static str> {
             if context.number_is_empty {
-                return Some("No value is specified for seconds, so 'S' must not be present");
+                return Err("No value is specified for seconds, so 'S' must not be present");
             }
 
             if context.dot_found && context.denom == 1 {
-                return Some("At least one digit must follow the decimal point if it appears");
+                return Err("At least one digit must follow the decimal point if it appears");
             }
 
             if context.last_filled_component >= 6 {
-                return Some("Bad order of duration components");
+                return Err("Bad order of duration components");
             }
 
             *seconds = context.number as f64 + context.numer as f64 / context.denom as f64;
             context.last_filled_component = 6;
             context.number = 0;
             context.number_is_empty = true;
-            None
+
+            Ok(())
         }
 
         let mut dur: Duration = Default::default();
@@ -130,13 +135,13 @@ impl Duration {
             match c {
                 '-' => {
                     if i == 0 {
-                        dur.negative = true;
+                        dur.is_negative = true;
                     } else {
                         return Err("The minus sign must appear first");
                     }
                 }
                 'P' => {
-                    if i == 0 || i == 1 && dur.negative {
+                    if i == 0 || i == 1 && dur.is_negative {
                         context.p_found = true;
                     } else {
                         return Err("Symbol 'P' occurred at the wrong position");
@@ -157,43 +162,29 @@ impl Duration {
 
                 // Duration components:
                 'Y' => {
-                    if let Some(e) = fill_component(&mut context, &mut dur.years, 1, "years", 'Y') {
-                        return Err(e);
-                    }
+                    fill_component(&mut context, &mut dur.years, 1, "years", 'Y')?;
                 }
                 'M' => {
                     if context.t_found {
-                        if let Some(e) =
-                            fill_component(&mut context, &mut dur.minutes, 5, "minutes", 'M')
-                        {
-                            return Err(e);
-                        }
-                    } else if let Some(e) =
-                        fill_component(&mut context, &mut dur.months, 2, "months", 'M')
-                    {
-                        return Err(e);
+                        fill_component(&mut context, &mut dur.minutes, 5, "minutes", 'M')?;
+                    } else {
+                        fill_component(&mut context, &mut dur.months, 2, "months", 'M')?;
                     }
                 }
                 'D' => {
-                    if let Some(e) = fill_component(&mut context, &mut dur.days, 3, "days", 'D') {
-                        return Err(e);
-                    }
+                    fill_component(&mut context, &mut dur.days, 3, "days", 'D')?;
                 }
                 'H' => {
                     if !context.t_found {
                         return Err("No symbol 'T' found before hours components");
                     }
-                    if let Some(e) = fill_component(&mut context, &mut dur.hours, 4, "hours", 'H') {
-                        return Err(e);
-                    }
+                    fill_component(&mut context, &mut dur.hours, 4, "hours", 'H')?;
                 }
                 'S' => {
                     if !context.t_found {
                         return Err("No symbol 'T' found before seconds components");
                     }
-                    if let Some(e) = fill_seconds(&mut context, &mut dur.seconds) {
-                        return Err(e);
-                    }
+                    fill_seconds(&mut context, &mut dur.seconds)?;
                 }
 
                 // Number:
@@ -241,7 +232,7 @@ impl Duration {
         }
 
         if context.last_filled_component <= 3 && context.t_found {
-            return Err("no time items are present, so 'T' must not be present");
+            return Err("No time items are present, so 'T' must not be present");
         }
 
         Ok(dur)
@@ -288,11 +279,7 @@ impl YaDeserialize for Duration {
         }
 
         if let Ok(xml::reader::XmlEvent::Characters(ref text)) = reader.peek() {
-            if text.len() > 64 {
-                Err(format!("Max length exceeded: {}", text.len()))
-            } else {
-                Duration::from_lexical_representation(text).map_err(|e| e.to_string())
-            }
+            Duration::from_lexical_representation(text).map_err(|e| e.to_string())
         } else {
             Err("Start element not found".to_string())
         }
@@ -328,4 +315,44 @@ impl YaSerialize for Duration {
             Ok(())
         }
     }
+}
+
+fn check_valid(s: &str) {
+    match Duration::from_lexical_representation(s) {
+        Ok(_) => assert!(true),
+        Err(err) => assert!(
+            false,
+            "{} should be valid, but an error occurred: {}",
+            s, err
+        ),
+    }
+}
+
+fn check_invalid(s: &str) {
+    match Duration::from_lexical_representation(s) {
+        Ok(dur) => assert!(false, "{} should be invalid", s),
+        Err(_) => assert!(true),
+    }
+}
+
+#[test]
+fn duration_parsing_test() {
+    check_valid("P2Y6M5DT12H35M30S");
+    check_valid("P1DT2H");
+    check_valid("P20M");
+    check_valid("PT20M");
+    check_valid("P0Y20M0D");
+    check_valid("P0Y");
+    check_valid("-P60D");
+    check_valid("PT1M30.5S");
+
+    check_invalid("P-20M");
+    check_invalid("P20MT");
+    check_invalid("P1YM5D");
+    check_invalid("P15.5Y");
+    check_invalid("P1D2H");
+    check_invalid("1Y2M");
+    check_invalid("P2M1Y");
+    check_invalid("P");
+    check_invalid("PT15.S");
 }
