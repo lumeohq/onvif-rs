@@ -1,3 +1,4 @@
+pub mod client;
 pub mod fault;
 
 const SOAP_URI: &str = "http://www.w3.org/2003/05/soap-envelope";
@@ -13,8 +14,8 @@ pub enum Error {
 
 #[derive(Debug)]
 pub struct Response {
-    response: Option<String>,
-    fault: Option<fault::Fault>,
+    pub response: Option<String>,
+    pub fault: Option<fault::Fault>,
 }
 
 pub fn soap(xml: &str) -> Result<String, Error> {

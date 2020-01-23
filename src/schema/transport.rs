@@ -1,19 +1,22 @@
 use yaserde::{YaDeserialize, YaSerialize};
 
+use crate::soap;
+use reqwest;
+
 #[derive(Debug)]
 pub enum Error {
     Serialization(String),
-    Http(String),
-    Soap(String),
+    Http(reqwest::Error),
+    Soap(soap::Error),
     Onvif(String),
 }
 
 pub trait Transport {
-    fn request(&mut self, message: &str) -> Result<String, Error>;
+    fn request(&self, message: &str) -> Result<String, Error>;
 }
 
 pub fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
-    transport: &mut T,
+    transport: &T,
     request: &R,
 ) -> Result<S, Error> {
     let ser = |obj: &R| yaserde::ser::to_string(obj).map_err(Error::Serialization);

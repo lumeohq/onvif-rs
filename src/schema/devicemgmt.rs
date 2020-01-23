@@ -116,7 +116,7 @@ pub struct GetSystemDateAndTimeResponse {
 // A device shall provide the UTCDateTime information.
 
 pub fn get_system_date_and_time<T: transport::Transport>(
-    transport: &mut T,
+    transport: &T,
     request: &GetSystemDateAndTime,
 ) -> Result<GetSystemDateAndTimeResponse, transport::Error> {
     transport::request(transport, request)
@@ -210,7 +210,7 @@ pub struct GetDeviceInformationResponse {
 
 // This operation gets basic device information from the device.
 pub fn get_device_information<T: transport::Transport>(
-    transport: &mut T,
+    transport: &T,
     request: &GetDeviceInformation,
 ) -> Result<GetDeviceInformationResponse, transport::Error> {
     transport::request(transport, request)

@@ -71,4 +71,4 @@ pub mod ws_addr;
 #[cfg(test)]
 mod tests;
 
-mod transport;
+pub mod transport;

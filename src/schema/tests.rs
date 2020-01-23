@@ -8,7 +8,7 @@ pub struct FakeTransport {
 }
 
 impl transport::Transport for FakeTransport {
-    fn request(&mut self, _message: &str) -> Result<String, transport::Error> {
+    fn request(&self, _message: &str) -> Result<String, transport::Error> {
         Ok(self.response.clone())
     }
 }
@@ -289,7 +289,7 @@ fn duration_deserialization() {
 fn operation_get_system_date_and_time() {
     let req: devicemgmt::GetSystemDateAndTime = Default::default();
 
-    let mut transport = FakeTransport {
+    let transport = FakeTransport {
         response: r#"
             <tds:GetSystemDateAndTimeResponse
                         xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
@@ -317,7 +317,7 @@ fn operation_get_system_date_and_time() {
             .into(),
     };
 
-    let resp = devicemgmt::get_system_date_and_time(&mut transport, &req).unwrap();
+    let resp = devicemgmt::get_system_date_and_time(&transport, &req).unwrap();
 
     assert_eq!(resp.system_date_and_time.utc_date_time.time.second, 40);
 }
@@ -326,7 +326,7 @@ fn operation_get_system_date_and_time() {
 fn operation_get_device_information() {
     let req: devicemgmt::GetDeviceInformation = Default::default();
 
-    let mut transport = FakeTransport {
+    let transport = FakeTransport {
         response: r#"
         <tds:GetDeviceInformationResponse
                     xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
@@ -341,7 +341,7 @@ fn operation_get_device_information() {
         .into(),
     };
 
-    let resp = devicemgmt::get_device_information(&mut transport, &req).unwrap();
+    let resp = devicemgmt::get_device_information(&transport, &req).unwrap();
 
     assert_eq!(resp.manufacturer, "Somebody");
 }
