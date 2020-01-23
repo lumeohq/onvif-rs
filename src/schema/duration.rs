@@ -273,11 +273,7 @@ impl YaDeserialize for Duration {
         }
 
         if let Ok(xml::reader::XmlEvent::Characters (ref text)) = reader.peek() {
-            if text.len() > 64 {
-                Err(format!("Max length exceeded: {}", text.len()))
-            } else {
-                Duration::from_lexical_representation(text).map_err(|e| e.to_string())
-            }
+            Duration::from_lexical_representation(text).map_err(|e| e.to_string())
         } else {
             Err("Start element not found".to_string())
         }
