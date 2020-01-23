@@ -106,7 +106,7 @@ fn extend_base_deserialization() {
     let des: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
 
     assert_eq!(des.token, "V_SRC_CFG_000");
-    assert_eq!(des.name, "V_SRC_CFG_000");
+    assert_eq!(des.name, tt::Name("V_SRC_CFG_000".to_string()));
     assert_eq!(des.use_count, 2);
     assert_eq!(des.source_token, "V_SRC_000");
     assert_eq!(des.bounds.x, 0);
@@ -116,9 +116,41 @@ fn extend_base_deserialization() {
 }
 
 #[test]
+fn extend_base_serialization() {
+    let model = tt::VideoSourceConfiguration {
+        token: "123abc".to_string(),
+        name: tt::Name("MyName".to_string()),
+        use_count: 2,
+        source_token: "456cde".to_string(),
+        bounds: tt::IntRectangle {
+            x: 1,
+            y: 2,
+            width: 3,
+            height: 4,
+        },
+    };
+
+    let expected = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:VideoSourceConfiguration xmlns:tt="http://www.onvif.org/ver10/schema" token="123abc">
+        <tt:Name>MyName</tt:Name>
+        <tt:UseCount>2</tt:UseCount>
+        <tt:SourceToken>456cde</tt:SourceToken>
+        <tt:Bounds x="1" y="2" width="3" height="4" />
+    </tt:VideoSourceConfiguration>"#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    println!("actual: {}", actual);
+    println!("expected: {}", expected);
+
+    assert_xml_eq(actual.as_str(), expected);
+}
+
+#[test]
 fn choice_deserialization() {
     let ser = r#"
-    <tt:ColorOptions xmlns:tt="http://www.onvif.org/ver10/schema">
+    <tt:ColorOptions attr_name="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
         <tt:ColorspaceRange>
             <X>0.1</X>
             <Y>0.2</Y>
@@ -136,8 +168,8 @@ fn choice_deserialization() {
 
     let des: tt::ColorOptions = yaserde::de::from_str(&ser).unwrap();
 
-    match des {
-        tt::ColorOptions::ColorspaceRange(colors) => {
+    match des.choice {
+        tt::ColorOptionsChoice::ColorspaceRange(colors) => {
             assert_eq!(colors.len(), 2);
 
             assert_eq!(colors[0].x, 0.1);
@@ -149,9 +181,108 @@ fn choice_deserialization() {
             assert_eq!(colors[1].y, 0.6);
             assert_eq!(colors[1].z, 0.7);
             assert_eq!(colors[1].colorspace, String::from("http://my.color.space"));
-        },
-        _ => panic!("Wrong variant")
+        }
+        _ => panic!("Wrong variant"),
     }
+
+    assert_eq!(
+        des.any_attribute,
+        Some(("attr_name".to_string(), "attr_value".to_string()))
+    );
+}
+
+#[test]
+fn choice_serialization() {
+    let model = tt::ColorOptions {
+        choice: tt::ColorOptionsChoice::ColorspaceRange(vec![
+            tt::ColorspaceRange {
+                x: 0.1,
+                y: 0.2,
+                z: 0.3,
+                colorspace: "http://my.color.space".to_string(),
+            },
+            tt::ColorspaceRange {
+                x: 0.5,
+                y: 0.6,
+                z: 0.7,
+                colorspace: "http://my.color.space".to_string(),
+            },
+        ]),
+        any_attribute: Some(("attr_name".to_string(), "attr_value".to_string())),
+    };
+
+    // TODO: "ColorspaceRange" must be "tt:ColorspaceRange", fixed in yaserde 0.3.11
+
+    let expected = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:ColorOptions attr_name="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
+        <ColorspaceRange>
+            <tt:X>0.1</tt:X>
+            <tt:Y>0.2</tt:Y>
+            <tt:Z>0.3</tt:Z>
+            <tt:Colorspace>http://my.color.space</tt:Colorspace>
+        </ColorspaceRange>
+        <ColorspaceRange>
+            <tt:X>0.5</tt:X>
+            <tt:Y>0.6</tt:Y>
+            <tt:Z>0.7</tt:Z>
+            <tt:Colorspace>http://my.color.space</tt:Colorspace>
+        </ColorspaceRange>
+    </tt:ColorOptions>
+    "#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    println!("actual: {}", actual);
+    println!("expected: {}", expected);
+
+    assert_xml_eq(actual.as_str(), expected);
+}
+
+#[test]
+fn duration_serialization() {
+    let model = tt::MediaUri {
+        uri: "http://a/b/c".to_string(),
+        invalid_after_connect: false,
+        invalid_after_reboot: true,
+        timeout: crate::schema::duration::Duration {
+            seconds: 60.0,
+            ..Default::default()
+        },
+    };
+
+    let expected = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:Uri>http://a/b/c</tt:Uri>
+        <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
+        <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
+        <tt:Timeout>PT60S</tt:Timeout>
+    </tt:MediaUri>
+    "#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    assert_xml_eq(actual.as_str(), expected);
+}
+
+#[test]
+fn duration_deserialization() {
+    let ser = r#"
+    <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:Uri>http://a/b/c</tt:Uri>
+        <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
+        <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
+        <tt:Timeout>PT60S</tt:Timeout>
+    </tt:MediaUri>
+    "#;
+
+    let des: tt::MediaUri = yaserde::de::from_str(&ser).unwrap();
+
+    assert_eq!(des.uri, "http://a/b/c".to_string());
+    assert_eq!(des.invalid_after_connect, false);
+    assert_eq!(des.invalid_after_reboot, true);
+    assert_eq!(des.timeout.seconds, 60.0);
 }
 
 #[test]
@@ -213,4 +344,21 @@ fn operation_get_device_information() {
     let resp = devicemgmt::get_device_information(&transport, &req).unwrap();
 
     assert_eq!(resp.manufacturer, "Somebody");
+}
+
+fn assert_xml_eq(actual: &str, expected: &str) -> () {
+    for (a, e) in izip!(without_whitespaces(actual), without_whitespaces(expected)) {
+        assert_eq!(a, e);
+    }
+}
+
+fn without_whitespaces<'a>(
+    expected: &'a str,
+) -> impl Iterator<Item = Result<xml::reader::XmlEvent, xml::reader::Error>> + 'a {
+    xml::EventReader::new(expected.as_bytes())
+        .into_iter()
+        .filter(|e| match e {
+            Ok(xml::reader::XmlEvent::Whitespace(_)) => false,
+            _ => true,
+        })
 }

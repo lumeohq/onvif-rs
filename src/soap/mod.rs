@@ -24,7 +24,7 @@ pub fn soap(xml: &str) -> Result<String, Error> {
     let mut namespaces = app_data
         .namespaces
         .clone()
-        .unwrap_or(xmltree::Namespace::empty());
+        .unwrap_or_else(xmltree::Namespace::empty);
     namespaces.put("s", SOAP_URI);
 
     let mut body = xmltree::Element::new("Body");
@@ -80,7 +80,7 @@ fn xml_element_to_string(el: &xmltree::Element) -> Result<String, Error> {
 
 fn get_fault(envelope: &xmltree::Element) -> Result<fault::Fault, Error> {
     let string = xml_element_to_string(envelope)?;
-    yaserde::de::from_str(&string).map_err(|e| Error::InternalError(e))
+    yaserde::de::from_str(&string).map_err(Error::InternalError)
 }
 
 #[cfg(test)]
