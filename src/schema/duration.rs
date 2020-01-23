@@ -59,9 +59,9 @@ impl Duration {
         s
     }
 
-    pub fn to_std_duration(&self) -> Result<std::time::Duration, &'static str> {
+    pub fn to_std_duration(&self) -> Result<std::time::Duration, String> {
         if self.years > 0 || self.months > 0 {
-            Err("Duration with months or years require a starting date to be converted")
+            Err("Duration with months or years require a starting date to be converted".into())
         } else {
             let secs = self.seconds as u64;
 
@@ -77,24 +77,27 @@ impl Duration {
     // TODO: Implement normalization function that takes a moment at time to start from and
     // converts months & years to days.
 
-    pub fn from_lexical_representation(s: &str) -> Result<Duration, &'static str> {
+    pub fn from_lexical_representation(s: &str) -> Result<Duration, String> {
         fn fill_component(
             context: &mut ParsingContext,
             component: &mut u64,
             idx: i32,
             name: &str,
             symbol: char,
-        ) -> Result<(), &'static str> {
+        ) -> Result<(), String> {
             if context.number_is_empty {
-                return Err("No value is specified for years, so 'Y' must not be present");
+                return Err(format!(
+                    "No value is specified for {}, so '{}' must not be present",
+                    name, symbol
+                ));
             }
 
             if context.dot_found {
-                return Err("Only the seconds can be expressed as a decimal");
+                return Err("Only the seconds can be expressed as a decimal".into());
             }
 
             if context.last_filled_component >= idx {
-                return Err("Bad order of duration components");
+                return Err("Bad order of duration components".into());
             }
 
             *component = context.number;
@@ -137,23 +140,23 @@ impl Duration {
                     if i == 0 {
                         dur.is_negative = true;
                     } else {
-                        return Err("The minus sign must appear first");
+                        return Err("The minus sign must appear first".into());
                     }
                 }
                 'P' => {
                     if i == 0 || i == 1 && dur.is_negative {
                         context.p_found = true;
                     } else {
-                        return Err("Symbol 'P' occurred at the wrong position");
+                        return Err("Symbol 'P' occurred at the wrong position".into());
                     }
                 }
                 'T' => {
                     if context.t_found {
-                        return Err("Symbol 'T' occurred twice");
+                        return Err("Symbol 'T' occurred twice".into());
                     }
 
                     if context.number > 0 {
-                        return Err("Symbol 'T' occurred after a number");
+                        return Err("Symbol 'T' occurred after a number".into());
                     }
 
                     context.t_found = true;
@@ -176,13 +179,13 @@ impl Duration {
                 }
                 'H' => {
                     if !context.t_found {
-                        return Err("No symbol 'T' found before hours components");
+                        return Err("No symbol 'T' found before hours components".into());
                     }
                     fill_component(&mut context, &mut dur.hours, 4, "hours", 'H')?;
                 }
                 'S' => {
                     if !context.t_found {
-                        return Err("No symbol 'T' found before seconds components");
+                        return Err("No symbol 'T' found before seconds components".into());
                     }
                     fill_seconds(&mut context, &mut dur.seconds)?;
                 }
@@ -190,18 +193,18 @@ impl Duration {
                 // Number:
                 '.' => {
                     if context.dot_found {
-                        return Err("Dot occurred twice");
+                        return Err("Dot occurred twice".into());
                     }
 
                     if context.number_is_empty {
-                        return Err("No digits before dot");
+                        return Err("No digits before dot".into());
                     }
 
                     context.dot_found = true;
                 }
                 digit => {
                     if !digit.is_digit(10) {
-                        return Err("Incorrect character occurred");
+                        return Err("Incorrect character occurred".into());
                     }
 
                     if context.dot_found {
@@ -220,19 +223,19 @@ impl Duration {
         }
 
         if context.number > 0 {
-            return Err("Number at the end of the string");
+            return Err("Number at the end of the string".into());
         }
 
         if !context.p_found {
-            return Err("'P' must always be present");
+            return Err("'P' must always be present".into());
         }
 
         if context.last_filled_component == 0 {
-            return Err("At least one number and designator are required");
+            return Err("At least one number and designator are required".into());
         }
 
         if context.last_filled_component <= 3 && context.t_found {
-            return Err("No time items are present, so 'T' must not be present");
+            return Err("No time items are present, so 'T' must not be present".into());
         }
 
         Ok(dur)
@@ -317,42 +320,41 @@ impl YaSerialize for Duration {
     }
 }
 
-fn check_valid(s: &str) {
-    match Duration::from_lexical_representation(s) {
-        Ok(_) => assert!(true),
-        Err(err) => assert!(
-            false,
-            "{} should be valid, but an error occurred: {}",
-            s, err
-        ),
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn check_valid(s: &str) {
+        if let Err(err) = Duration::from_lexical_representation(s) {
+            panic!("{} should be valid, but an error occurred: {}", s, err)
+        }
     }
-}
 
-fn check_invalid(s: &str) {
-    match Duration::from_lexical_representation(s) {
-        Ok(dur) => assert!(false, "{} should be invalid", s),
-        Err(_) => assert!(true),
+    fn check_invalid(s: &str) {
+        if let Ok(_) = Duration::from_lexical_representation(s) {
+            panic!("{} should be invalid", s)
+        }
     }
-}
 
-#[test]
-fn duration_parsing_test() {
-    check_valid("P2Y6M5DT12H35M30S");
-    check_valid("P1DT2H");
-    check_valid("P20M");
-    check_valid("PT20M");
-    check_valid("P0Y20M0D");
-    check_valid("P0Y");
-    check_valid("-P60D");
-    check_valid("PT1M30.5S");
+    #[test]
+    fn duration_parsing_test() {
+        check_valid("P2Y6M5DT12H35M30S");
+        check_valid("P1DT2H");
+        check_valid("P20M");
+        check_valid("PT20M");
+        check_valid("P0Y20M0D");
+        check_valid("P0Y");
+        check_valid("-P60D");
+        check_valid("PT1M30.5S");
 
-    check_invalid("P-20M");
-    check_invalid("P20MT");
-    check_invalid("P1YM5D");
-    check_invalid("P15.5Y");
-    check_invalid("P1D2H");
-    check_invalid("1Y2M");
-    check_invalid("P2M1Y");
-    check_invalid("P");
-    check_invalid("PT15.S");
+        check_invalid("P-20M");
+        check_invalid("P20MT");
+        check_invalid("P1YM5D");
+        check_invalid("P15.5Y");
+        check_invalid("P1D2H");
+        check_invalid("1Y2M");
+        check_invalid("P2M1Y");
+        check_invalid("P");
+        check_invalid("PT15.S");
+    }
 }

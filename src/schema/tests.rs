@@ -106,7 +106,7 @@ fn extend_base_deserialization() {
     let des: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
 
     assert_eq!(des.token, "V_SRC_CFG_000");
-    assert_eq!(des.name, types::Name("V_SRC_CFG_000".to_string()));
+    assert_eq!(des.name, tt::Name("V_SRC_CFG_000".to_string()));
     assert_eq!(des.use_count, 2);
     assert_eq!(des.source_token, "V_SRC_000");
     assert_eq!(des.bounds.x, 0);
@@ -119,7 +119,7 @@ fn extend_base_deserialization() {
 fn extend_base_serialization() {
     let model = tt::VideoSourceConfiguration {
         token: "123abc".to_string(),
-        name: types::Name("MyName".to_string()),
+        name: tt::Name("MyName".to_string()),
         use_count: 2,
         source_token: "456cde".to_string(),
         bounds: tt::IntRectangle {
@@ -181,11 +181,14 @@ fn choice_deserialization() {
             assert_eq!(colors[1].y, 0.6);
             assert_eq!(colors[1].z, 0.7);
             assert_eq!(colors[1].colorspace, String::from("http://my.color.space"));
-        },
-        _ => panic!("Wrong variant")
+        }
+        _ => panic!("Wrong variant"),
     }
 
-    assert_eq!(des.any_attribute, Some(("attr_name".to_string(), "attr_value".to_string())));
+    assert_eq!(
+        des.any_attribute,
+        Some(("attr_name".to_string(), "attr_value".to_string()))
+    );
 }
 
 #[test]
@@ -196,16 +199,16 @@ fn choice_serialization() {
                 x: 0.1,
                 y: 0.2,
                 z: 0.3,
-                colorspace: "http://my.color.space".to_string()
+                colorspace: "http://my.color.space".to_string(),
             },
             tt::ColorspaceRange {
                 x: 0.5,
                 y: 0.6,
                 z: 0.7,
-                colorspace: "http://my.color.space".to_string()
-            }
+                colorspace: "http://my.color.space".to_string(),
+            },
         ]),
-        any_attribute: Some(("attr_name".to_string(), "attr_value".to_string()))
+        any_attribute: Some(("attr_name".to_string(), "attr_value".to_string())),
     };
 
     // TODO: "ColorspaceRange" must be "tt:ColorspaceRange", fixed in yaserde 0.3.11
@@ -244,8 +247,8 @@ fn duration_serialization() {
         invalid_after_reboot: true,
         timeout: crate::schema::duration::Duration {
             seconds: 60.0,
-            .. Default::default()
-        }
+            ..Default::default()
+        },
     };
 
     let expected = r#"

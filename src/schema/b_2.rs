@@ -17,8 +17,8 @@
 //              schemaLocation="http://docs.oasis-open.org/wsn/t-1.xsd"
 //  />
 
-use crate::schema::ws_addr as wsa;
 use crate::schema::bf_2 as wsrf_bf;
 use crate::schema::t_1 as wstop;
+use crate::schema::ws_addr as wsa;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};

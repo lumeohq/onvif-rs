@@ -15,10 +15,21 @@
 // <xs:import namespace="http://docs.oasis-open.org/wsn/b-2" schemaLocation="http://docs.oasis-open.org/wsn/b-2.xsd"/>
 // <xs:import namespace="http://www.w3.org/2004/08/xop/include" schemaLocation="http://www.w3.org/2004/08/xop/include"/>
 
-use crate::schema::common as tt;
-use crate::schema::types as types;
+use crate::schema::common::*;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
+
+//<xs:simpleType name="Name">
+//    <xs:annotation>
+//        <xs:documentation>User readable name. Length up to 64 characters.</xs:documentation>
+//    </xs:annotation>
+//    <xs:restriction base="xs:string">
+//        <xs:maxLength value="64"/>
+//    </xs:restriction>
+//</xs:simpleType>
+
+#[derive(Default, PartialEq, Debug)]
+pub struct Name(pub String);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -124,7 +135,7 @@ pub struct VideoSourceConfiguration {
     #[yaserde(attribute)]
     pub token: String,
     #[yaserde(prefix = "tt", rename = "Name")]
-    pub name: types::Name,
+    pub name: Name,
     #[yaserde(prefix = "tt", rename = "UseCount")]
     pub use_count: i32,
     #[yaserde(prefix = "tt", rename = "SourceToken")]
@@ -132,31 +143,6 @@ pub struct VideoSourceConfiguration {
     #[yaserde(prefix = "tt", rename = "Bounds")]
     pub bounds: IntRectangle,
 }
-
-
-// "Color" type is defined in common.xsd and included into onvif.xsd
-// <xs:complexType name="Color">
-//     <xs:sequence>
-//         <xs:element name="X" type="tt:FloatRange"/>
-//         <xs:element name="Y" type="tt:FloatRange"/>
-//         <xs:element name="Z" type="tt:FloatRange"/>
-//         <xs:element name="Colorspace" type="xs:anyURI" />
-//     </xs:sequence>
-// </xs:complexType>
-
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Color {
-    #[yaserde(prefix = "tt", rename = "X")]
-    pub x: f32,
-    #[yaserde(prefix = "tt", rename = "Y")]
-    pub y: f32,
-    #[yaserde(prefix = "tt", rename = "Z")]
-    pub z: f32,
-    #[yaserde(prefix = "tt", rename = "Colorspace")]
-    pub colorspace: String,
-}
-
 
 // "ColorspaceRange" type is defined in onvif.xsd
 // <xs:complexType name="ColorspaceRange">
@@ -207,10 +193,12 @@ pub struct ColorOptions {
     pub any_attribute: Option<(String, String)>,
 }
 
-fn get_attr<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Option<&Vec<xml::attribute::OwnedAttribute>> {
+fn get_attr<R: Read>(
+    reader: &mut yaserde::de::Deserializer<R>,
+) -> Option<&Vec<xml::attribute::OwnedAttribute>> {
     match reader.peek() {
         Ok(xml::reader::XmlEvent::StartElement { ref attributes, .. }) => Some(attributes),
-        _ => None
+        _ => None,
     }
 }
 
@@ -218,17 +206,17 @@ impl YaDeserialize for ColorOptions {
     fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
         match reader.peek() {
             Ok(xml::reader::XmlEvent::StartElement { .. }) => {
-                let attr = get_attr(reader)
-                    .and_then(|a| a
-                        .first()
-                        .map(|a| (a.name.local_name.clone(), a.value.clone())));
+                let attr = get_attr(reader).and_then(|a| {
+                    a.first()
+                        .map(|a| (a.name.local_name.clone(), a.value.clone()))
+                });
 
                 Ok(ColorOptions {
                     choice: ColorOptionsChoice::deserialize(reader)?,
-                    any_attribute: attr
+                    any_attribute: attr,
                 })
-            },
-            _ => Err("Start element not found".to_string())
+            }
+            _ => Err("Start element not found".to_string()),
         }
     }
 }
@@ -239,24 +227,30 @@ impl YaSerialize for ColorOptions {
             .ns("tt", "http://www.onvif.org/ver10/schema");
 
         if let Some((ref name, ref value)) = self.any_attribute {
-            start = start.attr(xml::name::Name {
-                local_name: name.as_str(),
-                prefix: None,
-                namespace: None,
-            }, value.as_str());
+            start = start.attr(
+                xml::name::Name {
+                    local_name: name.as_str(),
+                    prefix: None,
+                    namespace: None,
+                },
+                value.as_str(),
+            );
         }
 
-        writer.write(start).map_err(|_| "Could not serialize start element")?;
+        writer
+            .write(start)
+            .map_err(|_| "Could not serialize start element")?;
         writer.set_skip_start_end(true);
 
         self.choice.serialize(writer)?;
 
-        writer.write(xml::writer::XmlEvent::end_element()).map_err(|_| "Could not serialize end element")?;
+        writer
+            .write(xml::writer::XmlEvent::end_element())
+            .map_err(|_| "Could not serialize end element")?;
 
         Ok(())
     }
 }
-
 
 // A type that uses xs:duration (annotations removed)
 //
@@ -282,4 +276,53 @@ pub struct MediaUri {
     pub invalid_after_reboot: bool,
     #[yaserde(prefix = "tt", rename = "Timeout")]
     pub timeout: crate::schema::duration::Duration,
+}
+
+impl YaDeserialize for Name {
+    fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
+        if let Ok(xml::reader::XmlEvent::StartElement { .. }) = reader.peek() {
+            reader.next_event()?;
+        } else {
+            return Err("Start element not found".to_string());
+        }
+
+        if let Ok(xml::reader::XmlEvent::Characters(ref text)) = reader.peek() {
+            if text.len() > 64 {
+                Err(format!("Max length exceeded: {}", text.len()))
+            } else {
+                Ok(Name(text.clone()))
+            }
+        } else {
+            Err("Start element not found".to_string())
+        }
+    }
+}
+
+impl YaSerialize for Name {
+    fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
+        // TODO: this should be simplified since yaserde 0.3.11
+        if let Some(override_name) = writer.get_start_event_name() {
+            writer
+                .write(xml::writer::XmlEvent::start_element(override_name.as_str()))
+                .map_err(|_e| "Start element write failed".to_string())
+        } else {
+            if !writer.skip_start_end() {
+                writer
+                    .write(xml::writer::XmlEvent::start_element("tt:Name"))
+                    .map_err(|_e| "Start element write failed".to_string())?;
+            }
+
+            writer
+                .write(xml::writer::XmlEvent::characters(self.0.as_str()))
+                .map_err(|_e| "Element value write failed".to_string())?;
+
+            if !writer.skip_start_end() {
+                writer
+                    .write(xml::writer::XmlEvent::end_element())
+                    .map_err(|_e| "End element write failed".to_string())?;
+            }
+
+            Ok(())
+        }
+    }
 }

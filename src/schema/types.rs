@@ -8,7 +8,6 @@
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
 
-
 //<xs:simpleType name="Name">
 //    <xs:restriction base="xs:string">
 //        <xs:maxLength value="64"/>
@@ -17,7 +16,7 @@ use yaserde::{YaDeserialize, YaSerialize};
 //</xs:simpleType>
 
 #[derive(Default, PartialEq, Debug)]
-pub struct Name (pub String);
+pub struct Name(pub String);
 
 impl YaDeserialize for Name {
     fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
@@ -27,7 +26,7 @@ impl YaDeserialize for Name {
             return Err("Start element not found".to_string());
         }
 
-        if let Ok(xml::reader::XmlEvent::Characters (ref text)) = reader.peek() {
+        if let Ok(xml::reader::XmlEvent::Characters(ref text)) = reader.peek() {
             if text.len() > 64 {
                 Err(format!("Max length exceeded: {}", text.len()))
             } else {
@@ -44,7 +43,7 @@ impl YaSerialize for Name {
         // TODO: this should be simplified since yaserde 0.3.11
         if let Some(override_name) = writer.get_start_event_name() {
             writer
-                .write(xml::writer::XmlEvent::start_element("tt:Name"))
+                .write(xml::writer::XmlEvent::start_element(override_name.as_str()))
                 .map_err(|_e| "Start element write failed".to_string())
         } else {
             if !writer.skip_start_end() {
