@@ -346,6 +346,108 @@ fn operation_get_device_information() {
     assert_eq!(resp.manufacturer, "Somebody");
 }
 
+#[test]
+fn probe_serialization() {
+    let expected = r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <s:Envelope
+                xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+                xmlns:s="http://www.w3.org/2003/05/soap-envelope"
+                xmlns:w="http://schemas.xmlsoap.org/ws/2004/08/addressing">
+            <s:Header>
+                <w:MessageID>uuid:84ede3de-7dec-11d0-c360-f01234567890</w:MessageID>
+                <w:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</w:To>
+                <w:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</w:Action>
+            </s:Header>
+            <s:Body>
+                <d:Probe />
+            </s:Body>
+        </s:Envelope>
+        "#;
+
+    use ws_discovery::probe::*;
+
+    let probe = Envelope {
+        header: Header {
+            message_id: "uuid:84ede3de-7dec-11d0-c360-f01234567890".into(),
+            action: "http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe".into(),
+            to: "urn:schemas-xmlsoap-org:ws:2005:04:discovery".into(),
+        },
+        ..Default::default()
+    };
+
+    let actual = yaserde::ser::to_string(&probe).unwrap();
+
+    assert_xml_eq(&actual, expected);
+}
+
+#[test]
+fn probe_match_deserialization() {
+    // Following XML was taken from ONVIF guide
+    // https://www.onvif.org/wp-content/uploads/2016/12/ONVIF_WG-APG-Application_Programmers_Guide-1.pdf
+
+    let ser = r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <SOAP-ENV:Envelope
+                    xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+                    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+                    xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+                    xmlns:dn="http://www.onvif.org/ver10/network/wsdl">
+            <SOAP-ENV:Header>
+                <wsa:MessageID>uuid:84ede3de-e374-11df-b259-00408c1836b2</wsa:MessageID>
+                <wsa:RelatesTo>uuid:84ede3de-7dec-11d0-c360-F01234567890</wsa:RelatesTo>
+                <wsa:To SOAP-ENV:mustUnderstand="true">
+                    http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous
+                </wsa:To>
+                <wsa:Action SOAP-ENV:mustUnderstand="true">
+                    http://schemas.xmlsoap.org/ws/2005/04/discovery/ProbeMatches
+                </wsa:Action>
+                <d:AppSequence SOAP-ENV:mustUnderstand="true" MessageNumber="3" InstanceId="1287607812">
+                </d:AppSequence>
+            </SOAP-ENV:Header>
+            <SOAP-ENV:Body>
+                <d:ProbeMatches>
+                    <d:ProbeMatch>
+                        <wsa:EndpointReference>
+                            <wsa:Address>urn:uuid:a1f48ac2-dc8b-11df-b255-00408c1836b2</wsa:Address>
+                        </wsa:EndpointReference>
+                        <d:Types>dn:NetworkVideoTransmitter</d:Types>
+                        <d:Scopes>
+                            onvif://www.onvif.org/type/video_encoder
+                            onvif://www.onvif.org/type/audio_encoder
+                            onvif://www.onvif.org/hardware/MODEL
+                            onvif://www.onvif.org/name/VENDOR%20MODEL
+                            onvif://www.onvif.org/location/ANY
+                        </d:Scopes>
+                        <d:XAddrs>
+                            http://169.254.76.145/onvif/services
+                            http://192.168.1.24/onvif/services
+                        </d:XAddrs>
+                        <d:MetadataVersion>1</d:MetadataVersion>
+                    </d:ProbeMatch>
+                </d:ProbeMatches>
+            </SOAP-ENV:Body>
+        </SOAP-ENV:Envelope>
+        "#;
+
+    let des: ws_discovery::probe_matches::Envelope = yaserde::de::from_str(&ser).unwrap();
+
+    assert_eq!(
+        des.header.relates_to,
+        "uuid:84ede3de-7dec-11d0-c360-F01234567890".to_string()
+    );
+    assert_eq!(
+        des.body.probe_matches.probe_match[0]
+            .x_addrs
+            .split_whitespace()
+            .collect::<Vec<&str>>(),
+        vec![
+            "http://169.254.76.145/onvif/services",
+            "http://192.168.1.24/onvif/services"
+        ]
+    );
+}
+
 fn assert_xml_eq(actual: &str, expected: &str) -> () {
     for (a, e) in izip!(without_whitespaces(actual), without_whitespaces(expected)) {
         assert_eq!(a, e);

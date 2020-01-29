@@ -14,3 +14,5 @@ yaserde = "0.3.10"
 yaserde_derive = "0.3.10"
 itertools = "0.8.1"
 reqwest = "0.9.22"
+uuid = { version = "0.8.1", features = ["v4"] }
+
