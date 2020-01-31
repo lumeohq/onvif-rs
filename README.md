@@ -6,6 +6,16 @@ ONVIF-rs is a Rust client library mplementation of the ONVIF specification.
 
 ## Usage
 
+## Examples
+To discover devices on the local network:
+```shell script
+cargo run --example discovery
+```
+
+To get date and time from a known device:
+```shell script
+cargo run --example camera_datetime -- http://192.168.0.2:8000
+```
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
