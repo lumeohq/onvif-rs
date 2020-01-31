@@ -6,7 +6,7 @@ fn main() {
     println!("Searching for devices ...");
 
     let xaddrs = async_std::task::block_on(async {
-        discovery::discover(std::time::Duration::from_millis(100))
+        discovery::discover(std::time::Duration::from_secs(1))
             .await
             .unwrap()
             .collect::<Vec<_>>()
