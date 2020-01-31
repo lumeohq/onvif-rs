@@ -1,5 +1,12 @@
-use crate::{schema, soap};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
+use crate::{
+    schema::{
+        self,
+        ws_discovery::{probe, probe_matches},
+    },
+    soap,
+};
+use async_std::stream::StreamExt;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 #[derive(Debug)]
 pub enum Error {
@@ -7,76 +14,74 @@ pub enum Error {
     Internal(String),
 }
 
-pub fn discover_sync(duration: std::time::Duration) -> Result<Vec<String>, Error> {
+pub async fn discover(
+    duration: std::time::Duration,
+) -> Result<impl async_std::stream::Stream<Item = String>, Error> {
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Internal)?;
 
     let socket = (|| {
-        let local_ipv4_addr = Ipv4Addr::UNSPECIFIED;
-        let multi_ipv4_addr = Ipv4Addr::new(239, 255, 255, 250);
-        let local_socket_addr = SocketAddr::new(IpAddr::V4(local_ipv4_addr), 0);
-        let multi_socket_addr = SocketAddr::new(IpAddr::V4(multi_ipv4_addr), 3702);
+        async {
+            let local_ipv4_addr = Ipv4Addr::UNSPECIFIED;
+            let multi_ipv4_addr = Ipv4Addr::new(239, 255, 255, 250);
+            let local_socket_addr = SocketAddr::new(IpAddr::V4(local_ipv4_addr), 0);
+            let multi_socket_addr = SocketAddr::new(IpAddr::V4(multi_ipv4_addr), 3702);
 
-        let socket = UdpSocket::bind(local_socket_addr)?;
+            let socket = async_std::net::UdpSocket::bind(local_socket_addr).await?;
+            socket.join_multicast_v4(multi_ipv4_addr, local_ipv4_addr)?;
+            socket
+                .send_to(&probe_xml.as_bytes(), multi_socket_addr)
+                .await?;
 
-        socket.set_read_timeout(Some(std::time::Duration::from_millis(10)))?;
-
-        socket.join_multicast_v4(&multi_ipv4_addr, &local_ipv4_addr)?;
-
-        socket.send_to(&probe_xml.as_bytes(), multi_socket_addr)?;
-
-        Ok(socket)
+            Ok(socket)
+        }
     })()
+    .await
     .map_err(Error::Network)?;
 
-    std::thread::sleep(duration);
-
-    let xmls = recv_xmls(&socket);
-
-    Ok(extract_xaddrs(
-        xmls,
-        &probe.header.message_id,
-        is_addr_responding,
-    ))
+    Ok(
+        // Make an async stream of XML's
+        futures::stream::unfold(socket, |s| async { Some((recv_string(&s).await, s)) })
+            .filter_map(|string| string.ok())
+            .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok())
+            .filter(move |envelope| envelope.header.relates_to == probe.header.message_id)
+            .filter_map(|envelope| get_responding_addr(&envelope, is_addr_responding))
+            // Blend in an interval stream to implement timeout
+            // Let our payload stream contain Some's and timeout stream contain None's
+            .map(|payload| Some(payload))
+            .merge(async_std::stream::interval(duration).map(|_| None))
+            // Terminate stream when the first None is received
+            .take_while(|event| event.is_some())
+            .filter_map(|event| event),
+    )
 }
 
-fn recv_xmls(socket: &UdpSocket) -> Vec<String> {
-    let mut buf = [0; 16 * 1024];
-    let mut xmls = vec![];
+async fn recv_string(s: &async_std::net::UdpSocket) -> std::io::Result<String> {
+    let mut buf = vec![0; 16 * 1024];
 
-    while let Ok((amt, _src)) = socket.recv_from(&mut buf) {
-        xmls.push(String::from_utf8_lossy(&buf[..amt]).to_string());
-    }
+    let (len, _src) = s.recv_from(&mut buf).await?;
 
-    xmls
+    Ok(String::from_utf8_lossy(&buf[..len]).to_string())
 }
 
-fn extract_xaddrs<F>(xmls: Vec<String>, message_id: &str, check_addr: F) -> Vec<String>
+fn get_responding_addr<F>(envelope: &probe_matches::Envelope, check_addr: F) -> Option<String>
 where
     F: Fn(&str) -> bool,
 {
-    xmls.iter()
-        .map(|xml| yaserde::de::from_str::<schema::ws_discovery::probe_matches::Envelope>(&xml))
-        .filter_map(|de_result| de_result.ok())
-        .filter(|envelope| envelope.header.relates_to == message_id)
-        .map(|envelope| {
-            envelope
-                .body
-                .probe_matches
-                .probe_match
-                .iter()
-                .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
-                .map(|x| x.to_string())
-                .filter(|addr| check_addr(addr))
-                .take(1)
-                .next()
-        })
-        .filter_map(|x| x)
-        .collect()
+    envelope
+        .body
+        .probe_matches
+        .probe_match
+        .iter()
+        .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
+        .map(|x| x.to_string())
+        .filter(|addr| check_addr(addr))
+        .take(1)
+        .next()
 }
 
-fn build_probe() -> schema::ws_discovery::probe::Envelope {
-    use schema::ws_discovery::probe::*;
+fn build_probe() -> probe::Envelope {
+    use probe::*;
 
     Envelope {
         header: Header {
@@ -142,7 +147,14 @@ fn test_xaddrs_extraction() {
         "http://addr_30",
     ];
 
-    let actual = extract_xaddrs(input, our_uuid, |addr| responding_addrs.contains(&addr));
+    let actual = input
+        .iter()
+        .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok())
+        .filter(|envelope| envelope.header.relates_to == our_uuid)
+        .filter_map(|envelope| {
+            get_responding_addr(&envelope, |addr| responding_addrs.contains(&addr))
+        })
+        .collect::<Vec<_>>();
 
     assert_eq!(actual.len(), 2);
 
