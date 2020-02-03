@@ -27,7 +27,7 @@ type StringStream = Pin<Box<dyn Stream<Item = String>>>;
 ///
 /// # Examples
 ///
-/// You can access each element on the stream concurrently as elements become available:
+/// You can access each element on the stream concurrently as soon as devices respond:
 ///
 /// ```
 /// use onvif_rs::discovery;
@@ -48,17 +48,18 @@ type StringStream = Pin<Box<dyn Stream<Item = String>>>;
 /// };
 /// ```
 ///
-/// Or you can await on a collection of devices found in one second:
+/// Or you can await on a collection of unique devices found in one second:
 ///
 /// ```
 /// use onvif_rs::discovery;
 /// use futures::stream::StreamExt; // to use collect
+/// use std::collections::HashSet;
 ///
 /// async {
 ///     let addrs = discovery::discover(std::time::Duration::from_secs(1))
 ///         .await
 ///         .unwrap()
-///         .collect::<Vec<_>>()
+///         .collect::<HashSet<_>>()
 ///         .await;
 ///
 ///     println!("Devices found: {:?}", addrs);
@@ -92,14 +93,24 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
     .map_err(Error::Network)?;
 
     let stream = {
-        use async_std::stream::StreamExt;
+        use futures::stream::StreamExt;
 
         // Make an async stream of XML's
         futures::stream::unfold(socket, |s| async { Some((recv_string(&s).await, s)) })
-            .filter_map(|string| string.ok())
-            .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok())
-            .filter(move |envelope| envelope.header.relates_to == probe.header.message_id)
-            .filter_map(|envelope| get_responding_addr(&envelope, is_addr_responding))
+            .filter_map(|string| async move { string.ok() })
+            .filter_map(
+                |xml| async move { yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok() },
+            )
+            .filter(move |envelope| {
+                futures::future::ready(envelope.header.relates_to == probe.header.message_id)
+            })
+            .filter_map(|envelope| get_responding_addr(envelope, is_addr_responding))
+    };
+
+    let timed_stream = {
+        use async_std::stream::StreamExt;
+
+        stream
             // Blend in an interval stream to implement timeout
             // Let our payload stream contain Some's and timeout stream contain None's
             .map(|payload| Some(payload))
@@ -109,11 +120,7 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
             .filter_map(|event| event)
     };
 
-    {
-        use futures::stream::StreamExt;
-
-        Ok(stream.boxed())
-    }
+    Ok(Box::pin(timed_stream))
 }
 
 async fn recv_string(s: &async_std::net::UdpSocket) -> std::io::Result<String> {
@@ -124,20 +131,29 @@ async fn recv_string(s: &async_std::net::UdpSocket) -> std::io::Result<String> {
     Ok(String::from_utf8_lossy(&buf[..len]).to_string())
 }
 
-fn get_responding_addr<F>(envelope: &probe_matches::Envelope, check_addr: F) -> Option<String>
+async fn get_responding_addr<F, Fut>(
+    envelope: probe_matches::Envelope,
+    mut func: F,
+) -> Option<String>
 where
-    F: Fn(&str) -> bool,
+    F: FnMut(String) -> Fut,
+    Fut: futures::Future<Output = bool>,
 {
-    envelope
-        .body
-        .probe_matches
-        .probe_match
-        .iter()
-        .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
-        .map(|x| x.to_string())
-        .filter(|addr| check_addr(addr))
-        .take(1)
-        .next()
+    use futures::stream::StreamExt;
+
+    let stream = futures::stream::iter(
+        envelope
+            .body
+            .probe_matches
+            .probe_match
+            .iter()
+            .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
+            .map(|x| x.to_string()),
+    )
+    .filter(|addr| func(addr.clone()))
+    .take(1);
+
+    Box::pin(stream).next().await
 }
 
 fn build_probe() -> probe::Envelope {
@@ -153,11 +169,12 @@ fn build_probe() -> probe::Envelope {
     }
 }
 
-fn is_addr_responding(uri: &str) -> bool {
+async fn is_addr_responding(uri: String) -> bool {
     schema::devicemgmt::get_system_date_and_time(
         &soap::client::Client::new(&uri),
         &Default::default(),
     )
+    .await
     .is_ok()
 }
 
@@ -200,19 +217,25 @@ fn test_xaddrs_extraction() {
         make_xml(bad_uuid, "http://addr_30 http://addr_31"),
     ];
 
-    let responding_addrs = vec![
-        "http://addr_10",
-        "http://addr_21",
-        "http://addr_22",
-        "http://addr_30",
-    ];
+    async fn is_addr_responding(uri: String) -> bool {
+        let responding_addrs = vec![
+            "http://addr_10".to_string(),
+            "http://addr_21".to_string(),
+            "http://addr_22".to_string(),
+            "http://addr_30".to_string(),
+        ];
+
+        responding_addrs.contains(&uri)
+    }
 
     let actual = input
         .iter()
         .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok())
         .filter(|envelope| envelope.header.relates_to == our_uuid)
         .filter_map(|envelope| {
-            get_responding_addr(&envelope, |addr| responding_addrs.contains(&addr))
+            tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(get_responding_addr(envelope, is_addr_responding))
         })
         .collect::<Vec<_>>();
 
