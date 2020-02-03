@@ -22,13 +22,17 @@ pub async fn discover(
 
     let socket = (|| {
         async {
-            let local_ipv4_addr = Ipv4Addr::UNSPECIFIED;
-            let multi_ipv4_addr = Ipv4Addr::new(239, 255, 255, 250);
-            let local_socket_addr = SocketAddr::new(IpAddr::V4(local_ipv4_addr), 0);
-            let multi_socket_addr = SocketAddr::new(IpAddr::V4(multi_ipv4_addr), 3702);
+            const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
+            const LOCAL_PORT: u16 = 0;
+
+            const MULTI_IPV4_ADDR: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
+            const MULTI_PORT: u16 = 3702;
+
+            let local_socket_addr = SocketAddr::new(IpAddr::V4(LOCAL_IPV4_ADDR), LOCAL_PORT);
+            let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
 
             let socket = async_std::net::UdpSocket::bind(local_socket_addr).await?;
-            socket.join_multicast_v4(multi_ipv4_addr, local_ipv4_addr)?;
+            socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
             socket
                 .send_to(&probe_xml.as_bytes(), multi_socket_addr)
                 .await?;
