@@ -67,6 +67,7 @@ pub mod thermal;
 pub mod uplink;
 #[allow(unused_imports)]
 pub mod ws_addr;
+pub mod ws_discovery;
 
 #[cfg(test)]
 mod tests;

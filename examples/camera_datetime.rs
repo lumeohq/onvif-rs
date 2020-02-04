@@ -7,9 +7,7 @@ fn main() {
         None => {
             eprintln!(
                 "Usage: {} camera_uri",
-                std::env::args()
-                    .next()
-                    .unwrap_or("camera_datetime".into())
+                std::env::args().next().unwrap_or("camera_datetime".into())
             );
             std::process::exit(1);
         }
