@@ -5,7 +5,7 @@ use crate::{
     },
     soap,
 };
-use async_std::stream::StreamExt;
+use async_std::{pin::Pin, stream::Stream};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 #[derive(Debug)]
@@ -14,9 +14,57 @@ pub enum Error {
     Internal(String),
 }
 
-pub async fn discover(
-    duration: std::time::Duration,
-) -> Result<impl async_std::stream::Stream<Item = String>, Error> {
+type StringStream = Pin<Box<dyn Stream<Item = String>>>;
+
+/// Discovers devices on a local network asynchronously using WS-discovery.
+///
+/// Internally it sends a multicast probe and waits for responses for a specified amount of time.
+/// The result is a stream of discovered devices one address per device.
+/// The stream is terminated after provided amount of time.
+///
+/// There are many different ways to iterate over and process the values in a `Stream`
+/// https://rust-lang.github.io/async-book/05_streams/02_iteration_and_concurrency.html
+///
+/// # Examples
+///
+/// You can access each element on the stream concurrently as elements become available:
+///
+/// ```
+/// use onvif_rs::discovery;
+/// use futures::stream::StreamExt; // to use for_each_concurrent
+///
+/// const MAX_CONCURRENT_JUMPERS: usize = 100;
+///
+/// async {
+///     discovery::discover(std::time::Duration::from_secs(1))
+///         .await
+///         .unwrap()
+///         .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| {
+///             async move {
+///                 println!("Device found at address: {}", addr);
+///             }
+///         })
+///         .await;
+/// };
+/// ```
+///
+/// Or you can await on a collection of devices found in one second:
+///
+/// ```
+/// use onvif_rs::discovery;
+/// use futures::stream::StreamExt; // to use collect
+///
+/// async {
+///     let addrs = discovery::discover(std::time::Duration::from_secs(1))
+///         .await
+///         .unwrap()
+///         .collect::<Vec<_>>()
+///         .await;
+///
+///     println!("Devices found: {:?}", addrs);
+/// };
+/// ```
+pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Error> {
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Internal)?;
 
@@ -43,7 +91,9 @@ pub async fn discover(
     .await
     .map_err(Error::Network)?;
 
-    Ok(
+    let stream = {
+        use async_std::stream::StreamExt;
+
         // Make an async stream of XML's
         futures::stream::unfold(socket, |s| async { Some((recv_string(&s).await, s)) })
             .filter_map(|string| string.ok())
@@ -56,8 +106,14 @@ pub async fn discover(
             .merge(async_std::stream::interval(duration).map(|_| None))
             // Terminate stream when the first None is received
             .take_while(|event| event.is_some())
-            .filter_map(|event| event),
-    )
+            .filter_map(|event| event)
+    };
+
+    {
+        use futures::stream::StreamExt;
+
+        Ok(stream.boxed())
+    }
 }
 
 async fn recv_string(s: &async_std::net::UdpSocket) -> std::io::Result<String> {

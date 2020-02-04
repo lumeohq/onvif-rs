@@ -1,17 +1,18 @@
 extern crate onvif_rs;
-use async_std::stream::StreamExt;
 use onvif_rs::discovery;
 
-fn main() {
-    println!("Searching for devices ...");
+#[async_std::main]
+async fn main() {
+    use futures::stream::StreamExt;
+    const MAX_CONCURRENT_JUMPERS: usize = 100;
 
-    let xaddrs = async_std::task::block_on(async {
-        discovery::discover(std::time::Duration::from_secs(1))
-            .await
-            .unwrap()
-            .collect::<Vec<_>>()
-            .await
-    });
-
-    println!("Devices found: {:#?}", xaddrs);
+    discovery::discover(std::time::Duration::from_secs(1))
+        .await
+        .unwrap()
+        .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| {
+            async move {
+                println!("Device found at address: {}", addr);
+            }
+        })
+        .await;
 }
