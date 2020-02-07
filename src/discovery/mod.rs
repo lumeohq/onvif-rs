@@ -133,7 +133,7 @@ async fn recv_string(s: &async_std::net::UdpSocket) -> std::io::Result<String> {
 
 async fn get_responding_addr<F, Fut>(
     envelope: probe_matches::Envelope,
-    mut func: F,
+    mut check_addr: F,
 ) -> Option<String>
 where
     F: FnMut(String) -> Fut,
@@ -150,7 +150,7 @@ where
             .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
             .map(|x| x.to_string()),
     )
-    .filter(|addr| func(addr.clone()))
+    .filter(|addr| check_addr(addr.clone()))
     .take(1);
 
     Box::pin(stream).next().await
