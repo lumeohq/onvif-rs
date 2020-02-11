@@ -144,6 +144,17 @@ pub struct VideoSourceConfiguration {
     pub bounds: IntRectangle,
 }
 
+// Range of values greater equal Min value and less equal Max value.
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct FloatRange {
+    #[yaserde(prefix = "tt", rename = "Min")]
+    pub min: f64,
+
+    #[yaserde(prefix = "tt", rename = "Max")]
+    pub max: f64,
+}
+
 // "ColorspaceRange" type is defined in onvif.xsd
 // <xs:complexType name="ColorspaceRange">
 //     <xs:sequence>
@@ -158,11 +169,11 @@ pub struct VideoSourceConfiguration {
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ColorspaceRange {
     #[yaserde(prefix = "tt", rename = "X")]
-    pub x: f32,
+    pub x: FloatRange,
     #[yaserde(prefix = "tt", rename = "Y")]
-    pub y: f32,
+    pub y: FloatRange,
     #[yaserde(prefix = "tt", rename = "Z")]
-    pub z: f32,
+    pub z: FloatRange,
     #[yaserde(prefix = "tt", rename = "Colorspace")]
     pub colorspace: String,
 }
@@ -187,69 +198,13 @@ impl Default for ColorOptionsChoice {
     }
 }
 
-#[derive(Default, PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ColorOptions {
+    #[yaserde(prefix = "tt", flatten)]
     pub choice: ColorOptionsChoice,
-    pub any_attribute: Option<(String, String)>,
-}
-
-fn get_attr<R: Read>(
-    reader: &mut yaserde::de::Deserializer<R>,
-) -> Option<&Vec<xml::attribute::OwnedAttribute>> {
-    match reader.peek() {
-        Ok(xml::reader::XmlEvent::StartElement { ref attributes, .. }) => Some(attributes),
-        _ => None,
-    }
-}
-
-impl YaDeserialize for ColorOptions {
-    fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
-        match reader.peek() {
-            Ok(xml::reader::XmlEvent::StartElement { .. }) => {
-                let attr = get_attr(reader).and_then(|a| {
-                    a.first()
-                        .map(|a| (a.name.local_name.clone(), a.value.clone()))
-                });
-
-                Ok(ColorOptions {
-                    choice: ColorOptionsChoice::deserialize(reader)?,
-                    any_attribute: attr,
-                })
-            }
-            _ => Err("Start element not found".to_string()),
-        }
-    }
-}
-
-impl YaSerialize for ColorOptions {
-    fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        let mut start = xml::writer::XmlEvent::start_element("tt:ColorOptions")
-            .ns("tt", "http://www.onvif.org/ver10/schema");
-
-        if let Some((ref name, ref value)) = self.any_attribute {
-            start = start.attr(
-                xml::name::Name {
-                    local_name: name.as_str(),
-                    prefix: None,
-                    namespace: None,
-                },
-                value.as_str(),
-            );
-        }
-
-        writer
-            .write(start)
-            .map_err(|_| "Could not serialize start element")?;
-        writer.set_skip_start_end(true);
-
-        self.choice.serialize(writer)?;
-
-        writer
-            .write(xml::writer::XmlEvent::end_element())
-            .map_err(|_| "Could not serialize end element")?;
-
-        Ok(())
-    }
+    #[yaserde(prefix = "tt", attribute)]
+    pub any_attribute: Option<String>,
 }
 
 // A type that uses xs:duration (annotations removed)
@@ -300,29 +255,26 @@ impl YaDeserialize for Name {
 
 impl YaSerialize for Name {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        // TODO: this should be simplified since yaserde 0.3.11
-        if let Some(override_name) = writer.get_start_event_name() {
+        let name = writer
+            .get_start_event_name()
+            .unwrap_or_else(|| "Name".to_string());
+
+        if !writer.skip_start_end() {
             writer
-                .write(xml::writer::XmlEvent::start_element(override_name.as_str()))
-                .map_err(|_e| "Start element write failed".to_string())
-        } else {
-            if !writer.skip_start_end() {
-                writer
-                    .write(xml::writer::XmlEvent::start_element("tt:Name"))
-                    .map_err(|_e| "Start element write failed".to_string())?;
-            }
-
-            writer
-                .write(xml::writer::XmlEvent::characters(self.0.as_str()))
-                .map_err(|_e| "Element value write failed".to_string())?;
-
-            if !writer.skip_start_end() {
-                writer
-                    .write(xml::writer::XmlEvent::end_element())
-                    .map_err(|_e| "End element write failed".to_string())?;
-            }
-
-            Ok(())
+                .write(xml::writer::XmlEvent::start_element(name.as_str()))
+                .map_err(|_e| "Start element write failed".to_string())?;
         }
+
+        writer
+            .write(xml::writer::XmlEvent::characters(self.0.as_str()))
+            .map_err(|_e| "Element value write failed".to_string())?;
+
+        if !writer.skip_start_end() {
+            writer
+                .write(xml::writer::XmlEvent::end_element())
+                .map_err(|_e| "End element write failed".to_string())?;
+        }
+
+        Ok(())
     }
 }

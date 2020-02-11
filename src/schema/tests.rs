@@ -150,18 +150,18 @@ fn extend_base_serialization() {
 #[test]
 fn choice_deserialization() {
     let ser = r#"
-    <tt:ColorOptions attr_name="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
+    <tt:ColorOptions tt:any_attribute="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
         <tt:ColorspaceRange>
-            <X>0.1</X>
-            <Y>0.2</Y>
-            <Z>0.3</Z>
-            <Colorspace>http://my.color.space</Colorspace>
+            <tt:X><tt:Min>0.1</tt:Min><tt:Max>0.11</tt:Max></tt:X>
+            <tt:Y><tt:Min>0.2</tt:Min><tt:Max>0.22</tt:Max></tt:Y>
+            <tt:Z><tt:Min>0.3</tt:Min><tt:Max>0.33</tt:Max></tt:Z>
+            <tt:Colorspace>http://my.color.space</tt:Colorspace>
         </tt:ColorspaceRange>
         <tt:ColorspaceRange>
-            <X>0.5</X>
-            <Y>0.6</Y>
-            <Z>0.7</Z>
-            <Colorspace>http://my.color.space</Colorspace>
+            <tt:X><tt:Min>0.4</tt:Min><tt:Max>0.44</tt:Max></tt:X>
+            <tt:Y><tt:Min>0.5</tt:Min><tt:Max>0.55</tt:Max></tt:Y>
+            <tt:Z><tt:Min>0.6</tt:Min><tt:Max>0.66</tt:Max></tt:Z>
+            <tt:Colorspace>http://my.color.space</tt:Colorspace>
         </tt:ColorspaceRange>
     </tt:ColorOptions>
     "#;
@@ -172,23 +172,56 @@ fn choice_deserialization() {
         tt::ColorOptionsChoice::ColorspaceRange(colors) => {
             assert_eq!(colors.len(), 2);
 
-            assert_eq!(colors[0].x, 0.1);
-            assert_eq!(colors[0].y, 0.2);
-            assert_eq!(colors[0].z, 0.3);
+            assert_eq!(
+                colors[0].x,
+                tt::FloatRange {
+                    min: 0.1,
+                    max: 0.11
+                }
+            );
+            assert_eq!(
+                colors[0].y,
+                tt::FloatRange {
+                    min: 0.2,
+                    max: 0.22
+                }
+            );
+            assert_eq!(
+                colors[0].z,
+                tt::FloatRange {
+                    min: 0.3,
+                    max: 0.33
+                }
+            );
             assert_eq!(colors[0].colorspace, String::from("http://my.color.space"));
 
-            assert_eq!(colors[1].x, 0.5);
-            assert_eq!(colors[1].y, 0.6);
-            assert_eq!(colors[1].z, 0.7);
+            assert_eq!(
+                colors[1].x,
+                tt::FloatRange {
+                    min: 0.4,
+                    max: 0.44
+                }
+            );
+            assert_eq!(
+                colors[1].y,
+                tt::FloatRange {
+                    min: 0.5,
+                    max: 0.55
+                }
+            );
+            assert_eq!(
+                colors[1].z,
+                tt::FloatRange {
+                    min: 0.6,
+                    max: 0.66
+                }
+            );
             assert_eq!(colors[1].colorspace, String::from("http://my.color.space"));
         }
-        _ => panic!("Wrong variant"),
+        _ => panic!("Wrong variant: {:?}", des.choice),
     }
 
-    assert_eq!(
-        des.any_attribute,
-        Some(("attr_name".to_string(), "attr_value".to_string()))
-    );
+    assert_eq!(des.any_attribute, Some("attr_value".to_string()));
 }
 
 #[test]
@@ -196,36 +229,52 @@ fn choice_serialization() {
     let model = tt::ColorOptions {
         choice: tt::ColorOptionsChoice::ColorspaceRange(vec![
             tt::ColorspaceRange {
-                x: 0.1,
-                y: 0.2,
-                z: 0.3,
+                x: tt::FloatRange {
+                    min: 0.1,
+                    max: 0.11,
+                },
+                y: tt::FloatRange {
+                    min: 0.2,
+                    max: 0.22,
+                },
+                z: tt::FloatRange {
+                    min: 0.3,
+                    max: 0.33,
+                },
                 colorspace: "http://my.color.space".to_string(),
             },
             tt::ColorspaceRange {
-                x: 0.5,
-                y: 0.6,
-                z: 0.7,
+                x: tt::FloatRange {
+                    min: 0.4,
+                    max: 0.44,
+                },
+                y: tt::FloatRange {
+                    min: 0.5,
+                    max: 0.55,
+                },
+                z: tt::FloatRange {
+                    min: 0.6,
+                    max: 0.66,
+                },
                 colorspace: "http://my.color.space".to_string(),
             },
         ]),
-        any_attribute: Some(("attr_name".to_string(), "attr_value".to_string())),
+        any_attribute: Some("attr_value".to_string()),
     };
-
-    // TODO: "ColorspaceRange" must be "tt:ColorspaceRange", fixed in yaserde 0.3.11
 
     let expected = r#"
     <?xml version="1.0" encoding="utf-8"?>
-    <tt:ColorOptions attr_name="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
+    <tt:ColorOptions tt:any_attribute="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
         <ColorspaceRange>
-            <tt:X>0.1</tt:X>
-            <tt:Y>0.2</tt:Y>
-            <tt:Z>0.3</tt:Z>
+            <tt:X><tt:Min>0.1</tt:Min><tt:Max>0.11</tt:Max></tt:X>
+            <tt:Y><tt:Min>0.2</tt:Min><tt:Max>0.22</tt:Max></tt:Y>
+            <tt:Z><tt:Min>0.3</tt:Min><tt:Max>0.33</tt:Max></tt:Z>
             <tt:Colorspace>http://my.color.space</tt:Colorspace>
         </ColorspaceRange>
         <ColorspaceRange>
-            <tt:X>0.5</tt:X>
-            <tt:Y>0.6</tt:Y>
-            <tt:Z>0.7</tt:Z>
+            <tt:X><tt:Min>0.4</tt:Min><tt:Max>0.44</tt:Max></tt:X>
+            <tt:Y><tt:Min>0.5</tt:Min><tt:Max>0.55</tt:Max></tt:Y>
+            <tt:Z><tt:Min>0.6</tt:Min><tt:Max>0.66</tt:Max></tt:Z>
             <tt:Colorspace>http://my.color.space</tt:Colorspace>
         </ColorspaceRange>
     </tt:ColorOptions>

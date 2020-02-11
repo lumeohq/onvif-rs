@@ -40,29 +40,26 @@ impl YaDeserialize for Name {
 
 impl YaSerialize for Name {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        // TODO: this should be simplified since yaserde 0.3.11
-        if let Some(override_name) = writer.get_start_event_name() {
+        let name = writer
+            .get_start_event_name()
+            .unwrap_or_else(|| "Name".to_string());
+
+        if !writer.skip_start_end() {
             writer
-                .write(xml::writer::XmlEvent::start_element(override_name.as_str()))
-                .map_err(|_e| "Start element write failed".to_string())
-        } else {
-            if !writer.skip_start_end() {
-                writer
-                    .write(xml::writer::XmlEvent::start_element("tt:Name"))
-                    .map_err(|_e| "Start element write failed".to_string())?;
-            }
-
-            writer
-                .write(xml::writer::XmlEvent::characters(self.0.as_str()))
-                .map_err(|_e| "Element value write failed".to_string())?;
-
-            if !writer.skip_start_end() {
-                writer
-                    .write(xml::writer::XmlEvent::end_element())
-                    .map_err(|_e| "End element write failed".to_string())?;
-            }
-
-            Ok(())
+                .write(xml::writer::XmlEvent::start_element(name.as_str()))
+                .map_err(|_e| "Start element write failed".to_string())?;
         }
+
+        writer
+            .write(xml::writer::XmlEvent::characters(self.0.as_str()))
+            .map_err(|_e| "Element value write failed".to_string())?;
+
+        if !writer.skip_start_end() {
+            writer
+                .write(xml::writer::XmlEvent::end_element())
+                .map_err(|_e| "End element write failed".to_string())?;
+        }
+
+        Ok(())
     }
 }
