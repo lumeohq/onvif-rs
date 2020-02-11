@@ -1,3 +1,4 @@
+use crate::utils;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
 
@@ -275,45 +276,13 @@ impl ParsingContext {
 
 impl YaDeserialize for Duration {
     fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
-        if let Ok(xml::reader::XmlEvent::StartElement { .. }) = reader.peek() {
-            reader.next_event()?;
-        } else {
-            return Err("Start element not found".to_string());
-        }
-
-        if let Ok(xml::reader::XmlEvent::Characters(ref text)) = reader.peek() {
-            Duration::from_lexical_representation(text).map_err(|e| e.to_string())
-        } else {
-            Err("Start element not found".to_string())
-        }
+        utils::yaserde::deserialize(reader, |s| Duration::from_lexical_representation(s))
     }
 }
 
 impl YaSerialize for Duration {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        let name = writer
-            .get_start_event_name()
-            .unwrap_or_else(|| "Duration".to_string());
-
-        if !writer.skip_start_end() {
-            writer
-                .write(xml::writer::XmlEvent::start_element(name.as_str()))
-                .map_err(|_| "Start element write failed".to_string())?;
-        }
-
-        writer
-            .write(xml::writer::XmlEvent::characters(
-                &self.to_lexical_representation(),
-            ))
-            .map_err(|_| "Element value write failed".to_string())?;
-
-        if !writer.skip_start_end() {
-            writer
-                .write(xml::writer::XmlEvent::end_element())
-                .map_err(|_| "End element write failed".to_string())?;
-        }
-
-        Ok(())
+        utils::yaserde::serialize(self, writer, |s| Ok(s.to_lexical_representation()))
     }
 }
 
