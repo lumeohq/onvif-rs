@@ -282,7 +282,9 @@ impl YaDeserialize for Duration {
 
 impl YaSerialize for Duration {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, writer, |s| Ok(s.to_lexical_representation()))
+        utils::yaserde::serialize(self, "Duration", writer, |s| {
+            Ok(s.to_lexical_representation())
+        })
     }
 }
 

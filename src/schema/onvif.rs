@@ -242,6 +242,6 @@ impl YaDeserialize for Name {
 
 impl YaSerialize for Name {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, writer, |s| Ok(s.0.to_string()))
+        utils::yaserde::serialize(self, "Name", writer, |s| Ok(s.0.to_string()))
     }
 }
