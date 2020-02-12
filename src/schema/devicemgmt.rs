@@ -115,11 +115,11 @@ pub struct GetSystemDateAndTimeResponse {
 // indication of NTP time (if applicable) through the GetSystemDateAndTime command.
 // A device shall provide the UTCDateTime information.
 
-pub fn get_system_date_and_time<T: transport::Transport>(
+pub async fn get_system_date_and_time<T: transport::Transport>(
     transport: &T,
     request: &GetSystemDateAndTime,
 ) -> Result<GetSystemDateAndTimeResponse, transport::Error> {
-    transport::request(transport, request)
+    transport::request(transport, request).await
 }
 
 //    <xs:element name="GetDeviceInformation">
@@ -209,9 +209,9 @@ pub struct GetDeviceInformationResponse {
 //    </wsdl:message>
 
 // This operation gets basic device information from the device.
-pub fn get_device_information<T: transport::Transport>(
+pub async fn get_device_information<T: transport::Transport>(
     transport: &T,
     request: &GetDeviceInformation,
 ) -> Result<GetDeviceInformationResponse, transport::Error> {
-    transport::request(transport, request)
+    transport::request(transport, request).await
 }

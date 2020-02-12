@@ -1,5 +1,6 @@
 use super::*;
 
+use async_trait::async_trait;
 use itertools::izip;
 use onvif as tt;
 
@@ -7,8 +8,9 @@ pub struct FakeTransport {
     pub response: String,
 }
 
+#[async_trait]
 impl transport::Transport for FakeTransport {
-    fn request(&self, _message: &str) -> Result<String, transport::Error> {
+    async fn request(&self, _message: &str) -> Result<String, transport::Error> {
         Ok(self.response.clone())
     }
 }
@@ -334,8 +336,8 @@ fn duration_deserialization() {
     assert_eq!(des.timeout.seconds, 60.0);
 }
 
-#[test]
-fn operation_get_system_date_and_time() {
+#[tokio::test]
+async fn operation_get_system_date_and_time() {
     let req: devicemgmt::GetSystemDateAndTime = Default::default();
 
     let transport = FakeTransport {
@@ -366,13 +368,15 @@ fn operation_get_system_date_and_time() {
             .into(),
     };
 
-    let resp = devicemgmt::get_system_date_and_time(&transport, &req).unwrap();
+    let resp = devicemgmt::get_system_date_and_time(&transport, &req)
+        .await
+        .unwrap();
 
     assert_eq!(resp.system_date_and_time.utc_date_time.time.second, 40);
 }
 
-#[test]
-fn operation_get_device_information() {
+#[tokio::test]
+async fn operation_get_device_information() {
     let req: devicemgmt::GetDeviceInformation = Default::default();
 
     let transport = FakeTransport {
@@ -390,7 +394,9 @@ fn operation_get_device_information() {
         .into(),
     };
 
-    let resp = devicemgmt::get_device_information(&transport, &req).unwrap();
+    let resp = devicemgmt::get_device_information(&transport, &req)
+        .await
+        .unwrap();
 
     assert_eq!(resp.manufacturer, "Somebody");
 }

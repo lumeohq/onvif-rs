@@ -1,7 +1,8 @@
 extern crate onvif_rs;
 use onvif_rs::{schema, soap};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let uri = match std::env::args().skip(1).next() {
         Some(arg) => arg,
         None => {
@@ -14,7 +15,7 @@ fn main() {
     };
 
     let mut client = soap::client::Client::new(&uri);
-    let date = schema::devicemgmt::get_system_date_and_time(&mut client, &Default::default());
+    let date = schema::devicemgmt::get_system_date_and_time(&mut client, &Default::default()).await;
 
     println!("{:#?}", date);
 }

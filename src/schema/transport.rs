@@ -1,6 +1,7 @@
 use yaserde::{YaDeserialize, YaSerialize};
 
 use crate::soap;
+use async_trait::async_trait;
 use reqwest;
 
 #[derive(Debug)]
@@ -11,11 +12,12 @@ pub enum Error {
     Onvif(String),
 }
 
+#[async_trait]
 pub trait Transport {
-    fn request(&self, message: &str) -> Result<String, Error>;
+    async fn request(&self, message: &str) -> Result<String, Error>;
 }
 
-pub fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
+pub async fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
     transport: &T,
     request: &R,
 ) -> Result<S, Error> {
@@ -23,11 +25,9 @@ pub fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
 
     let de = |s: &str| yaserde::de::from_str(s).map_err(Error::Serialization);
 
-    ser(&request).and_then(|serialized| {
-        transport
-            .request(&crop_xml_declaration(&serialized))
-            .and_then(|response| de(&response))
-    })
+    de(&transport
+        .request(&crop_xml_declaration(&ser(&request)?))
+        .await?)
 }
 
 fn crop_xml_declaration(xml: &str) -> String {

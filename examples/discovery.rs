@@ -1,7 +1,7 @@
 extern crate onvif_rs;
 use onvif_rs::discovery;
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
     use futures::stream::StreamExt;
     const MAX_CONCURRENT_JUMPERS: usize = 100;

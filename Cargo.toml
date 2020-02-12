@@ -13,7 +13,9 @@ xmltree = "0.8.0"
 yaserde = "0.3.11"
 yaserde_derive = "0.3.11"
 itertools = "0.8.1"
-reqwest = "0.9.22"
+reqwest = "0.10.1"
 uuid = { version = "0.8.1", features = ["v4"] }
-async-std = { version = "1.5.0", features = ["unstable", "attributes"] }
-futures = "0.3.2"
+futures = "0.3.4"
+async-std = { version = "1.5.0", features = ["unstable"] }
+async-trait ="0.1.24"
+tokio = { version = "0.2.11", features = ["full"] }
