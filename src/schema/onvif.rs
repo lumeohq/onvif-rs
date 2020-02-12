@@ -242,6 +242,36 @@ impl YaDeserialize for Name {
 
 impl YaSerialize for Name {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, writer, |s| Ok(s.0.to_string()))
+        utils::yaserde::serialize(self, "Name", writer, |s| Ok(s.0.to_string()))
     }
+}
+
+#[derive(Default, PartialEq, Debug)]
+pub struct StringAttrList(pub Vec<String>);
+
+impl YaDeserialize for StringAttrList {
+    fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
+        utils::yaserde::deserialize(reader, |s| {
+            Ok(StringAttrList(
+                s.split_whitespace().map(|s| s.to_string()).collect(),
+            ))
+        })
+    }
+}
+
+impl YaSerialize for StringAttrList {
+    fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
+        utils::yaserde::serialize(self, "StringAttrList", writer, |s| Ok(s.0.join(" ")))
+    }
+}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct FocusOptions20Extension {
+    // TODO: yaserde macro for any element
+    //  pub any: AnyElement,
+
+    // Supported options for auto focus. Options shall be chosen from tt:AFModes.
+    #[yaserde(prefix = "tt", rename = "AFModes")]
+    pub af_modes: Option<StringAttrList>,
 }

@@ -497,6 +497,46 @@ fn probe_match_deserialization() {
     );
 }
 
+#[test]
+fn list_serialization() {
+    let model = tt::FocusOptions20Extension {
+        af_modes: Some(tt::StringAttrList(vec![
+            "Auto".to_string(),
+            "Manual".to_string(),
+        ])),
+    };
+
+    let expected = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:AFModes>Auto Manual</tt:AFModes>
+    </tt:FocusOptions20Extension>
+    "#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    assert_xml_eq(actual.as_str(), expected);
+}
+
+#[test]
+fn list_deserialization() {
+    let ser = r#"
+    <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:AFModes>Auto Manual</tt:AFModes>
+    </tt:FocusOptions20Extension>
+    "#;
+
+    let des: tt::FocusOptions20Extension = yaserde::de::from_str(&ser).unwrap();
+
+    assert_eq!(
+        des.af_modes,
+        Some(tt::StringAttrList(vec![
+            "Auto".to_string(),
+            "Manual".to_string()
+        ]))
+    );
+}
+
 fn assert_xml_eq(actual: &str, expected: &str) -> () {
     for (a, e) in izip!(without_whitespaces(actual), without_whitespaces(expected)) {
         assert_eq!(a, e);

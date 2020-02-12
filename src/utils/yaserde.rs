@@ -2,13 +2,14 @@ use std::io::{Read, Write};
 use yaserde::{de, ser};
 
 pub fn serialize<S, W: Write>(
-    selff: &S,
+    self_bypass: &S,
+    default_name: &str,
     writer: &mut ser::Serializer<W>,
     ser_fn: impl FnOnce(&S) -> Result<String, String>,
 ) -> Result<(), String> {
     let name = writer
         .get_start_event_name()
-        .unwrap_or_else(|| "Name".to_string());
+        .unwrap_or_else(|| default_name.to_string());
 
     if !writer.skip_start_end() {
         writer
@@ -17,7 +18,9 @@ pub fn serialize<S, W: Write>(
     }
 
     writer
-        .write(xml::writer::XmlEvent::characters(ser_fn(selff)?.as_str()))
+        .write(xml::writer::XmlEvent::characters(
+            ser_fn(self_bypass)?.as_str(),
+        ))
         .map_err(|_e| "Element value write failed".to_string())?;
 
     if !writer.skip_start_end() {
