@@ -1,5 +1,6 @@
 // xsd:
 pub mod common;
+pub mod decimal;
 pub mod duration;
 pub mod integer;
 #[allow(unused_imports)]
