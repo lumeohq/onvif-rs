@@ -89,7 +89,7 @@ pub struct GetSystemDateAndTime {}
 )]
 pub struct GetSystemDateAndTimeResponse {
     #[yaserde(prefix = "tds", rename = "SystemDateAndTime")]
-    pub system_date_and_time: tt::SystemDateAndTime,
+    pub system_date_and_time: tt::SystemDateTime,
 }
 
 //    <wsdl:operation name="GetSystemDateAndTime">

@@ -19,3 +19,4 @@ futures = "0.3.4"
 async-std = { version = "1.5.0", features = ["unstable"] }
 async-trait ="0.1.24"
 tokio = { version = "0.2.11", features = ["full"] }
+macro-utils = { path = "macro-utils" }
