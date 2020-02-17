@@ -545,7 +545,7 @@ fn list_deserialization() {
     );
 }
 
-fn assert_xml_eq(actual: &str, expected: &str) -> () {
+pub fn assert_xml_eq(actual: &str, expected: &str) -> () {
     for (a, e) in izip!(without_whitespaces(actual), without_whitespaces(expected)) {
         assert_eq!(a, e);
     }
