@@ -10,7 +10,7 @@ pub struct Integer {
 }
 
 impl Integer {
-    fn from_bigint(bigint: BigInt) -> Self {
+    pub fn from_bigint(bigint: BigInt) -> Self {
         Integer{value: bigint}
     }
 }
@@ -23,7 +23,11 @@ impl ToBigInt for Integer {
 
 impl YaDeserialize for Integer {
     fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
-        utils::yaserde::deserialize(reader, |s| Ok(Integer::from_bigint(BigInt::from_str(s).unwrap())))
+        utils::yaserde::deserialize(reader, |s| {
+            BigInt::from_str(s)
+                .map(Integer::from_bigint)
+                .map_err(|e| e.to_string())
+        })
     }
 }
 

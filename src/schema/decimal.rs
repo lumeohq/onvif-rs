@@ -1,6 +1,5 @@
 use crate::utils;
 use bigdecimal::BigDecimal;
-use num_bigint::ToBigInt;
 use std::io::{Read, Write};
 use std::str::FromStr;
 use yaserde::{YaDeserialize, YaSerialize};
@@ -11,18 +10,22 @@ pub struct Decimal {
 }
 
 impl Decimal {
-    fn from_bigdecimal(bigdecimal: BigDecimal) -> Self {
+    pub fn from_bigdecimal(bigdecimal: BigDecimal) -> Self {
         Decimal{value: bigdecimal}
     }
 
-    fn to_bigdecimal(&self) -> Option<BigDecimal> {
-        Some(self.value.clone())
+    pub fn to_bigdecimal(&self) -> BigDecimal {
+        self.value.clone()
     }
 }
 
 impl YaDeserialize for Decimal {
     fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
-        utils::yaserde::deserialize(reader, |s| Ok(Decimal::from_bigdecimal(BigDecimal::from_str(s).unwrap())))
+        utils::yaserde::deserialize(reader, |s| {
+            BigDecimal::from_str(s)
+                .map(Decimal::from_bigdecimal)
+                .map_err(|e| e.to_string())
+        })
     }
 }
 
@@ -38,6 +41,7 @@ impl YaSerialize for Decimal {
 mod tests {
     use super::*;
     use crate::schema::tests::assert_xml_eq;
+    use num_bigint::ToBigInt;
 
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
     #[yaserde(
@@ -78,7 +82,7 @@ mod tests {
             </t:DecimalPair>
             "#;
         let i: DecimalPair = yaserde::de::from_str(&s).unwrap();
-        assert_eq!(i.first.to_bigdecimal().unwrap(), BigDecimal::new(1234.to_bigint().unwrap(), 5));
-        assert_eq!(i.second.to_bigdecimal().unwrap(), BigDecimal::new(-1234.to_bigint().unwrap(), 2));
+        assert_eq!(i.first.to_bigdecimal(), BigDecimal::new(1234.to_bigint().unwrap(), 5));
+        assert_eq!(i.second.to_bigdecimal(), BigDecimal::new(-1234.to_bigint().unwrap(), 2));
     }
 }
