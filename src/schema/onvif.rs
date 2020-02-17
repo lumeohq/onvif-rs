@@ -17,8 +17,12 @@
 
 use crate::schema::common::*;
 use crate::utils;
+use macro_utils::*;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
+
+#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+pub struct ReferenceToken(pub String);
 
 //<xs:simpleType name="Name">
 //    <xs:annotation>
@@ -29,7 +33,7 @@ use yaserde::{YaDeserialize, YaSerialize};
 //    </xs:restriction>
 //</xs:simpleType>
 
-#[derive(Default, PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Name(pub String);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -72,21 +76,48 @@ pub struct DateTime {
     pub date: Date,
 }
 
+#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub enum SetDateTimeType {
+    Manual,
+    #[yaserde(rename = "NTP")]
+    Ntp,
+    __Unknown__(String),
+}
+
+impl Default for SetDateTimeType {
+    fn default() -> SetDateTimeType {
+        Self::__Unknown__("No valid variants".into())
+    }
+}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct SystemDateTimeExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tds",
     namespace = "tds: http://www.onvif.org/ver10/device/wsdl",
     namespace = "tt: http://www.onvif.org/ver10/schema"
 )]
-pub struct SystemDateAndTime {
+pub struct SystemDateTime {
     #[yaserde(prefix = "tt", rename = "DateTimeType")]
-    pub date_time_type: String,
+    pub date_time_type: SetDateTimeType,
+
     #[yaserde(prefix = "tt", rename = "DaylightSavings")]
     pub daylight_savings: bool,
-    #[yaserde(rename = "TimeZone")]
-    pub time_zone: TimeZone,
-    #[yaserde(rename = "UTCDateTime")]
-    pub utc_date_time: DateTime,
+
+    #[yaserde(prefix = "tt", rename = "TimeZone")]
+    pub time_zone: Option<TimeZone>,
+
+    #[yaserde(prefix = "tt", rename = "UTCDateTime")]
+    pub utc_date_time: Option<DateTime>,
+
+    #[yaserde(prefix = "tt", rename = "LocalDateTime")]
+    pub local_date_time: Option<DateTime>,
+
+    #[yaserde(prefix = "tt", rename = "Extension")]
+    pub extension: Option<SystemDateTimeExtension>,
 }
 
 //<xs:complexType name="IntRectangle">
@@ -133,16 +164,26 @@ pub struct IntRectangle {
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceConfiguration {
-    #[yaserde(attribute)]
-    pub token: String,
-    #[yaserde(prefix = "tt", rename = "Name")]
-    pub name: Name,
-    #[yaserde(prefix = "tt", rename = "UseCount")]
-    pub use_count: i32,
     #[yaserde(prefix = "tt", rename = "SourceToken")]
-    pub source_token: String,
+    pub source_token: ReferenceToken,
+
     #[yaserde(prefix = "tt", rename = "Bounds")]
     pub bounds: IntRectangle,
+
+    #[yaserde(prefix = "tt", rename = "Extension")]
+    pub extension: Option<String>,
+
+    #[yaserde(attribute, rename = "ViewMode")]
+    pub view_mode: Option<String>,
+
+    #[yaserde(prefix = "tt", rename = "Name")]
+    pub name: Name,
+
+    #[yaserde(prefix = "tt", rename = "UseCount")]
+    pub use_count: i32,
+
+    #[yaserde(attribute, rename = "token")]
+    pub token: ReferenceToken,
 }
 
 // Range of values greater equal Min value and less equal Max value.
@@ -203,9 +244,7 @@ impl Default for ColorOptionsChoice {
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ColorOptions {
     #[yaserde(prefix = "tt", flatten)]
-    pub choice: ColorOptionsChoice,
-    #[yaserde(prefix = "tt", attribute)]
-    pub any_attribute: Option<String>,
+    pub color_options_choice: ColorOptionsChoice,
 }
 
 // A type that uses xs:duration (annotations removed)
@@ -234,36 +273,8 @@ pub struct MediaUri {
     pub timeout: crate::schema::duration::Duration,
 }
 
-impl YaDeserialize for Name {
-    fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
-        utils::yaserde::deserialize(reader, |s| Ok(Name(s.to_owned())))
-    }
-}
-
-impl YaSerialize for Name {
-    fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, "Name", writer, |s| Ok(s.0.to_string()))
-    }
-}
-
-#[derive(Default, PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct StringAttrList(pub Vec<String>);
-
-impl YaDeserialize for StringAttrList {
-    fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> Result<Self, String> {
-        utils::yaserde::deserialize(reader, |s| {
-            Ok(StringAttrList(
-                s.split_whitespace().map(|s| s.to_string()).collect(),
-            ))
-        })
-    }
-}
-
-impl YaSerialize for StringAttrList {
-    fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, "StringAttrList", writer, |s| Ok(s.0.join(" ")))
-    }
-}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
