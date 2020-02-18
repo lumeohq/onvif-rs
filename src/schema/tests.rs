@@ -17,7 +17,6 @@ impl transport::Transport for FakeTransport {
 }
 
 #[test]
-#[ignore] // Need to deal with SystemDateAndTime namespace
 fn basic_deserialization() {
     let response = r#"
     <?xml version="1.0" encoding="UTF-8"?>
@@ -344,7 +343,6 @@ fn duration_deserialization() {
 }
 
 #[tokio::test]
-#[ignore] // Need to deal with SystemDateAndTime namespace
 async fn operation_get_system_date_and_time() {
     let req: devicemgmt::GetSystemDateAndTime = Default::default();
 
