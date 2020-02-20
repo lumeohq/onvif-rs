@@ -10,8 +10,8 @@ edition = "2018"
 log = "0.4.8"
 xml-rs = "0.8.0"
 xmltree = "0.8.0"
-yaserde = "0.3.11"
-yaserde_derive = "0.3.11"
+yaserde = "0.3.12"
+yaserde_derive = "0.3.12"
 itertools = "0.8.1"
 reqwest = "0.10.1"
 uuid = { version = "0.8.1", features = ["v4"] }
@@ -22,3 +22,7 @@ tokio = { version = "0.2.11", features = ["full"] }
 num-bigint = "0.2.6"
 bigdecimal = "0.1.0"
 macro-utils = { path = "macro-utils" }
+
+[patch.crates-io]
+yaserde = { git = "https://github.com/media-io/yaserde", rev = "389077e" }
+yaserde_derive = { git = "https://github.com/media-io/yaserde", rev = "389077e" }

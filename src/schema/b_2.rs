@@ -22,3 +22,11 @@ use crate::schema::t_1 as wstop;
 use crate::schema::ws_addr as wsa;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
+
+// TODO: replace with actual types generated from .xsd
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct FilterType {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct NotificationMessageHolderType {}

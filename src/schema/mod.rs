@@ -1,7 +1,6 @@
 // xsd:
 pub mod common;
 pub mod decimal;
-pub mod duration;
 pub mod integer;
 #[allow(unused_imports)]
 pub mod metadatastream;
@@ -10,7 +9,11 @@ pub mod onvif;
 pub mod radiometry;
 #[allow(unused_imports)]
 pub mod rules;
+pub mod soap_envelope;
 pub mod types;
+pub mod xmlmime;
+pub mod xop;
+pub mod xs;
 
 // wsdl:
 #[allow(unused_imports)]
