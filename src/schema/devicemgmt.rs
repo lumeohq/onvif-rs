@@ -122,6 +122,54 @@ pub async fn get_system_date_and_time<T: transport::Transport>(
     transport::request(transport, request).await
 }
 
+#[derive(Default, PartialEq, Debug, YaSerialize)]
+#[yaserde(
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+)]
+pub struct SetHostname {
+    #[yaserde(prefix = "tds", rename = "Name")]
+    pub name: String,
+}
+
+#[derive(Default, PartialEq, Debug, YaDeserialize)]
+#[yaserde(
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+)]
+pub struct SetHostnameResponse {}
+
+pub async fn set_hostname<T: transport::Transport>(
+    transport: &T,
+    request: &SetHostname,
+) -> Result<SetHostnameResponse, transport::Error> {
+    transport::request(transport, request).await
+}
+
+#[derive(Default, PartialEq, Debug, YaSerialize)]
+#[yaserde(
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+)]
+pub struct GetHostname {}
+
+#[derive(Default, PartialEq, Debug, YaDeserialize)]
+#[yaserde(
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+)]
+pub struct GetHostnameResponse {
+    #[yaserde(prefix = "tds", rename = "HostnameInformation")]
+    pub hostname_information: tt::HostnameInformation,
+}
+
+pub async fn get_hostname<T: transport::Transport>(
+    transport: &T,
+    request: &GetHostname,
+) -> Result<GetHostnameResponse, transport::Error> {
+    transport::request(transport, request).await
+}
+
 //    <xs:element name="GetDeviceInformation">
 //        <xs:complexType>
 //            <xs:sequence/>
