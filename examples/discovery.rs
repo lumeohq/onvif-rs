@@ -9,10 +9,8 @@ async fn main() {
     discovery::discover(std::time::Duration::from_secs(1))
         .await
         .unwrap()
-        .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| {
-            async move {
-                println!("Device found at address: {}", addr);
-            }
+        .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| async move {
+            println!("Device found at address: {}", addr);
         })
         .await;
 }

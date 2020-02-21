@@ -11,7 +11,7 @@ pub struct Decimal {
 
 impl Decimal {
     pub fn from_bigdecimal(bigdecimal: BigDecimal) -> Self {
-        Decimal{value: bigdecimal}
+        Decimal { value: bigdecimal }
     }
 
     pub fn to_bigdecimal(&self) -> BigDecimal {
@@ -31,9 +31,7 @@ impl YaDeserialize for Decimal {
 
 impl YaSerialize for Decimal {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, "Decimal", writer, |s| {
-            Ok(s.value.to_string())
-        })
+        utils::yaserde::serialize(self, "Decimal", writer, |s| Ok(s.value.to_string()))
     }
 }
 
@@ -44,10 +42,7 @@ mod tests {
     use num_bigint::ToBigInt;
 
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-    #[yaserde(
-        prefix = "t",
-        namespace = "t: test"
-    )]
+    #[yaserde(prefix = "t", namespace = "t: test")]
     pub struct DecimalPair {
         #[yaserde(prefix = "t", rename = "First")]
         pub first: Decimal,
@@ -65,9 +60,11 @@ mod tests {
                 <t:Second>-12.34</t:Second>
             </t:DecimalPair>
             "#;
-        let i = DecimalPair{first: Decimal::from_bigdecimal(BigDecimal::new(1234.to_bigint().unwrap(), 5)),
-                            second: Decimal::from_bigdecimal(BigDecimal::new(-1234.to_bigint().unwrap(), 2))};
-        let actual =yaserde::ser::to_string(&i).unwrap();
+        let i = DecimalPair {
+            first: Decimal::from_bigdecimal(BigDecimal::new(1234.to_bigint().unwrap(), 5)),
+            second: Decimal::from_bigdecimal(BigDecimal::new(-1234.to_bigint().unwrap(), 2)),
+        };
+        let actual = yaserde::ser::to_string(&i).unwrap();
         assert_xml_eq(&actual, expected);
     }
 
@@ -82,7 +79,13 @@ mod tests {
             </t:DecimalPair>
             "#;
         let i: DecimalPair = yaserde::de::from_str(&s).unwrap();
-        assert_eq!(i.first.to_bigdecimal(), BigDecimal::new(1234.to_bigint().unwrap(), 5));
-        assert_eq!(i.second.to_bigdecimal(), BigDecimal::new(-1234.to_bigint().unwrap(), 2));
+        assert_eq!(
+            i.first.to_bigdecimal(),
+            BigDecimal::new(1234.to_bigint().unwrap(), 5)
+        );
+        assert_eq!(
+            i.second.to_bigdecimal(),
+            BigDecimal::new(-1234.to_bigint().unwrap(), 2)
+        );
     }
 }

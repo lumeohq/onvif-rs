@@ -11,7 +11,7 @@ pub struct Integer {
 
 impl Integer {
     pub fn from_bigint(bigint: BigInt) -> Self {
-        Integer{value: bigint}
+        Integer { value: bigint }
     }
 }
 
@@ -33,9 +33,7 @@ impl YaDeserialize for Integer {
 
 impl YaSerialize for Integer {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, "Integer", writer, |s| {
-            Ok(s.value.to_str_radix(10))
-        })
+        utils::yaserde::serialize(self, "Integer", writer, |s| Ok(s.value.to_str_radix(10)))
     }
 }
 
@@ -45,10 +43,7 @@ mod tests {
     use crate::schema::tests::assert_xml_eq;
 
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-    #[yaserde(
-        prefix = "t",
-        namespace = "t: test"
-    )]
+    #[yaserde(prefix = "t", namespace = "t: test")]
     pub struct IntegerPair {
         #[yaserde(prefix = "t", rename = "First")]
         pub first: Integer,
@@ -66,9 +61,11 @@ mod tests {
                 <t:Second>-1234</t:Second>
             </t:IntegerPair>
             "#;
-        let i = IntegerPair{first: Integer::from_bigint(1234.to_bigint().unwrap()),
-                            second: Integer::from_bigint(-1234.to_bigint().unwrap())};
-        let actual =yaserde::ser::to_string(&i).unwrap();
+        let i = IntegerPair {
+            first: Integer::from_bigint(1234.to_bigint().unwrap()),
+            second: Integer::from_bigint(-1234.to_bigint().unwrap()),
+        };
+        let actual = yaserde::ser::to_string(&i).unwrap();
         assert_xml_eq(&actual, expected);
     }
 
