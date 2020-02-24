@@ -69,25 +69,23 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Internal)?;
 
-    let socket = (|| {
-        async {
-            const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
-            const LOCAL_PORT: u16 = 0;
+    let socket = (|| async {
+        const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
+        const LOCAL_PORT: u16 = 0;
 
-            const MULTI_IPV4_ADDR: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
-            const MULTI_PORT: u16 = 3702;
+        const MULTI_IPV4_ADDR: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
+        const MULTI_PORT: u16 = 3702;
 
-            let local_socket_addr = SocketAddr::new(IpAddr::V4(LOCAL_IPV4_ADDR), LOCAL_PORT);
-            let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
+        let local_socket_addr = SocketAddr::new(IpAddr::V4(LOCAL_IPV4_ADDR), LOCAL_PORT);
+        let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
 
-            let socket = async_std::net::UdpSocket::bind(local_socket_addr).await?;
-            socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
-            socket
-                .send_to(&probe_xml.as_bytes(), multi_socket_addr)
-                .await?;
+        let socket = async_std::net::UdpSocket::bind(local_socket_addr).await?;
+        socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
+        socket
+            .send_to(&probe_xml.as_bytes(), multi_socket_addr)
+            .await?;
 
-            Ok(socket)
-        }
+        Ok(socket)
     })()
     .await
     .map_err(Error::Network)?;
@@ -113,7 +111,7 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
         stream
             // Blend in an interval stream to implement timeout
             // Let our payload stream contain Some's and timeout stream contain None's
-            .map(|payload| Some(payload))
+            .map(Some)
             .merge(async_std::stream::interval(duration).map(|_| None))
             // Terminate stream when the first None is received
             .take_while(|event| event.is_some())
