@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod client;
 pub mod fault;
 
@@ -18,7 +19,7 @@ pub struct Response {
     pub fault: Option<fault::Fault>,
 }
 
-pub fn soap(xml: &str) -> Result<String, Error> {
+pub fn soap(xml: &str, username_token: &Option<auth::UsernameToken>) -> Result<String, Error> {
     let app_data = parse(xml)?;
 
     let mut namespaces = app_data
@@ -34,6 +35,14 @@ pub fn soap(xml: &str) -> Result<String, Error> {
     let mut envelope = xmltree::Element::new("Envelope");
     envelope.namespaces = Some(namespaces);
     envelope.prefix = Some("s".to_string());
+
+    if let Some(username_token) = username_token {
+        let mut header = xmltree::Element::new("Header");
+        header.prefix = Some("s".to_string());
+        header.children.push(parse(&username_token.to_xml())?);
+        envelope.children.push(header);
+    }
+
     envelope.children.push(body);
 
     xml_element_to_string(&envelope)
@@ -110,7 +119,7 @@ mod tests {
             </s:Envelope>
         "#;
 
-        let actual = soap(app_data).unwrap();
+        let actual = soap(app_data, &None).unwrap();
 
         println!("{}", actual);
         println!("{}", expected);

@@ -14,7 +14,7 @@ async fn main() {
         }
     };
 
-    let mut client = soap::client::Client::new(&uri);
+    let mut client = soap::client::Client::new(&uri, None);
     let date = schema::devicemgmt::get_system_date_and_time(&mut client, &Default::default()).await;
 
     println!("{:#?}", date);

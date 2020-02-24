@@ -169,7 +169,7 @@ fn build_probe() -> probe::Envelope {
 
 async fn is_addr_responding(uri: String) -> bool {
     schema::devicemgmt::get_system_date_and_time(
-        &soap::client::Client::new(&uri),
+        &soap::client::Client::new(&uri, None),
         &Default::default(),
     )
     .await

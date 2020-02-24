@@ -7,6 +7,7 @@ use reqwest;
 #[derive(Debug)]
 pub enum Error {
     Serialization(String),
+    Deserialization(String),
     Http(reqwest::Error),
     Soap(soap::Error),
     Onvif(String),
@@ -23,7 +24,7 @@ pub async fn request<T: Transport, R: YaSerialize, S: YaDeserialize>(
 ) -> Result<S, Error> {
     let ser = |obj: &R| yaserde::ser::to_string(obj).map_err(Error::Serialization);
 
-    let de = |s: &str| yaserde::de::from_str(s).map_err(Error::Serialization);
+    let de = |s: &str| yaserde::de::from_str(s).map_err(Error::Deserialization);
 
     de(&transport
         .request(&crop_xml_declaration(&ser(&request)?))
