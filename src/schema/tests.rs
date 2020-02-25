@@ -1,8 +1,8 @@
 use super::*;
 
+use crate::utils::xml_eq::assert_xml_eq;
 use async_trait::async_trait;
 use common;
-use itertools::izip;
 use onvif as tt;
 
 pub struct FakeTransport {
@@ -19,31 +19,31 @@ impl transport::Transport for FakeTransport {
 #[test]
 fn basic_deserialization() {
     let response = r#"
-    <?xml version="1.0" encoding="UTF-8"?>
-    <tds:GetSystemDateAndTimeResponse
-        xmlns:tt="http://www.onvif.org/ver10/schema"
-        xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
-        <tds:SystemDateAndTime>
-            <tt:DateTimeType>NTP</tt:DateTimeType>
-            <tt:DaylightSavings>false</tt:DaylightSavings>
-            <tt:TimeZone>
-                <tt:TZ>PST7PDT</tt:TZ>
-            </tt:TimeZone>
-            <tt:UTCDateTime>
-                <tt:Time>
-                    <tt:Hour>16</tt:Hour>
-                    <tt:Minute>20</tt:Minute>
-                    <tt:Second>9</tt:Second>
-                </tt:Time>
-                <tt:Date>
-                    <tt:Year>2019</tt:Year>
-                    <tt:Month>11</tt:Month>
-                    <tt:Day>18</tt:Day>
-                </tt:Date>
-            </tt:UTCDateTime>
-        </tds:SystemDateAndTime>
-    </tds:GetSystemDateAndTimeResponse>
-    "#;
+        <?xml version="1.0" encoding="UTF-8"?>
+        <tds:GetSystemDateAndTimeResponse
+            xmlns:tt="http://www.onvif.org/ver10/schema"
+            xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
+            <tds:SystemDateAndTime>
+                <tt:DateTimeType>NTP</tt:DateTimeType>
+                <tt:DaylightSavings>false</tt:DaylightSavings>
+                <tt:TimeZone>
+                    <tt:TZ>PST7PDT</tt:TZ>
+                </tt:TimeZone>
+                <tt:UTCDateTime>
+                    <tt:Time>
+                        <tt:Hour>16</tt:Hour>
+                        <tt:Minute>20</tt:Minute>
+                        <tt:Second>9</tt:Second>
+                    </tt:Time>
+                    <tt:Date>
+                        <tt:Year>2019</tt:Year>
+                        <tt:Month>11</tt:Month>
+                        <tt:Day>18</tt:Day>
+                    </tt:Date>
+                </tt:UTCDateTime>
+            </tds:SystemDateAndTime>
+        </tds:GetSystemDateAndTimeResponse>
+        "#;
 
     let response: devicemgmt::GetSystemDateAndTimeResponse =
         yaserde::de::from_str(&response).unwrap();
@@ -65,47 +65,27 @@ fn basic_deserialization() {
 
 #[test]
 fn basic_serialization() {
-    let expected = r#"<?xml version="1.0" encoding="UTF-8"?>
-            <tds:GetSystemDateAndTime xmlns:tds="http://www.onvif.org/ver10/device/wsdl" />
-    "#;
+    let expected = r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <tds:GetSystemDateAndTime xmlns:tds="http://www.onvif.org/ver10/device/wsdl" />
+        "#;
 
     let request: devicemgmt::GetSystemDateAndTime = Default::default();
     let actual = yaserde::ser::to_string(&request).unwrap();
 
-    let actual_iter = xml::EventReader::new(actual.as_bytes())
-        .into_iter()
-        .filter(|e| match e {
-            // TODO: test fails because "UTF-8" != "utf-8", need to think if it is crucial
-            Ok(xml::reader::XmlEvent::StartDocument { .. }) => false,
-            _ => true,
-        });
-
-    let expected_iter = xml::EventReader::new(expected.as_bytes())
-        .into_iter()
-        .filter(|e| match e {
-            Ok(xml::reader::XmlEvent::StartDocument { .. }) => false,
-            Ok(xml::reader::XmlEvent::Whitespace(_)) => false, // Remove indents from expected string
-            _ => true,
-        });
-
-    for (a, e) in izip!(actual_iter, expected_iter) {
-        println!("{:?}", a);
-        println!("{:?}", e);
-
-        assert_eq!(a, e);
-    }
+    assert_xml_eq(actual.as_str(), expected);
 }
 
 #[test]
 fn extend_base_deserialization() {
     let ser = r#"
-    <tt:VideoSourceConfiguration token="V_SRC_CFG_000" xmlns:tt="http://www.onvif.org/ver10/schema">
-        <tt:Name>V_SRC_CFG_000</tt:Name>
-        <tt:UseCount>2</tt:UseCount>
-        <tt:SourceToken>V_SRC_000</tt:SourceToken>
-        <tt:Bounds height="720" width="1280" y="0" x="0"/>
-    </tt:VideoSourceConfiguration>
-    "#;
+        <tt:VideoSourceConfiguration token="V_SRC_CFG_000" xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:Name>V_SRC_CFG_000</tt:Name>
+            <tt:UseCount>2</tt:UseCount>
+            <tt:SourceToken>V_SRC_000</tt:SourceToken>
+            <tt:Bounds height="720" width="1280" y="0" x="0"/>
+        </tt:VideoSourceConfiguration>
+        "#;
 
     let de: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
 
@@ -142,13 +122,14 @@ fn extend_base_serialization() {
     };
 
     let expected = r#"
-    <?xml version="1.0" encoding="utf-8"?>
-    <tt:VideoSourceConfiguration xmlns:tt="http://www.onvif.org/ver10/schema" token="123abc">
-        <tt:SourceToken>456cde</tt:SourceToken>
-        <tt:Bounds x="1" y="2" width="3" height="4" />
-        <tt:Name>MyName</tt:Name>
-        <tt:UseCount>2</tt:UseCount>
-    </tt:VideoSourceConfiguration>"#;
+        <?xml version="1.0" encoding="utf-8"?>
+        <tt:VideoSourceConfiguration xmlns:tt="http://www.onvif.org/ver10/schema" token="123abc">
+            <tt:SourceToken>456cde</tt:SourceToken>
+            <tt:Bounds x="1" y="2" width="3" height="4" />
+            <tt:Name>MyName</tt:Name>
+            <tt:UseCount>2</tt:UseCount>
+        </tt:VideoSourceConfiguration>
+        "#;
 
     let actual = yaserde::ser::to_string(&model).unwrap();
 
@@ -161,21 +142,21 @@ fn extend_base_serialization() {
 #[test]
 fn choice_deserialization() {
     let ser = r#"
-    <tt:ColorOptions tt:any_attribute="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
-        <tt:ColorspaceRange>
-            <tt:X><tt:Min>0.1</tt:Min><tt:Max>0.11</tt:Max></tt:X>
-            <tt:Y><tt:Min>0.2</tt:Min><tt:Max>0.22</tt:Max></tt:Y>
-            <tt:Z><tt:Min>0.3</tt:Min><tt:Max>0.33</tt:Max></tt:Z>
-            <tt:Colorspace>http://my.color.space</tt:Colorspace>
-        </tt:ColorspaceRange>
-        <tt:ColorspaceRange>
-            <tt:X><tt:Min>0.4</tt:Min><tt:Max>0.44</tt:Max></tt:X>
-            <tt:Y><tt:Min>0.5</tt:Min><tt:Max>0.55</tt:Max></tt:Y>
-            <tt:Z><tt:Min>0.6</tt:Min><tt:Max>0.66</tt:Max></tt:Z>
-            <tt:Colorspace>http://my.color.space</tt:Colorspace>
-        </tt:ColorspaceRange>
-    </tt:ColorOptions>
-    "#;
+        <tt:ColorOptions tt:any_attribute="attr_value" xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:ColorspaceRange>
+                <tt:X><tt:Min>0.1</tt:Min><tt:Max>0.11</tt:Max></tt:X>
+                <tt:Y><tt:Min>0.2</tt:Min><tt:Max>0.22</tt:Max></tt:Y>
+                <tt:Z><tt:Min>0.3</tt:Min><tt:Max>0.33</tt:Max></tt:Z>
+                <tt:Colorspace>http://my.color.space</tt:Colorspace>
+            </tt:ColorspaceRange>
+            <tt:ColorspaceRange>
+                <tt:X><tt:Min>0.4</tt:Min><tt:Max>0.44</tt:Max></tt:X>
+                <tt:Y><tt:Min>0.5</tt:Min><tt:Max>0.55</tt:Max></tt:Y>
+                <tt:Z><tt:Min>0.6</tt:Min><tt:Max>0.66</tt:Max></tt:Z>
+                <tt:Colorspace>http://my.color.space</tt:Colorspace>
+            </tt:ColorspaceRange>
+        </tt:ColorOptions>
+        "#;
 
     let des: tt::ColorOptions = yaserde::de::from_str(&ser).unwrap();
 
@@ -271,22 +252,22 @@ fn choice_serialization() {
     };
 
     let expected = r#"
-    <?xml version="1.0" encoding="utf-8"?>
-    <tt:ColorOptions xmlns:tt="http://www.onvif.org/ver10/schema">
-        <ColorspaceRange>
-            <tt:X><tt:Min>0.1</tt:Min><tt:Max>0.11</tt:Max></tt:X>
-            <tt:Y><tt:Min>0.2</tt:Min><tt:Max>0.22</tt:Max></tt:Y>
-            <tt:Z><tt:Min>0.3</tt:Min><tt:Max>0.33</tt:Max></tt:Z>
-            <tt:Colorspace>http://my.color.space</tt:Colorspace>
-        </ColorspaceRange>
-        <ColorspaceRange>
-            <tt:X><tt:Min>0.4</tt:Min><tt:Max>0.44</tt:Max></tt:X>
-            <tt:Y><tt:Min>0.5</tt:Min><tt:Max>0.55</tt:Max></tt:Y>
-            <tt:Z><tt:Min>0.6</tt:Min><tt:Max>0.66</tt:Max></tt:Z>
-            <tt:Colorspace>http://my.color.space</tt:Colorspace>
-        </ColorspaceRange>
-    </tt:ColorOptions>
-    "#;
+        <?xml version="1.0" encoding="utf-8"?>
+        <tt:ColorOptions xmlns:tt="http://www.onvif.org/ver10/schema">
+            <ColorspaceRange>
+                <tt:X><tt:Min>0.1</tt:Min><tt:Max>0.11</tt:Max></tt:X>
+                <tt:Y><tt:Min>0.2</tt:Min><tt:Max>0.22</tt:Max></tt:Y>
+                <tt:Z><tt:Min>0.3</tt:Min><tt:Max>0.33</tt:Max></tt:Z>
+                <tt:Colorspace>http://my.color.space</tt:Colorspace>
+            </ColorspaceRange>
+            <ColorspaceRange>
+                <tt:X><tt:Min>0.4</tt:Min><tt:Max>0.44</tt:Max></tt:X>
+                <tt:Y><tt:Min>0.5</tt:Min><tt:Max>0.55</tt:Max></tt:Y>
+                <tt:Z><tt:Min>0.6</tt:Min><tt:Max>0.66</tt:Max></tt:Z>
+                <tt:Colorspace>http://my.color.space</tt:Colorspace>
+            </ColorspaceRange>
+        </tt:ColorOptions>
+        "#;
 
     let actual = yaserde::ser::to_string(&model).unwrap();
 
@@ -309,14 +290,14 @@ fn duration_serialization() {
     };
 
     let expected = r#"
-    <?xml version="1.0" encoding="utf-8"?>
-    <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
-        <tt:Uri>http://a/b/c</tt:Uri>
-        <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
-        <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
-        <tt:Timeout>PT60S</tt:Timeout>
-    </tt:MediaUri>
-    "#;
+        <?xml version="1.0" encoding="utf-8"?>
+        <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:Uri>http://a/b/c</tt:Uri>
+            <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
+            <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
+            <tt:Timeout>PT60S</tt:Timeout>
+        </tt:MediaUri>
+        "#;
 
     let actual = yaserde::ser::to_string(&model).unwrap();
 
@@ -326,13 +307,13 @@ fn duration_serialization() {
 #[test]
 fn duration_deserialization() {
     let ser = r#"
-    <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
-        <tt:Uri>http://a/b/c</tt:Uri>
-        <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
-        <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
-        <tt:Timeout>PT60S</tt:Timeout>
-    </tt:MediaUri>
-    "#;
+        <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:Uri>http://a/b/c</tt:Uri>
+            <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
+            <tt:InvalidAfterReboot>true</tt:InvalidAfterReboot>
+            <tt:Timeout>PT60S</tt:Timeout>
+        </tt:MediaUri>
+        "#;
 
     let des: tt::MediaUri = yaserde::de::from_str(&ser).unwrap();
 
@@ -390,17 +371,16 @@ async fn operation_get_device_information() {
 
     let transport = FakeTransport {
         response: r#"
-        <tds:GetDeviceInformationResponse
-                    xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
-                    xmlns:tt="http://www.onvif.org/ver10/schema">
-            <tds:Manufacturer>Somebody</tds:Manufacturer>
-            <tds:Model>IPCamera</tds:Model>
-            <tds:FirmwareVersion>1.5</tds:FirmwareVersion>
-            <tds:SerialNumber>a12b34</tds:SerialNumber>
-            <tds:HardwareId>2.0</tds:HardwareId>
-        </tds:GetDeviceInformationResponse>
-    "#
-        .into(),
+            <tds:GetDeviceInformationResponse
+                        xmlns:tds="http://www.onvif.org/ver10/device/wsdl"
+                        xmlns:tt="http://www.onvif.org/ver10/schema">
+                <tds:Manufacturer>Somebody</tds:Manufacturer>
+                <tds:Model>IPCamera</tds:Model>
+                <tds:FirmwareVersion>1.5</tds:FirmwareVersion>
+                <tds:SerialNumber>a12b34</tds:SerialNumber>
+                <tds:HardwareId>2.0</tds:HardwareId>
+            </tds:GetDeviceInformationResponse>"#
+            .into(),
     };
 
     let resp = devicemgmt::get_device_information(&transport, &req)
@@ -522,11 +502,11 @@ fn list_serialization() {
     };
 
     let expected = r#"
-    <?xml version="1.0" encoding="utf-8"?>
-    <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
-        <tt:AFModes>Auto Manual</tt:AFModes>
-    </tt:FocusOptions20Extension>
-    "#;
+        <?xml version="1.0" encoding="utf-8"?>
+        <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:AFModes>Auto Manual</tt:AFModes>
+        </tt:FocusOptions20Extension>
+        "#;
 
     let actual = yaserde::ser::to_string(&model).unwrap();
 
@@ -536,10 +516,10 @@ fn list_serialization() {
 #[test]
 fn list_deserialization() {
     let ser = r#"
-    <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
-        <tt:AFModes>Auto Manual</tt:AFModes>
-    </tt:FocusOptions20Extension>
-    "#;
+        <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:AFModes>Auto Manual</tt:AFModes>
+        </tt:FocusOptions20Extension>
+        "#;
 
     let des: tt::FocusOptions20Extension = yaserde::de::from_str(&ser).unwrap();
 
@@ -550,21 +530,4 @@ fn list_deserialization() {
             "Manual".to_string()
         ]))
     );
-}
-
-pub fn assert_xml_eq(actual: &str, expected: &str) -> () {
-    for (a, e) in izip!(without_whitespaces(actual), without_whitespaces(expected)) {
-        assert_eq!(a, e);
-    }
-}
-
-fn without_whitespaces<'a>(
-    expected: &'a str,
-) -> impl Iterator<Item = Result<xml::reader::XmlEvent, xml::reader::Error>> + 'a {
-    xml::EventReader::new(expected.as_bytes())
-        .into_iter()
-        .filter(|e| match e {
-            Ok(xml::reader::XmlEvent::Whitespace(_)) => false,
-            _ => true,
-        })
 }

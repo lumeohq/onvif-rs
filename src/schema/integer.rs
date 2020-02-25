@@ -40,7 +40,7 @@ impl YaSerialize for Integer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::tests::assert_xml_eq;
+    use crate::utils::xml_eq::assert_xml_eq;
 
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
     #[yaserde(prefix = "t", namespace = "t: test")]
