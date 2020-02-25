@@ -95,7 +95,7 @@ fn get_fault(envelope: &xmltree::Element) -> Result<fault::Fault, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::izip;
+    use crate::utils::xml_eq::assert_xml_eq;
 
     #[test]
     fn test_soap() {
@@ -104,7 +104,7 @@ mod tests {
                 <my:Title>Such book</my:Title>
                 <my:Pages>42</my:Pages>
             </my:Book>
-        "#;
+            "#;
 
         let expected = r#"
             <?xml version="1.0" encoding="UTF-8"?>
@@ -117,7 +117,7 @@ mod tests {
                     </my:Book>
                 </s:Body>
             </s:Envelope>
-        "#;
+            "#;
 
         let actual = soap(app_data, &None).unwrap();
 
@@ -125,26 +125,6 @@ mod tests {
         println!("{}", expected);
 
         assert_xml_eq(actual.as_str(), expected);
-    }
-
-    fn assert_xml_eq(actual: &str, expected: &str) -> () {
-        for (a, e) in izip!(without_whitespaces(actual), without_whitespaces(expected)) {
-            println!("{:?}", a);
-            println!("{:?}", e);
-
-            assert_eq!(a, e);
-        }
-    }
-
-    fn without_whitespaces<'a>(
-        expected: &'a str,
-    ) -> impl Iterator<Item = Result<xml::reader::XmlEvent, xml::reader::Error>> + 'a {
-        xml::EventReader::new(expected.as_bytes())
-            .into_iter()
-            .filter(|e| match e {
-                Ok(xml::reader::XmlEvent::Whitespace(_)) => false,
-                _ => true,
-            })
     }
 
     #[test]
@@ -173,7 +153,7 @@ mod tests {
                     </my:Book>
                 </s:Body>
             </s:Envelope>
-        "#;
+            "#;
 
         let actual = unsoap(input).unwrap();
 
@@ -212,7 +192,7 @@ mod tests {
                     <soapenv:Text>fault detail</soapenv:Text>
                 </soapenv:Detail>
             </soapenv:Fault>
-        "#;
+            "#;
 
         let envelope = xmltree::Element::parse(response.as_bytes()).unwrap();
 
