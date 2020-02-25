@@ -38,7 +38,7 @@ impl YaSerialize for Decimal {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::tests::assert_xml_eq;
+    use crate::utils::xml_eq::assert_xml_eq;
     use num_bigint::ToBigInt;
 
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
