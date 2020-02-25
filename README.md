@@ -1,6 +1,6 @@
 # ONVIF-rs
 
-ONVIF-rs is a Rust client library mplementation of the ONVIF specification.
+ONVIF-rs is a Rust client library implementation of the ONVIF specification.
 
 ## Installation
 
