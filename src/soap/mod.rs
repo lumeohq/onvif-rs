@@ -1,8 +1,9 @@
 pub mod auth;
 pub mod client;
-pub mod fault;
 #[cfg(test)]
 mod tests;
+
+use crate::schema::soap_envelope;
 
 const SOAP_URI: &str = "http://www.w3.org/2003/05/soap-envelope";
 
@@ -12,7 +13,7 @@ pub enum Error {
     EnvelopeNotFound,
     BodyNotFound,
     BodyIsEmpty,
-    Fault(fault::Fault),
+    Fault(soap_envelope::Fault),
     InternalError(String),
 }
 
@@ -87,7 +88,7 @@ fn xml_element_to_string(el: &xmltree::Element) -> Result<String, Error> {
     String::from_utf8(out).map_err(|e| Error::InternalError(e.to_string()))
 }
 
-fn deserialize_fault(envelope: &xmltree::Element) -> Result<fault::Fault, Error> {
+fn deserialize_fault(envelope: &xmltree::Element) -> Result<soap_envelope::Fault, Error> {
     let string = xml_element_to_string(envelope)?;
     yaserde::de::from_str(&string).map_err(Error::InternalError)
 }
