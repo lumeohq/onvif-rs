@@ -1,6 +1,6 @@
 extern crate reqwest;
-use crate::schema::transport::{Error, Transport};
 use crate::soap;
+use crate::transport::{Error, Transport};
 use async_trait::async_trait;
 
 #[derive(Default, Debug, Clone)]

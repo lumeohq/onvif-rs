@@ -7,4 +7,5 @@ pub mod discovery;
 pub mod schema;
 pub mod soap;
 
+mod transport;
 mod utils;

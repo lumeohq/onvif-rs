@@ -10,7 +10,6 @@ pub enum Error {
     Deserialization(String),
     Http(reqwest::Error),
     Soap(soap::Error),
-    Onvif(String),
 }
 
 #[async_trait]
