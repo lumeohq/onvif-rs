@@ -10,13 +10,13 @@ pub enum Error {
     EnvelopeNotFound,
     BodyNotFound,
     BodyIsEmpty,
+    Fault(fault::Fault),
     InternalError(String),
 }
 
 #[derive(Debug)]
 pub struct Response {
     pub response: Option<String>,
-    pub fault: Option<fault::Fault>,
 }
 
 pub fn soap(xml: &str, username_token: &Option<auth::UsernameToken>) -> Result<String, Error> {
@@ -48,7 +48,7 @@ pub fn soap(xml: &str, username_token: &Option<auth::UsernameToken>) -> Result<S
     xml_element_to_string(&envelope)
 }
 
-pub fn unsoap(xml: &str) -> Result<Response, Error> {
+pub fn unsoap(xml: &str) -> Result<String, Error> {
     let root = parse(xml)?;
 
     let envelope = match root.name.as_ref() {
@@ -61,19 +61,17 @@ pub fn unsoap(xml: &str) -> Result<Response, Error> {
         None => Err(Error::BodyNotFound),
     }?;
 
+    match body.get_child("Fault") {
+        Some(fault) => deserialize_fault(fault).and_then(|fault| Err(Error::Fault(fault))),
+        None => Ok(()),
+    }?;
+
     let response = match body.children.first() {
         Some(app_data) => xml_element_to_string(&app_data),
         _ => Err(Error::BodyIsEmpty),
     }?;
 
-    let fault = body
-        .get_child("Fault")
-        .and_then(|elem| get_fault(elem).ok());
-
-    Ok(Response {
-        response: Some(response),
-        fault,
-    })
+    Ok(response)
 }
 
 fn parse(xml: &str) -> Result<xmltree::Element, Error> {
@@ -87,7 +85,7 @@ fn xml_element_to_string(el: &xmltree::Element) -> Result<String, Error> {
     String::from_utf8(out).map_err(|e| Error::InternalError(e.to_string()))
 }
 
-fn get_fault(envelope: &xmltree::Element) -> Result<fault::Fault, Error> {
+fn deserialize_fault(envelope: &xmltree::Element) -> Result<fault::Fault, Error> {
     let string = xml_element_to_string(envelope)?;
     yaserde::de::from_str(&string).map_err(Error::InternalError)
 }
@@ -159,7 +157,7 @@ mod tests {
 
         println!("{:?}", actual);
 
-        let parsed: Book = yaserde::de::from_str(&actual.response.unwrap()).unwrap();
+        let parsed: Book = yaserde::de::from_str(&actual).unwrap();
 
         assert_eq!(parsed.title, "Such book");
         assert_eq!(parsed.pages, 42);
@@ -196,7 +194,7 @@ mod tests {
 
         let envelope = xmltree::Element::parse(response.as_bytes()).unwrap();
 
-        let fault = get_fault(&envelope).unwrap();
+        let fault = deserialize_fault(&envelope).unwrap();
 
         assert_eq!(fault.code.value, "fault code");
         assert_eq!(fault.code.subcode.unwrap().value, "ter:fault subcode");
