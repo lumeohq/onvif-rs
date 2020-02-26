@@ -1,7 +1,5 @@
 // xsd:
 pub mod common;
-pub mod decimal;
-pub mod integer;
 #[allow(unused_imports)]
 pub mod metadatastream;
 pub mod onvif;
