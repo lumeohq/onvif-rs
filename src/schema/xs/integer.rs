@@ -33,7 +33,7 @@ impl YaDeserialize for Integer {
 
 impl YaSerialize for Integer {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, "Integer", writer, |s| Ok(s.value.to_str_radix(10)))
+        utils::yaserde::serialize(self, "Integer", writer, |s| s.value.to_str_radix(10))
     }
 }
 

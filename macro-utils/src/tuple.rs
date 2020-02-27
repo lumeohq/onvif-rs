@@ -30,10 +30,10 @@ pub fn from_to_string(ast: &syn::DeriveInput) -> TokenStream {
                         Ok(#struct_name(#from))
                     }
 
-                    pub fn to_string(&self) -> Result<String, String> {
+                    pub fn to_string(&self) -> String {
                         use itertools::Itertools;
 
-                        Ok(#to)
+                        #to
                     }
                 }
             }
@@ -62,18 +62,12 @@ fn from_str(ty: &Type) -> TokenStream {
 fn to_string(ty: &Type) -> TokenStream {
     match ty {
         Type::String(_) => quote! { self.0.clone() },
-        Type::Simple(_) => quote! { self.0.to_string() },
-        Type::Struct(_) => quote! { self.0.to_string()? },
+        Type::Simple(_) | Type::Struct(_) => quote! { self.0.to_string() },
         Type::Vec(_, subtype) => match Type::from_path(&subtype) {
-            Type::Simple(_) | Type::String(_) => quote! {
+            Type::String(_) | Type::Simple(_) | Type::Struct(_) => quote! {
                 self.0
                     .iter()
-                    .join(" ")
-            },
-            Type::Struct(_) => quote! {
-                self.0
-                    .iter()
-                    .flat_map(|x| x.to_string().ok())
+                    .map(|x| x.to_string())
                     .join(" ")
             },
             _ => syn::Error::new(subtype.span(), "Not implemented for this subtype")
