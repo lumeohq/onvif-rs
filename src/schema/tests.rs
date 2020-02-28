@@ -493,7 +493,7 @@ fn probe_match_deserialization() {
 }
 
 #[test]
-fn list_serialization() {
+fn string_list_serialization() {
     let model = tt::FocusOptions20Extension {
         af_modes: Some(tt::StringAttrList(vec![
             "Auto".to_string(),
@@ -514,7 +514,7 @@ fn list_serialization() {
 }
 
 #[test]
-fn list_deserialization() {
+fn string_list_deserialization() {
     let ser = r#"
         <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
             <tt:AFModes>Auto Manual</tt:AFModes>
@@ -530,4 +530,30 @@ fn list_deserialization() {
             "Manual".to_string()
         ]))
     );
+}
+
+#[test]
+fn float_list_serialization() {
+    let model = tt::FloatAttrList(vec![1.0, 2.3, 3.99]);
+
+    let expected = r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <FloatAttrList>1 2.3 3.99</FloatAttrList>
+        "#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    assert_xml_eq(actual.as_str(), expected);
+}
+
+#[test]
+fn float_list_deserialization() {
+    let ser = r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <FloatAttrList>1 2.3 3.99</FloatAttrList>
+        "#;
+
+    let des: tt::FloatAttrList = yaserde::de::from_str(&ser).unwrap();
+
+    assert_eq!(des, tt::FloatAttrList(vec![1.0, 2.3, 3.99]));
 }
