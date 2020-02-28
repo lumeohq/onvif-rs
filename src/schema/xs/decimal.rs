@@ -31,7 +31,7 @@ impl YaDeserialize for Decimal {
 
 impl YaSerialize for Decimal {
     fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> Result<(), String> {
-        utils::yaserde::serialize(self, "Decimal", writer, |s| Ok(s.value.to_string()))
+        utils::yaserde::serialize(self, "Decimal", writer, |s| s.value.to_string())
     }
 }
 

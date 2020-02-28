@@ -5,7 +5,7 @@ pub fn serialize<S, W: Write>(
     self_bypass: &S,
     default_name: &str,
     writer: &mut ser::Serializer<W>,
-    ser_fn: impl FnOnce(&S) -> Result<String, String>,
+    ser_fn: impl FnOnce(&S) -> String,
 ) -> Result<(), String> {
     let name = writer
         .get_start_event_name()
@@ -19,7 +19,7 @@ pub fn serialize<S, W: Write>(
 
     writer
         .write(xml::writer::XmlEvent::characters(
-            ser_fn(self_bypass)?.as_str(),
+            ser_fn(self_bypass).as_str(),
         ))
         .map_err(|_e| "Element value write failed".to_string())?;
 

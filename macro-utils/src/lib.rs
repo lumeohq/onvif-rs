@@ -10,11 +10,13 @@ mod tuple;
 pub fn tuple_serde(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse(input).unwrap();
 
-    let from_to_string = tuple::from_to_string(&ast);
+    let from_str = tuple::from_str(&ast);
+    let display = tuple::display(&ast);
     let serde = tuple::serde(&ast);
 
     let ts = quote! {
-        #from_to_string
+        #from_str
+        #display
         #serde
     };
 
