@@ -2,51 +2,18 @@ use proc_macro2::TokenStream;
 use quote;
 use syn::spanned::Spanned;
 
-enum Type {
-    Simple(syn::Path),
-    String(syn::Path),
-    Struct(syn::Path),
-    Vec(syn::Path, syn::Path),
+enum Type<'a> {
+    Simple(&'a syn::Path),
+    String(&'a syn::Path),
+    Struct(&'a syn::Path),
+    Vec(&'a syn::Path, &'a syn::Path),
 }
 
-pub fn from_to_string(ast: &syn::DeriveInput) -> TokenStream {
-    match &ast.data {
-        syn::Data::Struct(data_struct) => {
-            let struct_name = &ast.ident;
-
-            let field_path = extract_field_path(&data_struct).expect("Bad field count or type");
-
-            let ty = Type::from_path(&field_path);
-
-            let from = from_str(&ty);
-
-            let to = to_string(&ty);
-
-            quote! {
-                impl #struct_name {
-                    pub fn from_str(s: &str) -> Result<#struct_name, String> {
-                        use std::str::FromStr;
-
-                        Ok(#struct_name(#from))
-                    }
-
-                    pub fn to_string(&self) -> String {
-                        use itertools::Itertools;
-
-                        #to
-                    }
-                }
-            }
-        }
-        _ => unimplemented!("Implemented only for structs"),
-    }
-}
-
-fn from_str(ty: &Type) -> TokenStream {
-    match ty {
+pub fn from_str(ast: &syn::DeriveInput) -> TokenStream {
+    let convert = match extract_field_type(ast) {
         Type::String(_) => quote! { s.to_string() },
-        Type::Simple(ty) => quote! { #ty::from_str(s).map_err(|e| e.to_string())? },
         Type::Struct(ty) => quote! { #ty::from_str(s)? },
+        Type::Simple(ty) => quote! { #ty::from_str(s).map_err(|e| e.to_string())? },
         Type::Vec(_, subtype) => match Type::from_path(&subtype) {
             Type::String(subtype) | Type::Struct(subtype) | Type::Simple(subtype) => quote! {
                 s.split_whitespace()
@@ -56,27 +23,50 @@ fn from_str(ty: &Type) -> TokenStream {
             _ => syn::Error::new(subtype.span(), "Not implemented for this subtype")
                 .to_compile_error(),
         },
+    };
+
+    let struct_name = &ast.ident;
+
+    quote! {
+        impl std::str::FromStr for #struct_name {
+            type Err = String;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                use std::str::FromStr;
+
+                Ok(#struct_name(#convert))
+            }
+        }
     }
 }
 
-fn to_string(ty: &Type) -> TokenStream {
-    match ty {
-        Type::String(_) => quote! { self.0.clone() },
-        Type::Simple(_) | Type::Struct(_) => quote! { self.0.to_string() },
+pub fn display(ast: &syn::DeriveInput) -> TokenStream {
+    let write = match extract_field_type(ast) {
+        Type::String(_) | Type::Simple(_) | Type::Struct(_) => quote! {
+            write!(f, "{}", self.0)
+        },
         Type::Vec(_, subtype) => match Type::from_path(&subtype) {
             Type::String(_) | Type::Simple(_) | Type::Struct(_) => quote! {
-                self.0
-                    .iter()
-                    .map(|x| x.to_string())
-                    .join(" ")
+                write!(f, "{}", self.0.iter().join(" "))
             },
             _ => syn::Error::new(subtype.span(), "Not implemented for this subtype")
                 .to_compile_error(),
         },
+    };
+
+    let struct_name = &ast.ident;
+
+    quote! {
+        impl std::fmt::Display for #struct_name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                use itertools::Itertools;
+                #write
+            }
+        }
     }
 }
 
-impl Type {
+impl Type<'_> {
     pub fn from_path(path: &syn::Path) -> Type {
         match path
             .segments
@@ -87,15 +77,14 @@ impl Type {
             .as_str()
         {
             "bool" | "i8" | "u8" | "i16" | "u16" | "i32" | "u32" | "i64" | "u64" | "f32"
-            | "f64" => Type::Simple(path.clone()),
-            "String" => Type::String(path.clone()),
+            | "f64" => Type::Simple(path),
+            "String" => Type::String(path),
             "Vec" => Type::Vec(
-                path.clone(),
+                path,
                 extract_subtype(path.segments.last().expect("Missing subtype"))
-                    .expect("Vec subtype not found")
-                    .clone(),
+                    .expect("Vec subtype not found"),
             ),
-            _ => Type::Struct(path.clone()),
+            _ => Type::Struct(path),
         }
     }
 }
@@ -116,6 +105,17 @@ pub fn serde(ast: &syn::DeriveInput) -> TokenStream {
                 utils::yaserde::deserialize(reader, |s| #struct_name::from_str(s))
             }
         }
+    }
+}
+
+fn extract_field_type(ast: &syn::DeriveInput) -> Type {
+    match &ast.data {
+        syn::Data::Struct(data_struct) => {
+            let field_path = extract_field_path(&data_struct).expect("Bad field count or type");
+
+            Type::from_path(&field_path)
+        }
+        _ => unimplemented!("Implemented only for structs"),
     }
 }
 

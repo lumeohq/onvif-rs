@@ -20,6 +20,7 @@ use crate::schema::{b_2 as wsnt, soap_envelope as soapenv, xmlmime as xmime, xop
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
+use std::str::FromStr;
 use yaserde::{YaDeserialize, YaSerialize};
 
 //generated file

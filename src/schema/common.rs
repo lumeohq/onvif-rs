@@ -8,6 +8,7 @@
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
+use std::str::FromStr;
 use yaserde::{YaDeserialize, YaSerialize};
 
 //generated file
