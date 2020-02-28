@@ -74,5 +74,3 @@ pub mod ws_discovery;
 
 #[cfg(test)]
 mod tests;
-
-pub mod transport;

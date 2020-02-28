@@ -49,8 +49,8 @@
 //  - event.wsdl. It is a little bit more complex case for code generation.
 //  - everything else. Simpler case. Let current file (devicegmt.rs) be an example of this group.
 
-use super::transport;
 use crate::schema::onvif as tt;
+use crate::transport;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
 

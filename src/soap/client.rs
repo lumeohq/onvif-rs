@@ -1,6 +1,6 @@
 extern crate reqwest;
-use crate::schema::transport::{Error, Transport};
 use crate::soap;
+use crate::transport::{Error, Transport};
 use async_trait::async_trait;
 
 #[derive(Default, Debug, Clone)]
@@ -29,13 +29,7 @@ impl Transport for Client {
             .text()
             .await
             .map_err(Error::Http)
-            .and_then(|text| {
-                soap::unsoap(&text)
-                    .map_err(Error::Soap)
-                    // TODO: process SOAP fault messages
-                    // probably need to return something more than a String
-                    .map(|response| response.response.unwrap())
-            })
+            .and_then(|text| soap::unsoap(&text).map_err(Error::Soap))
     }
 }
 
