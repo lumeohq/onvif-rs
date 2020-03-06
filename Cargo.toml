@@ -27,3 +27,5 @@ bigdecimal = "0.1.0"
 macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "cf5a898e" }
 xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "cf5a898e" }
 
+[dev-dependencies]
+assert_approx_eq = "1.1.0"
