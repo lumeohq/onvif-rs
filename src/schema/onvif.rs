@@ -15,8 +15,10 @@
 // <xs:import namespace="http://docs.oasis-open.org/wsn/b-2" schemaLocation="http://docs.oasis-open.org/wsn/b-2.xsd"/>
 // <xs:import namespace="http://www.w3.org/2004/08/xop/include" schemaLocation="http://www.w3.org/2004/08/xop/include"/>
 
-use crate::schema::common::*;
-use crate::schema::{b_2 as wsnt, soap_envelope as soapenv, xmlmime as xmime, xop, xs};
+pub use crate::schema::common::*;
+use crate::schema::{
+    b_2 as wsnt, soap_envelope as soapenv, validate::Validate, xmlmime as xmime, xop,
+};
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
@@ -24,7 +26,6 @@ use std::str::FromStr;
 use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
 
-//generated file
 //use common.xsd  ;
 
 //use http://www.w3.org/2005/05/xmlmime  http://www.w3.org/2005/05/xmlmime;
@@ -44,9 +45,23 @@ pub struct DeviceEntity {
     pub token: ReferenceToken,
 }
 
+impl Validate for DeviceEntity {}
+
 // User readable name. Length up to 64 characters.
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Name(pub String);
+
+impl Validate for Name {
+    fn validate(&self) -> Result<(), String> {
+        if self.0.len() > "64".parse().unwrap() {
+            return Err(format!(
+                "MaxLength validation error. \nExpected: 0 length <= 64 \nActual: 0 length == {}",
+                self.0.len()
+            ));
+        }
+        Ok(())
+    }
+}
 
 // Rectangle defined by lower left corner position and size. Units are pixel.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -64,6 +79,8 @@ pub struct IntRectangle {
     #[yaserde(attribute, rename = "height")]
     pub height: i32,
 }
+
+impl Validate for IntRectangle {}
 
 // Range of a rectangle. The rectangle itself is defined by lower left corner
 // position and size. Units are pixel.
@@ -87,6 +104,8 @@ pub struct IntRectangleRange {
     pub height_range: IntRange,
 }
 
+impl Validate for IntRectangleRange {}
+
 // Range of values greater equal Min value and less equal Max value.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -97,6 +116,8 @@ pub struct FloatRange {
     #[yaserde(prefix = "tt", rename = "Max")]
     pub max: f64,
 }
+
+impl Validate for FloatRange {}
 
 // Range of duration greater equal Min duration and less equal Max duration.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -109,6 +130,8 @@ pub struct DurationRange {
     pub max: xs::Duration,
 }
 
+impl Validate for DurationRange {}
+
 // List of values.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -117,17 +140,27 @@ pub struct IntList {
     pub items: Vec<i32>,
 }
 
+impl Validate for IntList {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct IntAttrList(pub Vec<i32>);
+
+impl Validate for IntAttrList {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct FloatAttrList(pub Vec<f64>);
 
+impl Validate for FloatAttrList {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct StringAttrList(pub Vec<String>);
 
+impl Validate for StringAttrList {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct ReferenceTokenList(pub Vec<ReferenceToken>);
+
+impl Validate for ReferenceTokenList {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -136,6 +169,8 @@ pub struct FloatList {
     pub items: Vec<f64>,
 }
 
+impl Validate for FloatList {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct StringItems {
@@ -143,30 +178,20 @@ pub struct StringItems {
     pub item: Vec<String>,
 }
 
+impl Validate for StringItems {}
+
 // pub type StringList = StringAttrList;
-
-// type IntRange = IntRange;
-
+// pub type IntRange = IntRange;
 // pub type IntList = IntAttrList;
-
-// type FloatRange = FloatRange;
-
+// pub type FloatRange = FloatRange;
 // pub type FloatList = FloatAttrList;
-
-// type DurationRange = DurationRange;
-
-// type IntRectangleRange = IntRectangleRange;
-
+// pub type DurationRange = DurationRange;
+// pub type IntRectangleRange = IntRectangleRange;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AnyHolder {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct AnyHolder {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for AnyHolder {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -186,21 +211,16 @@ pub struct VideoSource {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<VideoSourceExtension>,
 
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
 
+impl Validate for VideoSource {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Optional configuration of the image sensor. To be used if imaging service
     // 2.00 is supported.
     #[yaserde(prefix = "tt", rename = "Imaging")]
@@ -210,12 +230,13 @@ pub struct VideoSourceExtension {
     pub extension: Option<VideoSourceExtension2>,
 }
 
+impl Validate for VideoSourceExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoSourceExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct VideoSourceExtension2 {}
+
+impl Validate for VideoSourceExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -224,17 +245,12 @@ pub struct AudioSource {
     #[yaserde(prefix = "tt", rename = "Channels")]
     pub channels: i32,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
+
+impl Validate for AudioSource {}
 
 // A media profile consists of a set of media configurations. Media profiles are
 // used by a client
@@ -282,20 +298,17 @@ pub struct Profile {
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 
-    // A value of true signals that the profile cannot be deleted. Default is false.
+    // A value of true signals that the profile cannot be deleted. Default is
+    // false.
     #[yaserde(attribute, rename = "fixed")]
     pub fixed: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Profile {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ProfileExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Optional configuration of the Audio output.
     #[yaserde(prefix = "tt", rename = "AudioOutputConfiguration")]
     pub audio_output_configuration: Option<AudioOutputConfiguration>,
@@ -306,36 +319,25 @@ pub struct ProfileExtension {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ProfileExtension2>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ProfileExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ProfileExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ProfileExtension2 {}
 
-// type VideoSourceConfiguration = VideoSourceConfiguration;
+impl Validate for ProfileExtension2 {}
 
-// type AudioSourceConfiguration = AudioSourceConfiguration;
-
-// type VideoEncoderConfiguration = VideoEncoderConfiguration;
-
-// type AudioEncoderConfiguration = AudioEncoderConfiguration;
-
-// type VideoAnalyticsConfiguration = VideoAnalyticsConfiguration;
-
-// type Ptzconfiguration = Ptzconfiguration;
-
-// type MetadataConfiguration = MetadataConfiguration;
-
-// type AudioOutputConfiguration = AudioOutputConfiguration;
-
-// type AudioDecoderConfiguration = AudioDecoderConfiguration;
-
+// pub type VideoSourceConfiguration = VideoSourceConfiguration;
+// pub type AudioSourceConfiguration = AudioSourceConfiguration;
+// pub type VideoEncoderConfiguration = VideoEncoderConfiguration;
+// pub type AudioEncoderConfiguration = AudioEncoderConfiguration;
+// pub type VideoAnalyticsConfiguration = VideoAnalyticsConfiguration;
+// pub type Ptzconfiguration = Ptzconfiguration;
+// pub type MetadataConfiguration = MetadataConfiguration;
+// pub type AudioOutputConfiguration = AudioOutputConfiguration;
+// pub type AudioDecoderConfiguration = AudioDecoderConfiguration;
 // Base type defining the common properties of a configuration.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -354,6 +356,8 @@ pub struct ConfigurationEntity {
     pub token: ReferenceToken,
 }
 
+impl Validate for ConfigurationEntity {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceConfiguration {
@@ -361,24 +365,18 @@ pub struct VideoSourceConfiguration {
     #[yaserde(prefix = "tt", rename = "SourceToken")]
     pub source_token: ReferenceToken,
 
-    // Rectangle specifying the Video capturing area. The capturing area shall not
-    // be larger than the whole Video source area.
+    // Rectangle specifying the Video capturing area. The capturing area shall
+    // not be larger than the whole Video source area.
     #[yaserde(prefix = "tt", rename = "Bounds")]
     pub bounds: IntRectangle,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<VideoSourceConfigurationExtension>,
 
-    // Readonly parameter signalling Source configuration's view mode, for devices
-    // supporting different view modes as defined in tt:viewModes.
+    // Readonly parameter signalling Source configuration's view mode, for
+    // devices supporting different view modes as defined in tt:viewModes.
     #[yaserde(attribute, rename = "ViewMode")]
     pub view_mode: Option<String>,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -394,6 +392,8 @@ pub struct VideoSourceConfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for VideoSourceConfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceConfigurationExtension {
@@ -407,21 +407,23 @@ pub struct VideoSourceConfigurationExtension {
     pub extension: Option<VideoSourceConfigurationExtension2>,
 }
 
+impl Validate for VideoSourceConfigurationExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceConfigurationExtension2 {
-    // Optional element describing the geometric lens distortion. Multiple instances
-    // for future variable lens support.
+    // Optional element describing the geometric lens distortion. Multiple
+    // instances for future variable lens support.
     #[yaserde(prefix = "tt", rename = "LensDescription")]
     pub lens_description: Vec<LensDescription>,
 
-    // Optional element describing the scene orientation in the camera’s field of
-    // view.
+    // Optional element describing the scene orientation in the camera’s field
+    // of view.
     #[yaserde(prefix = "tt", rename = "SceneOrientation")]
     pub scene_orientation: SceneOrientation,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
 }
+
+impl Validate for VideoSourceConfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -438,27 +440,28 @@ pub struct Rotate {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<RotateExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Rotate {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct RotateExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct RotateExtension {}
+
+impl Validate for RotateExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum RotateMode {
-    // Enable the Rotate feature. Degree of rotation is specified Degree parameter.
+    // Enable the Rotate feature. Degree of rotation is specified Degree
+    // parameter.
+    #[yaserde(rename = "OFF")]
     Off,
     // Disable the Rotate feature.
+    #[yaserde(rename = "ON")]
     On,
     // Rotate feature is automatically activated by the device.
+    #[yaserde(rename = "AUTO")]
     Auto,
-
     __Unknown__(String),
 }
 
@@ -467,6 +470,8 @@ impl Default for RotateMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for RotateMode {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -479,17 +484,13 @@ pub struct LensProjection {
     #[yaserde(prefix = "tt", rename = "Radius")]
     pub radius: f64,
 
-    // Optional ray absorption at the given angle due to vignetting. A value of one
-    // means no absorption.
+    // Optional ray absorption at the given angle due to vignetting. A value of
+    // one means no absorption.
     #[yaserde(prefix = "tt", rename = "Transmittance")]
     pub transmittance: Option<f64>,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for LensProjection {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -501,10 +502,9 @@ pub struct LensOffset {
     // Optional vertical offset of the lens center in normalized coordinates.
     #[yaserde(attribute, rename = "y")]
     pub y: Option<f64>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for LensOffset {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -513,30 +513,26 @@ pub struct LensDescription {
     #[yaserde(prefix = "tt", rename = "Offset")]
     pub offset: LensOffset,
 
-    // Radial description of the projection characteristics. The resulting curve is
-    // defined by the B-Spline interpolation
-    // over the given elements. The element for Radius zero shall not be provided.
-    // The projection points shall be ordered with ascending Radius.
+    // Radial description of the projection characteristics. The resulting curve
+    // is defined by the B-Spline interpolation
+    // over the given elements. The element for Radius zero shall not be
+    // provided. The projection points shall be ordered with ascending Radius.
     // Items outside the last projection Radius shall be assumed to be invisible
     // (black).
     #[yaserde(prefix = "tt", rename = "Projection")]
     pub projection: Vec<LensProjection>,
 
-    // Compensation of the x coordinate needed for the ONVIF normalized coordinate
-    // system.
+    // Compensation of the x coordinate needed for the ONVIF normalized
+    // coordinate system.
     #[yaserde(prefix = "tt", rename = "XFactor")]
     pub x_factor: f64,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
 
     // Optional focal length of the optical system.
     #[yaserde(attribute, rename = "FocalLength")]
     pub focal_length: Option<f64>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for LensDescription {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -560,17 +556,13 @@ pub struct VideoSourceConfigurationOptions {
     // Maximum number of profiles.
     #[yaserde(attribute, rename = "MaximumNumberOfProfiles")]
     pub maximum_number_of_profiles: Option<i32>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for VideoSourceConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceConfigurationOptionsExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Options of parameters for Rotation feature.
     #[yaserde(prefix = "tt", rename = "Rotate")]
     pub rotate: Option<RotateOptions>,
@@ -579,15 +571,17 @@ pub struct VideoSourceConfigurationOptionsExtension {
     pub extension: Option<VideoSourceConfigurationOptionsExtension2>,
 }
 
+impl Validate for VideoSourceConfigurationOptionsExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoSourceConfigurationOptionsExtension2 {
     // Scene orientation modes supported by the device for this configuration.
     #[yaserde(prefix = "tt", rename = "SceneOrientationMode")]
     pub scene_orientation_mode: Vec<SceneOrientationMode>,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
 }
+
+impl Validate for VideoSourceConfigurationOptionsExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -603,28 +597,28 @@ pub struct RotateOptions {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<RotateOptionsExtension>,
 
-    // After setting the rotation, if a device starts to reboot this value is true.
+    // After setting the rotation, if a device starts to reboot this value is
+    // true.
     // If a device can handle rotation setting without rebooting this value is
     // false.
     #[yaserde(attribute, rename = "Reboot")]
     pub reboot: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RotateOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct RotateOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct RotateOptionsExtension {}
+
+impl Validate for RotateOptionsExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum SceneOrientationMode {
+    #[yaserde(rename = "MANUAL")]
     Manual,
+    #[yaserde(rename = "AUTO")]
     Auto,
-
     __Unknown__(String),
 }
 
@@ -634,12 +628,13 @@ impl Default for SceneOrientationMode {
     }
 }
 
+impl Validate for SceneOrientationMode {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum SceneOrientationOption {
     Below,
     Horizon,
     Above,
-
     __Unknown__(String),
 }
 
@@ -649,6 +644,8 @@ impl Default for SceneOrientationOption {
     }
 }
 
+impl Validate for SceneOrientationOption {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct SceneOrientation {
@@ -656,8 +653,8 @@ pub struct SceneOrientation {
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: SceneOrientationMode,
 
-    // Assigned or determined scene orientation based on the Mode. When assigning
-    // the Mode to AUTO, this field
+    // Assigned or determined scene orientation based on the Mode. When
+    // assigning the Mode to AUTO, this field
     // is optional and will be ignored by the device. When assigning the Mode to
     // MANUAL, this field is required
     // and the device will return an InvalidArgs fault if missing.
@@ -665,29 +662,38 @@ pub struct SceneOrientation {
     pub orientation: Option<String>,
 }
 
+impl Validate for SceneOrientation {}
+
 // Source view modes supported by device.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ViewModes {
     // Undewarped viewmode from device supporting fisheye lens.
+    #[yaserde(rename = "tt:Fisheye")]
     Fisheye,
     // 360 degree panoramic view.
+    #[yaserde(rename = "tt:360Panorama")]
     _360Panorama,
     // 180 degree panoramic view.
+    #[yaserde(rename = "tt:180Panorama")]
     _180Panorama,
-    // View mode combining four streams in single Quad, eg., applicable for devices
-    // supporting four heads.
+    // View mode combining four streams in single Quad, eg., applicable for
+    // devices supporting four heads.
+    #[yaserde(rename = "tt:Quad")]
     Quad,
     // Unaltered view from the sensor.
+    #[yaserde(rename = "tt:Original")]
     Original,
     // Viewmode combining the left side sensors, applicable for devices supporting
     // multiple sensors.
+    #[yaserde(rename = "tt:LeftHalf")]
     LeftHalf,
-    // Viewmode combining the right side sensors, applicable for devices supporting
-    // multiple sensors.
+    // Viewmode combining the right side sensors, applicable for devices
+    // supporting multiple sensors.
+    #[yaserde(rename = "tt:RightHalf")]
     RightHalf,
     // Dewarped view mode for device supporting fisheye lens.
+    #[yaserde(rename = "tt:Dewarp")]
     Dewarp,
-
     __Unknown__(String),
 }
 
@@ -696,6 +702,8 @@ impl Default for ViewModes {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for ViewModes {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -708,8 +716,8 @@ pub struct VideoEncoderConfiguration {
     #[yaserde(prefix = "tt", rename = "Resolution")]
     pub resolution: VideoResolution,
 
-    // Relative value for the video quantizers and the quality of the video. A high
-    // value within supported quality range means higher quality
+    // Relative value for the video quantizers and the quality of the video. A
+    // high value within supported quality range means higher quality
     #[yaserde(prefix = "tt", rename = "Quality")]
     pub quality: f64,
 
@@ -733,9 +741,6 @@ pub struct VideoEncoderConfiguration {
     #[yaserde(prefix = "tt", rename = "SessionTimeout")]
     pub session_timeout: xs::Duration,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // A value of true indicates that frame rate is a fixed value rather than an
     // upper limit,
     // and that the video encoder shall prioritize frame rate over all other
@@ -743,10 +748,6 @@ pub struct VideoEncoderConfiguration {
     // configuration values such as bitrate. Default is false.
     #[yaserde(attribute, rename = "GuaranteedFrameRate")]
     pub guaranteed_frame_rate: Option<bool>,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -762,12 +763,15 @@ pub struct VideoEncoderConfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for VideoEncoderConfiguration {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum VideoEncoding {
+    #[yaserde(rename = "JPEG")]
     Jpeg,
+    #[yaserde(rename = "MPEG4")]
     Mpeg4,
     H264,
-
     __Unknown__(String),
 }
 
@@ -777,11 +781,14 @@ impl Default for VideoEncoding {
     }
 }
 
+impl Validate for VideoEncoding {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Mpeg4Profile {
+    #[yaserde(rename = "SP")]
     Sp,
+    #[yaserde(rename = "ASP")]
     Asp,
-
     __Unknown__(String),
 }
 
@@ -791,13 +798,14 @@ impl Default for Mpeg4Profile {
     }
 }
 
+impl Validate for Mpeg4Profile {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum H264Profile {
     Baseline,
     Main,
     Extended,
     High,
-
     __Unknown__(String),
 }
 
@@ -806,6 +814,8 @@ impl Default for H264Profile {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for H264Profile {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -818,6 +828,8 @@ pub struct VideoResolution {
     #[yaserde(prefix = "tt", rename = "Height")]
     pub height: i32,
 }
+
+impl Validate for VideoResolution {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -838,13 +850,15 @@ pub struct VideoRateControl {
     pub bitrate_limit: i32,
 }
 
+impl Validate for VideoRateControl {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Mpeg4Configuration {
-    // Determines the interval in which the I-Frames will be coded. An entry of 1
-    // indicates I-Frames are continuously generated. An entry of 2 indicates that
-    // every 2nd image is an I-Frame, and 3 only every 3rd frame, etc. The frames in
-    // between are coded as P or B Frames.
+    // Determines the interval in which the I-Frames will be coded. An entry of
+    // 1 indicates I-Frames are continuously generated. An entry of 2 indicates
+    // that every 2nd image is an I-Frame, and 3 only every 3rd frame, etc. The
+    // frames in between are coded as P or B Frames.
     #[yaserde(prefix = "tt", rename = "GovLength")]
     pub gov_length: i32,
 
@@ -854,13 +868,16 @@ pub struct Mpeg4Configuration {
     pub mpeg_4_profile: Mpeg4Profile,
 }
 
+impl Validate for Mpeg4Configuration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct H264Configuration {
-    // Group of Video frames length. Determines typically the interval in which the
-    // I-Frames will be coded. An entry of 1 indicates I-Frames are continuously
-    // generated. An entry of 2 indicates that every 2nd image is an I-Frame, and 3
-    // only every 3rd frame, etc. The frames in between are coded as P or B Frames.
+    // Group of Video frames length. Determines typically the interval in which
+    // the I-Frames will be coded. An entry of 1 indicates I-Frames are
+    // continuously generated. An entry of 2 indicates that every 2nd image is
+    // an I-Frame, and 3 only every 3rd frame, etc. The frames in between are
+    // coded as P or B Frames.
     #[yaserde(prefix = "tt", rename = "GovLength")]
     pub gov_length: i32,
 
@@ -868,6 +885,8 @@ pub struct H264Configuration {
     #[yaserde(prefix = "tt", rename = "H264Profile")]
     pub h264_profile: H264Profile,
 }
+
+impl Validate for H264Configuration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -895,17 +914,13 @@ pub struct VideoEncoderConfigurationOptions {
     // VideoEncoderConfiguration element.
     #[yaserde(attribute, rename = "GuaranteedFrameRateSupported")]
     pub guaranteed_frame_rate_supported: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for VideoEncoderConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoEncoderOptionsExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Optional JPEG encoder settings ranges.
     #[yaserde(prefix = "tt", rename = "JPEG")]
     pub jpeg: Option<JpegOptions2>,
@@ -922,12 +937,13 @@ pub struct VideoEncoderOptionsExtension {
     pub extension: Option<VideoEncoderOptionsExtension2>,
 }
 
+impl Validate for VideoEncoderOptionsExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoEncoderOptionsExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct VideoEncoderOptionsExtension2 {}
+
+impl Validate for VideoEncoderOptionsExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -940,12 +956,14 @@ pub struct JpegOptions {
     #[yaserde(prefix = "tt", rename = "FrameRateRange")]
     pub frame_rate_range: IntRange,
 
-    // Supported encoding interval range. The encoding interval corresponds to the
-    // number of frames devided by the encoded frames. An encoding interval value of
-    // "1" means that all frames are encoded.
+    // Supported encoding interval range. The encoding interval corresponds to
+    // the number of frames devided by the encoded frames. An encoding interval
+    // value of "1" means that all frames are encoded.
     #[yaserde(prefix = "tt", rename = "EncodingIntervalRange")]
     pub encoding_interval_range: IntRange,
 }
+
+impl Validate for JpegOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -954,13 +972,6 @@ pub struct JpegOptions2 {
     #[yaserde(prefix = "tt", rename = "BitrateRange")]
     pub bitrate_range: IntRange,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // List of supported image sizes.
     #[yaserde(prefix = "tt", rename = "ResolutionsAvailable")]
     pub resolutions_available: Vec<VideoResolution>,
@@ -969,12 +980,14 @@ pub struct JpegOptions2 {
     #[yaserde(prefix = "tt", rename = "FrameRateRange")]
     pub frame_rate_range: IntRange,
 
-    // Supported encoding interval range. The encoding interval corresponds to the
-    // number of frames devided by the encoded frames. An encoding interval value of
-    // "1" means that all frames are encoded.
+    // Supported encoding interval range. The encoding interval corresponds to
+    // the number of frames devided by the encoded frames. An encoding interval
+    // value of "1" means that all frames are encoded.
     #[yaserde(prefix = "tt", rename = "EncodingIntervalRange")]
     pub encoding_interval_range: IntRange,
 }
+
+impl Validate for JpegOptions2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -983,8 +996,8 @@ pub struct Mpeg4Options {
     #[yaserde(prefix = "tt", rename = "ResolutionsAvailable")]
     pub resolutions_available: Vec<VideoResolution>,
 
-    // Supported group of Video frames length. This value typically corresponds to
-    // the I-Frame distance.
+    // Supported group of Video frames length. This value typically corresponds
+    // to the I-Frame distance.
     #[yaserde(prefix = "tt", rename = "GovLengthRange")]
     pub gov_length_range: IntRange,
 
@@ -992,9 +1005,9 @@ pub struct Mpeg4Options {
     #[yaserde(prefix = "tt", rename = "FrameRateRange")]
     pub frame_rate_range: IntRange,
 
-    // Supported encoding interval range. The encoding interval corresponds to the
-    // number of frames devided by the encoded frames. An encoding interval value of
-    // "1" means that all frames are encoded.
+    // Supported encoding interval range. The encoding interval corresponds to
+    // the number of frames devided by the encoded frames. An encoding interval
+    // value of "1" means that all frames are encoded.
     #[yaserde(prefix = "tt", rename = "EncodingIntervalRange")]
     pub encoding_interval_range: IntRange,
 
@@ -1002,6 +1015,8 @@ pub struct Mpeg4Options {
     #[yaserde(prefix = "tt", rename = "Mpeg4ProfilesSupported")]
     pub mpeg_4_profiles_supported: Vec<Mpeg4Profile>,
 }
+
+impl Validate for Mpeg4Options {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1010,19 +1025,12 @@ pub struct Mpeg4Options2 {
     #[yaserde(prefix = "tt", rename = "BitrateRange")]
     pub bitrate_range: IntRange,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // List of supported image sizes.
     #[yaserde(prefix = "tt", rename = "ResolutionsAvailable")]
     pub resolutions_available: Vec<VideoResolution>,
 
-    // Supported group of Video frames length. This value typically corresponds to
-    // the I-Frame distance.
+    // Supported group of Video frames length. This value typically corresponds
+    // to the I-Frame distance.
     #[yaserde(prefix = "tt", rename = "GovLengthRange")]
     pub gov_length_range: IntRange,
 
@@ -1030,9 +1038,9 @@ pub struct Mpeg4Options2 {
     #[yaserde(prefix = "tt", rename = "FrameRateRange")]
     pub frame_rate_range: IntRange,
 
-    // Supported encoding interval range. The encoding interval corresponds to the
-    // number of frames devided by the encoded frames. An encoding interval value of
-    // "1" means that all frames are encoded.
+    // Supported encoding interval range. The encoding interval corresponds to
+    // the number of frames devided by the encoded frames. An encoding interval
+    // value of "1" means that all frames are encoded.
     #[yaserde(prefix = "tt", rename = "EncodingIntervalRange")]
     pub encoding_interval_range: IntRange,
 
@@ -1041,6 +1049,8 @@ pub struct Mpeg4Options2 {
     pub mpeg_4_profiles_supported: Vec<Mpeg4Profile>,
 }
 
+impl Validate for Mpeg4Options2 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct H264Options {
@@ -1048,8 +1058,8 @@ pub struct H264Options {
     #[yaserde(prefix = "tt", rename = "ResolutionsAvailable")]
     pub resolutions_available: Vec<VideoResolution>,
 
-    // Supported group of Video frames length. This value typically corresponds to
-    // the I-Frame distance.
+    // Supported group of Video frames length. This value typically corresponds
+    // to the I-Frame distance.
     #[yaserde(prefix = "tt", rename = "GovLengthRange")]
     pub gov_length_range: IntRange,
 
@@ -1057,9 +1067,9 @@ pub struct H264Options {
     #[yaserde(prefix = "tt", rename = "FrameRateRange")]
     pub frame_rate_range: IntRange,
 
-    // Supported encoding interval range. The encoding interval corresponds to the
-    // number of frames devided by the encoded frames. An encoding interval value of
-    // "1" means that all frames are encoded.
+    // Supported encoding interval range. The encoding interval corresponds to
+    // the number of frames devided by the encoded frames. An encoding interval
+    // value of "1" means that all frames are encoded.
     #[yaserde(prefix = "tt", rename = "EncodingIntervalRange")]
     pub encoding_interval_range: IntRange,
 
@@ -1067,6 +1077,8 @@ pub struct H264Options {
     #[yaserde(prefix = "tt", rename = "H264ProfilesSupported")]
     pub h264_profiles_supported: Vec<H264Profile>,
 }
+
+impl Validate for H264Options {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1075,19 +1087,12 @@ pub struct H264Options2 {
     #[yaserde(prefix = "tt", rename = "BitrateRange")]
     pub bitrate_range: IntRange,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // List of supported image sizes.
     #[yaserde(prefix = "tt", rename = "ResolutionsAvailable")]
     pub resolutions_available: Vec<VideoResolution>,
 
-    // Supported group of Video frames length. This value typically corresponds to
-    // the I-Frame distance.
+    // Supported group of Video frames length. This value typically corresponds
+    // to the I-Frame distance.
     #[yaserde(prefix = "tt", rename = "GovLengthRange")]
     pub gov_length_range: IntRange,
 
@@ -1095,9 +1100,9 @@ pub struct H264Options2 {
     #[yaserde(prefix = "tt", rename = "FrameRateRange")]
     pub frame_rate_range: IntRange,
 
-    // Supported encoding interval range. The encoding interval corresponds to the
-    // number of frames devided by the encoded frames. An encoding interval value of
-    // "1" means that all frames are encoded.
+    // Supported encoding interval range. The encoding interval corresponds to
+    // the number of frames devided by the encoded frames. An encoding interval
+    // value of "1" means that all frames are encoded.
     #[yaserde(prefix = "tt", rename = "EncodingIntervalRange")]
     pub encoding_interval_range: IntRange,
 
@@ -1106,15 +1111,18 @@ pub struct H264Options2 {
     pub h264_profiles_supported: Vec<H264Profile>,
 }
 
+impl Validate for H264Options2 {}
+
 // Video Media Subtypes as referenced by IANA (without the leading "video/"
 // Video Media Type). See also
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum VideoEncodingMimeNames {
+    #[yaserde(rename = "JPEG")]
     Jpeg,
+    #[yaserde(rename = "MPV4-ES")]
     Mpv4Es,
     H264,
     H265,
-
     __Unknown__(String),
 }
 
@@ -1123,6 +1131,8 @@ impl Default for VideoEncodingMimeNames {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for VideoEncodingMimeNames {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum VideoEncodingProfiles {
@@ -1133,7 +1143,6 @@ pub enum VideoEncodingProfiles {
     Main10,
     Extended,
     High,
-
     __Unknown__(String),
 }
 
@@ -1142,6 +1151,8 @@ impl Default for VideoEncodingProfiles {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for VideoEncodingProfiles {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1163,18 +1174,16 @@ pub struct VideoEncoder2Configuration {
     #[yaserde(prefix = "tt", rename = "Multicast")]
     pub multicast: Option<MulticastConfiguration>,
 
-    // Relative value for the video quantizers and the quality of the video. A high
-    // value within supported quality range means higher quality
+    // Relative value for the video quantizers and the quality of the video. A
+    // high value within supported quality range means higher quality
     #[yaserde(prefix = "tt", rename = "Quality")]
     pub quality: f64,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // Group of Video frames length. Determines typically the interval in which the
-    // I-Frames will be coded. An entry of 1 indicates I-Frames are continuously
-    // generated. An entry of 2 indicates that every 2nd image is an I-Frame, and 3
-    // only every 3rd frame, etc. The frames in between are coded as P or B Frames.
+    // Group of Video frames length. Determines typically the interval in which
+    // the I-Frames will be coded. An entry of 1 indicates I-Frames are
+    // continuously generated. An entry of 2 indicates that every 2nd image is
+    // an I-Frame, and 3 only every 3rd frame, etc. The frames in between are
+    // coded as P or B Frames.
     #[yaserde(attribute, rename = "GovLength")]
     pub gov_length: Option<i32>,
 
@@ -1190,10 +1199,6 @@ pub struct VideoEncoder2Configuration {
     #[yaserde(attribute, rename = "GuaranteedFrameRate")]
     pub guaranteed_frame_rate: Option<bool>,
 
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Name,
@@ -1208,6 +1213,8 @@ pub struct VideoEncoder2Configuration {
     pub token: ReferenceToken,
 }
 
+impl Validate for VideoEncoder2Configuration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoResolution2 {
@@ -1218,13 +1225,9 @@ pub struct VideoResolution2 {
     // Number of the lines of the Video image.
     #[yaserde(prefix = "tt", rename = "Height")]
     pub height: i32,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for VideoResolution2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1238,16 +1241,12 @@ pub struct VideoRateControl2 {
     #[yaserde(prefix = "tt", rename = "BitrateLimit")]
     pub bitrate_limit: i32,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Enforce constant bitrate.
     #[yaserde(attribute, rename = "ConstantBitRate")]
     pub constant_bit_rate: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for VideoRateControl2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1269,12 +1268,9 @@ pub struct VideoEncoder2ConfigurationOptions {
     #[yaserde(prefix = "tt", rename = "BitrateRange")]
     pub bitrate_range: IntRange,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // Exactly two values, which define the Lower and Upper bounds for the supported
-    // group of Video frames length. These values typically correspond to the
-    // I-Frame distance.
+    // Exactly two values, which define the Lower and Upper bounds for the
+    // supported group of Video frames length. These values typically correspond
+    // to the I-Frame distance.
     #[yaserde(attribute, rename = "GovLengthRange")]
     pub gov_length_range: Option<IntAttrList>,
 
@@ -1283,7 +1279,8 @@ pub struct VideoEncoder2ConfigurationOptions {
     #[yaserde(attribute, rename = "FrameRatesSupported")]
     pub frame_rates_supported: Option<FloatAttrList>,
 
-    // List of supported encoder profiles as defined in tt::VideoEncodingProfiles.
+    // List of supported encoder profiles as defined in
+    // tt::VideoEncodingProfiles.
     #[yaserde(attribute, rename = "ProfilesSupported")]
     pub profiles_supported: Option<StringAttrList>,
 
@@ -1295,10 +1292,9 @@ pub struct VideoEncoder2ConfigurationOptions {
     // VideoEncoder2Configuration element.
     #[yaserde(attribute, rename = "GuaranteedFrameRateSupported")]
     pub guaranteed_frame_rate_supported: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for VideoEncoder2ConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1306,13 +1302,6 @@ pub struct AudioSourceConfiguration {
     // Token of the Audio Source the configuration applies to
     #[yaserde(prefix = "tt", rename = "SourceToken")]
     pub source_token: ReferenceToken,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -1328,6 +1317,8 @@ pub struct AudioSourceConfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for AudioSourceConfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioSourceConfigurationOptions {
@@ -1337,22 +1328,21 @@ pub struct AudioSourceConfigurationOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<AudioSourceOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioSourceConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AudioSourceOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct AudioSourceOptionsExtension {}
+
+impl Validate for AudioSourceOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioEncoderConfiguration {
-    // Audio codec used for encoding the audio input (either G.711, G.726 or AAC)
+    // Audio codec used for encoding the audio input (either G.711, G.726 or
+    // AAC)
     #[yaserde(prefix = "tt", rename = "Encoding")]
     pub encoding: AudioEncoding,
 
@@ -1372,13 +1362,6 @@ pub struct AudioEncoderConfiguration {
     #[yaserde(prefix = "tt", rename = "SessionTimeout")]
     pub session_timeout: xs::Duration,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Name,
@@ -1393,12 +1376,14 @@ pub struct AudioEncoderConfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for AudioEncoderConfiguration {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum AudioEncoding {
     G711,
     G726,
+    #[yaserde(rename = "AAC")]
     Aac,
-
     __Unknown__(String),
 }
 
@@ -1408,16 +1393,17 @@ impl Default for AudioEncoding {
     }
 }
 
+impl Validate for AudioEncoding {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioEncoderConfigurationOptions {
     // list of supported AudioEncoderConfigurations
     #[yaserde(prefix = "tt", rename = "Options")]
     pub options: Vec<AudioEncoderConfigurationOption>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioEncoderConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1433,23 +1419,21 @@ pub struct AudioEncoderConfigurationOption {
     // List of supported Sample Rates in kHz for the specified Encoding
     #[yaserde(prefix = "tt", rename = "SampleRateList")]
     pub sample_rate_list: IntList,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioEncoderConfigurationOption {}
 
 // Audio Media Subtypes as referenced by IANA (without the leading "audio/"
 // Audio Media Type). See also
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum AudioEncodingMimeNames {
+    #[yaserde(rename = "PCMU")]
     Pcmu,
     G726,
+    #[yaserde(rename = "MP4A-LATM")]
     Mp4ALatm,
+    #[yaserde(rename = "mpeg4-generic")]
     Mpeg4Generic,
-
     __Unknown__(String),
 }
 
@@ -1458,6 +1442,8 @@ impl Default for AudioEncodingMimeNames {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for AudioEncodingMimeNames {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1479,13 +1465,6 @@ pub struct AudioEncoder2Configuration {
     #[yaserde(prefix = "tt", rename = "SampleRate")]
     pub sample_rate: i32,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Name,
@@ -1499,6 +1478,8 @@ pub struct AudioEncoder2Configuration {
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
+
+impl Validate for AudioEncoder2Configuration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1515,13 +1496,9 @@ pub struct AudioEncoder2ConfigurationOptions {
     // List of supported Sample Rates in kHz for the specified Encoding
     #[yaserde(prefix = "tt", rename = "SampleRateList")]
     pub sample_rate_list: IntList,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioEncoder2ConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1531,13 +1508,6 @@ pub struct VideoAnalyticsConfiguration {
 
     #[yaserde(prefix = "tt", rename = "RuleEngineConfiguration")]
     pub rule_engine_configuration: RuleEngineConfiguration,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -1552,6 +1522,8 @@ pub struct VideoAnalyticsConfiguration {
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
+
+impl Validate for VideoAnalyticsConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1581,8 +1553,6 @@ pub struct MetadataConfiguration {
     #[yaserde(prefix = "tt", rename = "SessionTimeout")]
     pub session_timeout: xs::Duration,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "AnalyticsEngineConfiguration")]
     pub analytics_engine_configuration: Option<AnalyticsEngineConfiguration>,
 
@@ -1594,14 +1564,10 @@ pub struct MetadataConfiguration {
     #[yaserde(attribute, rename = "CompressionType")]
     pub compression_type: Option<String>,
 
-    // Optional parameter to configure if the metadata stream shall contain the Geo
-    // Location coordinates of each target.
+    // Optional parameter to configure if the metadata stream shall contain the
+    // Geo Location coordinates of each target.
     #[yaserde(attribute, rename = "GeoLocation")]
     pub geo_location: Option<bool>,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -1617,12 +1583,13 @@ pub struct MetadataConfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for MetadataConfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct MetadataConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct MetadataConfigurationExtension {}
+
+impl Validate for MetadataConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1635,10 +1602,9 @@ pub struct Ptzfilter {
     // True if the metadata stream shall contain the PTZ position
     #[yaserde(prefix = "tt", rename = "Position")]
     pub position: bool,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ptzfilter {}
 
 // Subcription handling in the same way as base notification subscription.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -1649,20 +1615,15 @@ pub struct EventSubscription {
 
     #[yaserde(prefix = "tt", rename = "SubscriptionPolicy")]
     pub subscription_policy: Option<SubscriptionPolicyType>,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for EventSubscription {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SubscriptionPolicyType {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct SubscriptionPolicyType {}
+
+impl Validate for SubscriptionPolicyType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1670,8 +1631,6 @@ pub struct MetadataConfigurationOptions {
     #[yaserde(prefix = "tt", rename = "PTZStatusFilterOptions")]
     pub ptz_status_filter_options: PtzstatusFilterOptions,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<MetadataConfigurationOptionsExtension>,
 
@@ -1679,16 +1638,15 @@ pub struct MetadataConfigurationOptions {
     // target.
     #[yaserde(attribute, rename = "GeoLocation")]
     pub geo_location: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MetadataConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MetadataConfigurationOptionsExtension {
-    // List of supported metadata compression type. Its options shall be chosen from
-    // tt:MetadataCompressionType.
+    // List of supported metadata compression type. Its options shall be chosen
+    // from tt:MetadataCompressionType.
     #[yaserde(prefix = "tt", rename = "CompressionType")]
     pub compression_type: Vec<String>,
 
@@ -1696,19 +1654,21 @@ pub struct MetadataConfigurationOptionsExtension {
     pub extension: Option<MetadataConfigurationOptionsExtension2>,
 }
 
+impl Validate for MetadataConfigurationOptionsExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct MetadataConfigurationOptionsExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct MetadataConfigurationOptionsExtension2 {}
+
+impl Validate for MetadataConfigurationOptionsExtension2 {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum MetadataCompressionType {
     None,
+    #[yaserde(rename = "GZIP")]
     Gzip,
+    #[yaserde(rename = "EXI")]
     Exi,
-
     __Unknown__(String),
 }
 
@@ -1717,6 +1677,8 @@ impl Default for MetadataCompressionType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for MetadataCompressionType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1729,9 +1691,6 @@ pub struct PtzstatusFilterOptions {
     #[yaserde(prefix = "tt", rename = "ZoomStatusSupported")]
     pub zoom_status_supported: bool,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // True if the device is able to stream the pan or tilt position.
     #[yaserde(prefix = "tt", rename = "PanTiltPositionSupported")]
     pub pan_tilt_position_supported: Option<bool>,
@@ -1742,17 +1701,15 @@ pub struct PtzstatusFilterOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtzstatusFilterOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzstatusFilterOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzstatusFilterOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzstatusFilterOptionsExtension {}
+
+impl Validate for PtzstatusFilterOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1768,28 +1725,26 @@ pub struct VideoOutput {
     #[yaserde(prefix = "tt", rename = "RefreshRate")]
     pub refresh_rate: Option<f64>,
 
-    // Aspect ratio of the display as physical extent of width divided by height.
+    // Aspect ratio of the display as physical extent of width divided by
+    // height.
     #[yaserde(prefix = "tt", rename = "AspectRatio")]
     pub aspect_ratio: Option<f64>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<VideoOutputExtension>,
 
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
 
+impl Validate for VideoOutput {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoOutputExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct VideoOutputExtension {}
+
+impl Validate for VideoOutputExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1797,13 +1752,6 @@ pub struct VideoOutputConfiguration {
     // Token of the Video Output the configuration applies to
     #[yaserde(prefix = "tt", rename = "OutputToken")]
     pub output_token: ReferenceToken,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -1819,16 +1767,13 @@ pub struct VideoOutputConfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for VideoOutputConfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoOutputConfigurationOptions {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct VideoOutputConfigurationOptions {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for VideoOutputConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1850,10 +1795,9 @@ pub struct VideoDecoderConfigurationOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<VideoDecoderConfigurationOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for VideoDecoderConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1873,13 +1817,9 @@ pub struct H264DecOptions {
     // Supported H.264 framerate range in fps
     #[yaserde(prefix = "tt", rename = "SupportedFrameRate")]
     pub supported_frame_rate: IntRange,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for H264DecOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1895,13 +1835,9 @@ pub struct JpegDecOptions {
     // Supported Jpeg framerate range in fps
     #[yaserde(prefix = "tt", rename = "SupportedFrameRate")]
     pub supported_frame_rate: IntRange,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for JpegDecOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1921,35 +1857,25 @@ pub struct Mpeg4DecOptions {
     // Supported Mpeg4 framerate range in fps
     #[yaserde(prefix = "tt", rename = "SupportedFrameRate")]
     pub supported_frame_rate: IntRange,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Mpeg4DecOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoDecoderConfigurationOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct VideoDecoderConfigurationOptionsExtension {}
+
+impl Validate for VideoDecoderConfigurationOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioOutput {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
+
+impl Validate for AudioOutput {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1958,30 +1884,23 @@ pub struct AudioOutputConfiguration {
     #[yaserde(prefix = "tt", rename = "OutputToken")]
     pub output_token: ReferenceToken,
 
-    // An audio channel MAY support different types of audio transmission. While for
-    // full duplex
+    // An audio channel MAY support different types of audio transmission. While
+    // for full duplex
     // operation no special handling is required, in half duplex operation the
     // transmission direction
     // needs to be switched.
     // The optional SendPrimacy parameter inside the AudioOutputConfiguration
     // indicates which
-    // direction is currently active. An NVC can switch between different modes by
-    // setting the
+    // direction is currently active. An NVC can switch between different modes
+    // by setting the
     // AudioOutputConfiguration.
     #[yaserde(prefix = "tt", rename = "SendPrimacy")]
     pub send_primacy: Option<String>,
 
-    // Volume setting of the output. The applicable range is defined via the option
-    // AudioOutputOptions.OutputLevelRange.
+    // Volume setting of the output. The applicable range is defined via the
+    // option AudioOutputOptions.OutputLevelRange.
     #[yaserde(prefix = "tt", rename = "OutputLevel")]
     pub output_level: i32,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -1996,6 +1915,8 @@ pub struct AudioOutputConfiguration {
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
+
+impl Validate for AudioOutputConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2011,24 +1932,13 @@ pub struct AudioOutputConfigurationOptions {
     // Minimum and maximum level range supported for this Output.
     #[yaserde(prefix = "tt", rename = "OutputLevelRange")]
     pub output_level_range: IntRange,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioOutputConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioDecoderConfiguration {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Name,
@@ -2043,30 +1953,31 @@ pub struct AudioDecoderConfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for AudioDecoderConfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioDecoderConfigurationOptions {
-    // If the device is able to decode AAC encoded audio this section describes the
-    // supported configurations
+    // If the device is able to decode AAC encoded audio this section describes
+    // the supported configurations
     #[yaserde(prefix = "tt", rename = "AACDecOptions")]
     pub aac_dec_options: Option<AacdecOptions>,
 
-    // If the device is able to decode G711 encoded audio this section describes the
-    // supported configurations
+    // If the device is able to decode G711 encoded audio this section describes
+    // the supported configurations
     #[yaserde(prefix = "tt", rename = "G711DecOptions")]
     pub g711_dec_options: Option<G711DecOptions>,
 
-    // If the device is able to decode G726 encoded audio this section describes the
-    // supported configurations
+    // If the device is able to decode G726 encoded audio this section describes
+    // the supported configurations
     #[yaserde(prefix = "tt", rename = "G726DecOptions")]
     pub g726_dec_options: Option<G726DecOptions>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<AudioDecoderConfigurationOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioDecoderConfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2078,13 +1989,9 @@ pub struct G711DecOptions {
     // List of supported sample rates in kHz
     #[yaserde(prefix = "tt", rename = "SampleRateRange")]
     pub sample_rate_range: IntList,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for G711DecOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2096,13 +2003,9 @@ pub struct AacdecOptions {
     // List of supported sample rates in kHz
     #[yaserde(prefix = "tt", rename = "SampleRateRange")]
     pub sample_rate_range: IntList,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AacdecOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2114,54 +2017,46 @@ pub struct G726DecOptions {
     // List of supported sample rates in kHz
     #[yaserde(prefix = "tt", rename = "SampleRateRange")]
     pub sample_rate_range: IntList,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for G726DecOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AudioDecoderConfigurationOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct AudioDecoderConfigurationOptionsExtension {}
+
+impl Validate for AudioDecoderConfigurationOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MulticastConfiguration {
-    // The multicast address (if this address is set to 0 no multicast streaming is
-    // enaled)
+    // The multicast address (if this address is set to 0 no multicast streaming
+    // is enaled)
     #[yaserde(prefix = "tt", rename = "Address")]
     pub address: Ipaddress,
 
-    // The RTP mutlicast destination port. A device may support RTCP. In this case
-    // the port value shall be even to allow the corresponding RTCP stream to be
-    // mapped to the next higher (odd) destination port number as defined in the
-    // RTSP specification.
+    // The RTP mutlicast destination port. A device may support RTCP. In this
+    // case the port value shall be even to allow the corresponding RTCP stream
+    // to be mapped to the next higher (odd) destination port number as defined
+    // in the RTSP specification.
     #[yaserde(prefix = "tt", rename = "Port")]
     pub port: i32,
 
-    // In case of IPv6 the TTL value is assumed as the hop limit. Note that for IPV6
-    // and administratively scoped IPv4 multicast the primary use for hop limit /
-    // TTL is to prevent packets from (endlessly) circulating and not limiting
-    // scope. In these cases the address contains the scope.
+    // In case of IPv6 the TTL value is assumed as the hop limit. Note that for
+    // IPV6 and administratively scoped IPv4 multicast the primary use for hop
+    // limit / TTL is to prevent packets from (endlessly) circulating and not
+    // limiting scope. In these cases the address contains the scope.
     #[yaserde(prefix = "tt", rename = "TTL")]
     pub ttl: i32,
 
-    // Read only property signalling that streaming is persistant. Use the methods
-    // StartMulticastStreaming and StopMulticastStreaming to switch its state.
+    // Read only property signalling that streaming is persistant. Use the
+    // methods StartMulticastStreaming and StopMulticastStreaming to switch its
+    // state.
     #[yaserde(prefix = "tt", rename = "AutoStart")]
     pub auto_start: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MulticastConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2172,19 +2067,16 @@ pub struct StreamSetup {
 
     #[yaserde(prefix = "tt", rename = "Transport")]
     pub transport: Transport,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for StreamSetup {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum StreamType {
+    #[yaserde(rename = "RTP-Unicast")]
     RtpUnicast,
+    #[yaserde(rename = "RTP-Multicast")]
     RtpMulticast,
-
     __Unknown__(String),
 }
 
@@ -2194,6 +2086,8 @@ impl Default for StreamType {
     }
 }
 
+impl Validate for StreamType {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Transport {
@@ -2201,20 +2095,26 @@ pub struct Transport {
     // RTSP=RTP/RTSP/TCP or HTTP=RTP/RTSP/HTTP/TCP
     #[yaserde(prefix = "tt", rename = "Protocol")]
     pub protocol: TransportProtocol,
-    //    // Optional element to describe further tunnel options. This element is normally
-    //// not needed
-    //    #[yaserde(prefix = "tt", rename = "Tunnel")]
-    //    pub tunnel: Option<Transport>,
+
+    // Optional element to describe further tunnel options. This element is
+    // normally not needed
+    #[yaserde(prefix = "tt", rename = "Tunnel")]
+    pub tunnel: Vec<Transport>,
 }
+
+impl Validate for Transport {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum TransportProtocol {
+    #[yaserde(rename = "UDP")]
     Udp,
     // This value is deprecated.
+    #[yaserde(rename = "TCP")]
     Tcp,
+    #[yaserde(rename = "RTSP")]
     Rtsp,
+    #[yaserde(rename = "HTTP")]
     Http,
-
     __Unknown__(String),
 }
 
@@ -2224,6 +2124,8 @@ impl Default for TransportProtocol {
     }
 }
 
+impl Validate for TransportProtocol {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MediaUri {
@@ -2231,34 +2133,29 @@ pub struct MediaUri {
     #[yaserde(prefix = "tt", rename = "Uri")]
     pub uri: String,
 
-    // Indicates if the Uri is only valid until the connection is established. The
-    // value shall be set to "false".
+    // Indicates if the Uri is only valid until the connection is established.
+    // The value shall be set to "false".
     #[yaserde(prefix = "tt", rename = "InvalidAfterConnect")]
     pub invalid_after_connect: bool,
 
-    // Indicates if the Uri is invalid after a reboot of the device. The value shall
-    // be set to "false".
+    // Indicates if the Uri is invalid after a reboot of the device. The value
+    // shall be set to "false".
     #[yaserde(prefix = "tt", rename = "InvalidAfterReboot")]
     pub invalid_after_reboot: bool,
 
-    // Duration how long the Uri is valid. This parameter shall be set to PT0S to
-    // indicate that this stream URI is indefinitely valid even if the profile
-    // changes
+    // Duration how long the Uri is valid. This parameter shall be set to PT0S
+    // to indicate that this stream URI is indefinitely valid even if the
+    // profile changes
     #[yaserde(prefix = "tt", rename = "Timeout")]
     pub timeout: xs::Duration,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MediaUri {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ScopeDefinition {
     Fixed,
     Configurable,
-
     __Unknown__(String),
 }
 
@@ -2267,6 +2164,8 @@ impl Default for ScopeDefinition {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for ScopeDefinition {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2280,11 +2179,12 @@ pub struct Scope {
     pub scope_item: String,
 }
 
+impl Validate for Scope {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum DiscoveryMode {
     Discoverable,
     NonDiscoverable,
-
     __Unknown__(String),
 }
 
@@ -2293,6 +2193,8 @@ impl Default for DiscoveryMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for DiscoveryMode {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2311,29 +2213,25 @@ pub struct NetworkInterface {
 
     // IPv4 network interface configuration.
     #[yaserde(prefix = "tt", rename = "IPv4")]
-    pub i_pv_4: Option<Ipv4NetworkInterface>,
+    pub i_pv_4: Vec<Ipv4NetworkInterface>,
 
     // IPv6 network interface configuration.
     #[yaserde(prefix = "tt", rename = "IPv6")]
-    pub i_pv_6: Option<Ipv6NetworkInterface>,
+    pub i_pv_6: Vec<Ipv6NetworkInterface>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NetworkInterfaceExtension>,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
 
+impl Validate for NetworkInterface {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkInterfaceExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "InterfaceType")]
     pub interface_type: IanaIfTypes,
 
@@ -2348,26 +2246,34 @@ pub struct NetworkInterfaceExtension {
     pub extension: Option<NetworkInterfaceExtension2>,
 }
 
+impl Validate for NetworkInterfaceExtension {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
-pub struct NetworkInterfaceConfigPriority(pub i64);
+pub struct NetworkInterfaceConfigPriority(pub xs::Integer);
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Dot3Configuration {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
+impl Validate for NetworkInterfaceConfigPriority {
+    fn validate(&self) -> Result<(), String> {
+        if self.0 < "0".parse().unwrap() {
+            return Err(format!("MinInclusive validation error: invalid value of 0! \nExpected: 0 >= 0.\nActual: 0 == {}", self.0));
+        }
+        if self.0 > "31".parse().unwrap() {
+            return Err(format!("MaxInclusive validation error: invalid value of 0! \nExpected: 0 <= 31.\nActual: 0 == {}", self.0));
+        }
+        Ok(())
+    }
 }
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkInterfaceExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct Dot3Configuration {}
+
+impl Validate for Dot3Configuration {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct NetworkInterfaceExtension2 {}
+
+impl Validate for NetworkInterfaceExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2385,6 +2291,8 @@ pub struct NetworkInterfaceLink {
     pub interface_type: IanaIfTypes,
 }
 
+impl Validate for NetworkInterfaceLink {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkInterfaceConnectionSetting {
@@ -2401,11 +2309,12 @@ pub struct NetworkInterfaceConnectionSetting {
     pub duplex: Duplex,
 }
 
+impl Validate for NetworkInterfaceConnectionSetting {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Duplex {
     Full,
     Half,
-
     __Unknown__(String),
 }
 
@@ -2415,8 +2324,12 @@ impl Default for Duplex {
     }
 }
 
+impl Validate for Duplex {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct IanaIfTypes(pub i32);
+
+impl Validate for IanaIfTypes {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2434,6 +2347,8 @@ pub struct NetworkInterfaceInfo {
     pub mtu: Option<i32>,
 }
 
+impl Validate for NetworkInterfaceInfo {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Ipv6NetworkInterface {
@@ -2446,6 +2361,8 @@ pub struct Ipv6NetworkInterface {
     pub config: Option<Ipv6Configuration>,
 }
 
+impl Validate for Ipv6NetworkInterface {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Ipv4NetworkInterface {
@@ -2457,6 +2374,8 @@ pub struct Ipv4NetworkInterface {
     #[yaserde(prefix = "tt", rename = "Config")]
     pub config: Ipv4Configuration,
 }
+
+impl Validate for Ipv4NetworkInterface {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2476,13 +2395,9 @@ pub struct Ipv4Configuration {
     // Indicates whether or not DHCP is used.
     #[yaserde(prefix = "tt", rename = "DHCP")]
     pub dhcp: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ipv4Configuration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2513,17 +2428,15 @@ pub struct Ipv6Configuration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<Ipv6ConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ipv6Configuration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Ipv6ConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct Ipv6ConfigurationExtension {}
+
+impl Validate for Ipv6ConfigurationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Ipv6DHCPConfiguration {
@@ -2531,7 +2444,6 @@ pub enum Ipv6DHCPConfiguration {
     Stateful,
     Stateless,
     Off,
-
     __Unknown__(String),
 }
 
@@ -2540,6 +2452,8 @@ impl Default for Ipv6DHCPConfiguration {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for Ipv6DHCPConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2558,24 +2472,24 @@ pub struct NetworkProtocol {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NetworkProtocolExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for NetworkProtocol {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkProtocolExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct NetworkProtocolExtension {}
+
+impl Validate for NetworkProtocolExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum NetworkProtocolType {
+    #[yaserde(rename = "HTTP")]
     Http,
+    #[yaserde(rename = "HTTPS")]
     Https,
+    #[yaserde(rename = "RTSP")]
     Rtsp,
-
     __Unknown__(String),
 }
 
@@ -2585,12 +2499,16 @@ impl Default for NetworkProtocolType {
     }
 }
 
+impl Validate for NetworkProtocolType {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum NetworkHostType {
+    #[yaserde(rename = "IPv4")]
     Ipv4,
+    #[yaserde(rename = "IPv6")]
     Ipv6,
+    #[yaserde(rename = "DNS")]
     Dns,
-
     __Unknown__(String),
 }
 
@@ -2599,6 +2517,8 @@ impl Default for NetworkHostType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for NetworkHostType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2621,17 +2541,15 @@ pub struct NetworkHost {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NetworkHostExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for NetworkHost {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkHostExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct NetworkHostExtension {}
+
+impl Validate for NetworkHostExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2649,6 +2567,8 @@ pub struct Ipaddress {
     pub i_pv_6_address: Option<Ipv6Address>,
 }
 
+impl Validate for Ipaddress {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PrefixedIPv4Address {
@@ -2661,8 +2581,12 @@ pub struct PrefixedIPv4Address {
     pub prefix_length: i32,
 }
 
+impl Validate for PrefixedIPv4Address {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Ipv4Address(pub String);
+
+impl Validate for Ipv4Address {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2676,17 +2600,24 @@ pub struct PrefixedIPv6Address {
     pub prefix_length: i32,
 }
 
+impl Validate for PrefixedIPv6Address {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Ipv6Address(pub String);
+
+impl Validate for Ipv6Address {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct HwAddress(pub String);
 
+impl Validate for HwAddress {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Iptype {
+    #[yaserde(rename = "IPv4")]
     Ipv4,
+    #[yaserde(rename = "IPv6")]
     Ipv6,
-
     __Unknown__(String),
 }
 
@@ -2696,8 +2627,12 @@ impl Default for Iptype {
     }
 }
 
+impl Validate for Iptype {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Dnsname(pub String);
+
+impl Validate for Dnsname {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2712,17 +2647,15 @@ pub struct HostnameInformation {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<HostnameInformationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for HostnameInformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct HostnameInformationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct HostnameInformationExtension {}
+
+impl Validate for HostnameInformationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2745,17 +2678,15 @@ pub struct Dnsinformation {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<DnsinformationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dnsinformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct DnsinformationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct DnsinformationExtension {}
+
+impl Validate for DnsinformationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2774,26 +2705,25 @@ pub struct Ntpinformation {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NtpinformationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ntpinformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NtpinformationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct NtpinformationExtension {}
+
+impl Validate for NtpinformationExtension {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Domain(pub String);
+
+impl Validate for Domain {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum IpaddressFilterType {
     Allow,
     Deny,
-
     __Unknown__(String),
 }
 
@@ -2802,6 +2732,8 @@ impl Default for IpaddressFilterType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for IpaddressFilterType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2820,24 +2752,21 @@ pub struct DynamicDNSInformation {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<DynamicDNSInformationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for DynamicDNSInformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct DynamicDNSInformationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct DynamicDNSInformationExtension {}
+
+impl Validate for DynamicDNSInformationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum DynamicDNSType {
     NoUpdate,
     ClientUpdates,
     ServerUpdates,
-
     __Unknown__(String),
 }
 
@@ -2846,6 +2775,8 @@ impl Default for DynamicDNSType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for DynamicDNSType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2864,24 +2795,21 @@ pub struct NetworkInterfaceSetConfiguration {
 
     // IPv4 network interface configuration.
     #[yaserde(prefix = "tt", rename = "IPv4")]
-    pub i_pv_4: Option<Ipv4NetworkInterfaceSetConfiguration>,
+    pub i_pv_4: Vec<Ipv4NetworkInterfaceSetConfiguration>,
 
     // IPv6 network interface configuration.
     #[yaserde(prefix = "tt", rename = "IPv6")]
-    pub i_pv_6: Option<Ipv6NetworkInterfaceSetConfiguration>,
+    pub i_pv_6: Vec<Ipv6NetworkInterfaceSetConfiguration>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NetworkInterfaceSetConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for NetworkInterfaceSetConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkInterfaceSetConfigurationExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "Dot3")]
     pub dot_3: Vec<Dot3Configuration>,
 
@@ -2891,6 +2819,8 @@ pub struct NetworkInterfaceSetConfigurationExtension {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NetworkInterfaceSetConfigurationExtension2>,
 }
+
+impl Validate for NetworkInterfaceSetConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2912,6 +2842,8 @@ pub struct Ipv6NetworkInterfaceSetConfiguration {
     pub dhcp: Option<Ipv6DHCPConfiguration>,
 }
 
+impl Validate for Ipv6NetworkInterfaceSetConfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Ipv4NetworkInterfaceSetConfiguration {
@@ -2928,6 +2860,8 @@ pub struct Ipv4NetworkInterfaceSetConfiguration {
     pub dhcp: Option<bool>,
 }
 
+impl Validate for Ipv4NetworkInterfaceSetConfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkGateway {
@@ -2939,6 +2873,8 @@ pub struct NetworkGateway {
     #[yaserde(prefix = "tt", rename = "IPv6Address")]
     pub i_pv_6_address: Vec<Ipv6Address>,
 }
+
+impl Validate for NetworkGateway {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2957,19 +2893,15 @@ pub struct NetworkZeroConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NetworkZeroConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for NetworkZeroConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkZeroConfigurationExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // Optional array holding the configuration for the second and possibly further
-    // interfaces.
+    // Optional array holding the configuration for the second and possibly
+    // further interfaces.
     #[yaserde(prefix = "tt", rename = "Additional")]
     pub additional: Vec<NetworkZeroConfiguration>,
 
@@ -2977,12 +2909,13 @@ pub struct NetworkZeroConfigurationExtension {
     pub extension: Option<NetworkZeroConfigurationExtension2>,
 }
 
+impl Validate for NetworkZeroConfigurationExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkZeroConfigurationExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct NetworkZeroConfigurationExtension2 {}
+
+impl Validate for NetworkZeroConfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2998,17 +2931,15 @@ pub struct IpaddressFilter {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<IpaddressFilterExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for IpaddressFilter {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct IpaddressFilterExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct IpaddressFilterExtension {}
+
+impl Validate for IpaddressFilterExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3027,23 +2958,37 @@ pub struct Dot11Configuration {
 
     #[yaserde(prefix = "tt", rename = "Security")]
     pub security: Dot11SecurityConfiguration,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dot11Configuration {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Dot11SSIDType(pub String);
 
+impl Validate for Dot11SSIDType {
+    fn validate(&self) -> Result<(), String> {
+        if self.0.len() < "1".parse().unwrap() {
+            return Err(format!(
+                "MinLength validation error. \nExpected: 0 length >= 1 \nActual: 0 length == {}",
+                self.0.len()
+            ));
+        }
+        if self.0.len() > "32".parse().unwrap() {
+            return Err(format!(
+                "MaxLength validation error. \nExpected: 0 length <= 32 \nActual: 0 length == {}",
+                self.0.len()
+            ));
+        }
+        Ok(())
+    }
+}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Dot11StationMode {
+    #[yaserde(rename = "Ad-hoc")]
     AdHoc,
     Infrastructure,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -3052,6 +2997,8 @@ impl Default for Dot11StationMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for Dot11StationMode {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3070,30 +3017,25 @@ pub struct Dot11SecurityConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<Dot11SecurityConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dot11SecurityConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Dot11SecurityConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct Dot11SecurityConfigurationExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for Dot11SecurityConfigurationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Dot11SecurityMode {
     None,
+    #[yaserde(rename = "WEP")]
     Wep,
+    #[yaserde(rename = "PSK")]
     Psk,
     Dot1X,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -3103,13 +3045,16 @@ impl Default for Dot11SecurityMode {
     }
 }
 
+impl Validate for Dot11SecurityMode {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Dot11Cipher {
+    #[yaserde(rename = "CCMP")]
     Ccmp,
+    #[yaserde(rename = "TKIP")]
     Tkip,
     Any,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -3119,47 +3064,60 @@ impl Default for Dot11Cipher {
     }
 }
 
+impl Validate for Dot11Cipher {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Dot11PSK(pub String);
+
+impl Validate for Dot11PSK {
+    fn validate(&self) -> Result<(), String> {
+        if self.0.len() != "32".parse().unwrap() {
+            return Err(format!(
+                "Length validation error. \nExpected: 0 length == 32 \nActual: 0 length == {}",
+                self.0.len()
+            ));
+        }
+        Ok(())
+    }
+}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Dot11PSKPassphrase(pub String);
 
+impl Validate for Dot11PSKPassphrase {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Dot11PSKSet {
-    // According to IEEE802.11-2007 H.4.1 the RSNA PSK consists of 256 bits, or 64
-    // octets when represented in hex
+    // According to IEEE802.11-2007 H.4.1 the RSNA PSK consists of 256 bits, or
+    // 64 octets when represented in hex
     #[yaserde(prefix = "tt", rename = "Key")]
     pub key: Option<Dot11PSK>,
 
-    // According to IEEE802.11-2007 H.4.1 a pass-phrase is a sequence of between 8
-    // and 63 ASCII-encoded characters and
-    // each character in the pass-phrase must have an encoding in the range of 32 to
-    // 126 (decimal),inclusive.
+    // According to IEEE802.11-2007 H.4.1 a pass-phrase is a sequence of between
+    // 8 and 63 ASCII-encoded characters and
+    // each character in the pass-phrase must have an encoding in the range of
+    // 32 to 126 (decimal),inclusive.
     #[yaserde(prefix = "tt", rename = "Passphrase")]
     pub passphrase: Option<Dot11PSKPassphrase>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<Dot11PSKSetExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dot11PSKSet {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Dot11PSKSetExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct Dot11PSKSetExtension {}
+
+impl Validate for Dot11PSKSetExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkInterfaceSetConfigurationExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct NetworkInterfaceSetConfigurationExtension2 {}
+
+impl Validate for NetworkInterfaceSetConfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3178,23 +3136,20 @@ pub struct Dot11Capabilities {
 
     #[yaserde(prefix = "tt", rename = "WEP")]
     pub wep: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dot11Capabilities {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Dot11SignalStrength {
     None,
+    #[yaserde(rename = "Very Bad")]
     VeryBad,
     Bad,
     Good,
+    #[yaserde(rename = "Very Good")]
     VeryGood,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -3203,6 +3158,8 @@ impl Default for Dot11SignalStrength {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for Dot11SignalStrength {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3224,21 +3181,17 @@ pub struct Dot11Status {
 
     #[yaserde(prefix = "tt", rename = "ActiveConfigAlias")]
     pub active_config_alias: ReferenceToken,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dot11Status {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Dot11AuthAndMangementSuite {
     None,
     Dot1X,
+    #[yaserde(rename = "PSK")]
     Psk,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -3247,6 +3200,8 @@ impl Default for Dot11AuthAndMangementSuite {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for Dot11AuthAndMangementSuite {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3272,17 +3227,15 @@ pub struct Dot11AvailableNetworks {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<Dot11AvailableNetworksExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dot11AvailableNetworks {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Dot11AvailableNetworksExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct Dot11AvailableNetworksExtension {}
+
+impl Validate for Dot11AvailableNetworksExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum CapabilityCategory {
@@ -3292,8 +3245,8 @@ pub enum CapabilityCategory {
     Events,
     Imaging,
     Media,
+    #[yaserde(rename = "PTZ")]
     Ptz,
-
     __Unknown__(String),
 }
 
@@ -3303,45 +3256,44 @@ impl Default for CapabilityCategory {
     }
 }
 
+impl Validate for CapabilityCategory {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Capabilities {
     // Analytics capabilities
     #[yaserde(prefix = "tt", rename = "Analytics")]
-    pub analytics: Option<AnalyticsCapabilities>,
+    pub analytics: Vec<AnalyticsCapabilities>,
 
     // Device capabilities
     #[yaserde(prefix = "tt", rename = "Device")]
-    pub device: Option<DeviceCapabilities>,
+    pub device: Vec<DeviceCapabilities>,
 
     // Event capabilities
     #[yaserde(prefix = "tt", rename = "Events")]
-    pub events: Option<EventCapabilities>,
+    pub events: Vec<EventCapabilities>,
 
     // Imaging capabilities
     #[yaserde(prefix = "tt", rename = "Imaging")]
-    pub imaging: Option<ImagingCapabilities>,
+    pub imaging: Vec<ImagingCapabilities>,
 
     // Media capabilities
     #[yaserde(prefix = "tt", rename = "Media")]
-    pub media: Option<MediaCapabilities>,
+    pub media: Vec<MediaCapabilities>,
 
     // PTZ capabilities
     #[yaserde(prefix = "tt", rename = "PTZ")]
-    pub ptz: Option<Ptzcapabilities>,
+    pub ptz: Vec<Ptzcapabilities>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<CapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Capabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct CapabilitiesExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "DeviceIO")]
     pub device_io: Option<DeviceIOCapabilities>,
 
@@ -3367,12 +3319,13 @@ pub struct CapabilitiesExtension {
     pub extensions: Option<CapabilitiesExtension2>,
 }
 
+impl Validate for CapabilitiesExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct CapabilitiesExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct CapabilitiesExtension2 {}
+
+impl Validate for CapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3388,13 +3341,9 @@ pub struct AnalyticsCapabilities {
     // Indicates whether or not modules are supported.
     #[yaserde(prefix = "tt", rename = "AnalyticsModuleSupport")]
     pub analytics_module_support: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AnalyticsCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3421,17 +3370,15 @@ pub struct DeviceCapabilities {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<DeviceCapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for DeviceCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct DeviceCapabilitiesExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct DeviceCapabilitiesExtension {}
+
+impl Validate for DeviceCapabilitiesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3455,13 +3402,9 @@ pub struct EventCapabilities {
         rename = "WSPausableSubscriptionManagerInterfaceSupport"
     )]
     pub ws_pausable_subscription_manager_interface_support: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for EventCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3476,16 +3419,13 @@ pub struct Iocapabilities {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<IocapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Iocapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct IocapabilitiesExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "Auxiliary")]
     pub auxiliary: Option<bool>,
 
@@ -3494,17 +3434,15 @@ pub struct IocapabilitiesExtension {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: IocapabilitiesExtension2,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for IocapabilitiesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct IocapabilitiesExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct IocapabilitiesExtension2 {}
+
+impl Validate for IocapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3517,27 +3455,20 @@ pub struct MediaCapabilities {
     #[yaserde(prefix = "tt", rename = "StreamingCapabilities")]
     pub streaming_capabilities: RealTimeStreamingCapabilities,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<MediaCapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MediaCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MediaCapabilitiesExtension {
     #[yaserde(prefix = "tt", rename = "ProfileCapabilities")]
     pub profile_capabilities: ProfileCapabilities,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MediaCapabilitiesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3556,17 +3487,15 @@ pub struct RealTimeStreamingCapabilities {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<RealTimeStreamingCapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RealTimeStreamingCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct RealTimeStreamingCapabilitiesExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct RealTimeStreamingCapabilitiesExtension {}
+
+impl Validate for RealTimeStreamingCapabilitiesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3574,13 +3503,9 @@ pub struct ProfileCapabilities {
     // Maximum number of profiles.
     #[yaserde(prefix = "tt", rename = "MaximumNumberOfProfiles")]
     pub maximum_number_of_profiles: i32,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ProfileCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3603,16 +3528,13 @@ pub struct NetworkCapabilities {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<NetworkCapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for NetworkCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkCapabilitiesExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "Dot11Configuration")]
     pub dot_11_configuration: Option<bool>,
 
@@ -3620,12 +3542,13 @@ pub struct NetworkCapabilitiesExtension {
     pub extension: Option<NetworkCapabilitiesExtension2>,
 }
 
+impl Validate for NetworkCapabilitiesExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkCapabilitiesExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct NetworkCapabilitiesExtension2 {}
+
+impl Validate for NetworkCapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3662,14 +3585,11 @@ pub struct SecurityCapabilities {
     #[yaserde(prefix = "tt", rename = "RELToken")]
     pub rel_token: bool,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SecurityCapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SecurityCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3680,6 +3600,8 @@ pub struct SecurityCapabilitiesExtension {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SecurityCapabilitiesExtension2>,
 }
+
+impl Validate for SecurityCapabilitiesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3693,9 +3615,9 @@ pub struct SecurityCapabilitiesExtension2 {
 
     #[yaserde(prefix = "tt", rename = "RemoteUserHandling")]
     pub remote_user_handling: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
 }
+
+impl Validate for SecurityCapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3730,16 +3652,13 @@ pub struct SystemCapabilities {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SystemCapabilitiesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SystemCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct SystemCapabilitiesExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(prefix = "tt", rename = "HttpFirmwareUpgrade")]
     pub http_firmware_upgrade: Option<bool>,
 
@@ -3756,12 +3675,13 @@ pub struct SystemCapabilitiesExtension {
     pub extension: Option<SystemCapabilitiesExtension2>,
 }
 
+impl Validate for SystemCapabilitiesExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SystemCapabilitiesExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct SystemCapabilitiesExtension2 {}
+
+impl Validate for SystemCapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3771,12 +3691,14 @@ pub struct OnvifVersion {
     pub major: i32,
 
     // Two digit minor version number.
-    // If major version number is less than "16", X.0.1 maps to "01" and X.2.1 maps
-    // to "21" where X stands for Major version number.
+    // If major version number is less than "16", X.0.1 maps to "01" and X.2.1
+    // maps to "21" where X stands for Major version number.
     // Otherwise, minor number is month of release, such as "06" for June.
     #[yaserde(prefix = "tt", rename = "Minor")]
     pub minor: i32,
 }
+
+impl Validate for OnvifVersion {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3784,10 +3706,9 @@ pub struct ImagingCapabilities {
     // Imaging service URI.
     #[yaserde(prefix = "tt", rename = "XAddr")]
     pub x_addr: String,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImagingCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3795,13 +3716,9 @@ pub struct Ptzcapabilities {
     // PTZ service URI.
     #[yaserde(prefix = "tt", rename = "XAddr")]
     pub x_addr: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ptzcapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3823,13 +3740,9 @@ pub struct DeviceIOCapabilities {
 
     #[yaserde(prefix = "tt", rename = "RelayOutputs")]
     pub relay_outputs: i32,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for DeviceIOCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3840,13 +3753,9 @@ pub struct DisplayCapabilities {
     // Indication that the SetLayout command supports only predefined layouts.
     #[yaserde(prefix = "tt", rename = "FixedLayout")]
     pub fixed_layout: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for DisplayCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3868,13 +3777,9 @@ pub struct RecordingCapabilities {
 
     #[yaserde(prefix = "tt", rename = "MaxStringLength")]
     pub max_string_length: i32,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3884,13 +3789,9 @@ pub struct SearchCapabilities {
 
     #[yaserde(prefix = "tt", rename = "MetadataSearch")]
     pub metadata_search: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SearchCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3898,13 +3799,9 @@ pub struct ReplayCapabilities {
     // The address of the replay service.
     #[yaserde(prefix = "tt", rename = "XAddr")]
     pub x_addr: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ReplayCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3932,13 +3829,9 @@ pub struct ReceiverCapabilities {
     // The maximum allowed length for RTSP URIs.
     #[yaserde(prefix = "tt", rename = "MaximumRTSPURILength")]
     pub maximum_rtspuri_length: i32,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ReceiverCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3952,17 +3845,15 @@ pub struct AnalyticsDeviceCapabilities {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<AnalyticsDeviceExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AnalyticsDeviceCapabilities {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AnalyticsDeviceExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct AnalyticsDeviceExtension {}
+
+impl Validate for AnalyticsDeviceExtension {}
 
 // Enumeration describing the available system log modes.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -3971,7 +3862,6 @@ pub enum SystemLogType {
     System,
     // Indicates that a access log is requested.
     Access,
-
     __Unknown__(String),
 }
 
@@ -3980,6 +3870,8 @@ impl Default for SystemLogType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for SystemLogType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3993,6 +3885,8 @@ pub struct SystemLog {
     pub string: Option<String>,
 }
 
+impl Validate for SystemLog {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct SupportInformation {
@@ -4005,6 +3899,8 @@ pub struct SupportInformation {
     pub string: Option<String>,
 }
 
+impl Validate for SupportInformation {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct BinaryData {
@@ -4013,18 +3909,22 @@ pub struct BinaryData {
     pub data: String,
 
     #[yaserde(attribute, prefix = "xmime" rename = "contentType")]
-    pub xmime_content_type: Option<xmime::ContentType>,
+    pub content_type: Option<xmime::ContentType>,
 }
+
+impl Validate for BinaryData {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AttachmentData {
-    #[yaserde(prefix = "tt", rename = "Include")]
-    pub xop_include: xop::Include,
+    #[yaserde(prefix = "xop", rename = "Include")]
+    pub include: xop::Include,
 
     #[yaserde(attribute, prefix = "xmime" rename = "contentType")]
-    pub xmime_content_type: Option<xmime::ContentType>,
+    pub content_type: Option<xmime::ContentType>,
 }
+
+impl Validate for AttachmentData {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4036,12 +3936,16 @@ pub struct BackupFile {
     pub data: AttachmentData,
 }
 
+impl Validate for BackupFile {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct SystemLogUriList {
     #[yaserde(prefix = "tt", rename = "SystemLog")]
     pub system_log: Vec<SystemLogUri>,
 }
+
+impl Validate for SystemLogUriList {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4051,13 +3955,9 @@ pub struct SystemLogUri {
 
     #[yaserde(prefix = "tt", rename = "Uri")]
     pub uri: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SystemLogUri {}
 
 // Enumeration describing the available factory default modes.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -4066,7 +3966,6 @@ pub enum FactoryDefaultType {
     Hard,
     // Indicates that a soft factory default is requested.
     Soft,
-
     __Unknown__(String),
 }
 
@@ -4076,6 +3975,8 @@ impl Default for FactoryDefaultType {
     }
 }
 
+impl Validate for FactoryDefaultType {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum SetDateTimeType {
     // Indicates that the date and time are set manually.
@@ -4083,7 +3984,6 @@ pub enum SetDateTimeType {
     // Indicates that the date and time are set through NTP
     #[yaserde(rename = "NTP")]
     Ntp,
-
     __Unknown__(String),
 }
 
@@ -4092,6 +3992,8 @@ impl Default for SetDateTimeType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for SetDateTimeType {}
 
 // General date time inforamtion returned by the GetSystemDateTime method.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -4120,17 +4022,15 @@ pub struct SystemDateTime {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SystemDateTimeExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SystemDateTime {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SystemDateTimeExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct SystemDateTimeExtension {}
+
+impl Validate for SystemDateTimeExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4141,6 +4041,8 @@ pub struct DateTime {
     #[yaserde(prefix = "tt", rename = "Date")]
     pub date: Date,
 }
+
+impl Validate for DateTime {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4156,6 +4058,8 @@ pub struct Date {
     #[yaserde(prefix = "tt", rename = "Day")]
     pub day: i32,
 }
+
+impl Validate for Date {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4173,6 +4077,8 @@ pub struct Time {
     pub second: i32,
 }
 
+impl Validate for Time {}
+
 // The TZ format is specified by POSIX, please refer to POSIX 1003.1 section 8.3
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4181,6 +4087,8 @@ pub struct TimeZone {
     #[yaserde(prefix = "tt", rename = "TZ")]
     pub tz: String,
 }
+
+impl Validate for TimeZone {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4193,13 +4101,9 @@ pub struct RemoteUser {
 
     #[yaserde(prefix = "tt", rename = "UseDerivedPassword")]
     pub use_derived_password: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RemoteUser {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum UserLevel {
@@ -4208,7 +4112,6 @@ pub enum UserLevel {
     User,
     Anonymous,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -4217,6 +4120,8 @@ impl Default for UserLevel {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for UserLevel {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4235,17 +4140,15 @@ pub struct User {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<UserExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for User {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct UserExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct UserExtension {}
+
+impl Validate for UserExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4264,17 +4167,15 @@ pub struct CertificateGenerationParameters {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<CertificateGenerationParametersExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for CertificateGenerationParameters {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct CertificateGenerationParametersExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct CertificateGenerationParametersExtension {}
+
+impl Validate for CertificateGenerationParametersExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4288,6 +4189,8 @@ pub struct Certificate {
     pub certificate: BinaryData,
 }
 
+impl Validate for Certificate {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct CertificateStatus {
@@ -4298,13 +4201,9 @@ pub struct CertificateStatus {
     // Indicates whether or not a certificate is used in a HTTPS configuration.
     #[yaserde(prefix = "tt", rename = "Status")]
     pub status: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for CertificateStatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4317,13 +4216,9 @@ pub struct CertificateWithPrivateKey {
 
     #[yaserde(prefix = "tt", rename = "PrivateKey")]
     pub private_key: BinaryData,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for CertificateWithPrivateKey {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4362,10 +4257,9 @@ pub struct CertificateInformation {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<CertificateInformationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for CertificateInformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4374,12 +4268,13 @@ pub struct CertificateUsage {
     pub critical: bool,
 }
 
+impl Validate for CertificateUsage {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct CertificateInformationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct CertificateInformationExtension {}
+
+impl Validate for CertificateInformationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4405,17 +4300,15 @@ pub struct Dot1XConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<Dot1XConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Dot1XConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Dot1XConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct Dot1XConfigurationExtension {}
+
+impl Validate for Dot1XConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4424,50 +4317,44 @@ pub struct EapmethodConfiguration {
     #[yaserde(prefix = "tt", rename = "TLSConfiguration")]
     pub tls_configuration: Option<Tlsconfiguration>,
 
-    // Password for those EAP Methods that require a password. The password shall
-    // never be returned on a get method.
+    // Password for those EAP Methods that require a password. The password
+    // shall never be returned on a get method.
     #[yaserde(prefix = "tt", rename = "Password")]
     pub password: Option<String>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<EapMethodExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for EapmethodConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct EapMethodExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct EapMethodExtension {}
+
+impl Validate for EapMethodExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Tlsconfiguration {
     #[yaserde(prefix = "tt", rename = "CertificateID")]
     pub certificate_id: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Tlsconfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct GenericEapPwdConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct GenericEapPwdConfigurationExtension {}
+
+impl Validate for GenericEapPwdConfigurationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum RelayLogicalState {
+    #[yaserde(rename = "active")]
     Active,
+    #[yaserde(rename = "inactive")]
     Inactive,
-
     __Unknown__(String),
 }
 
@@ -4477,11 +4364,14 @@ impl Default for RelayLogicalState {
     }
 }
 
+impl Validate for RelayLogicalState {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum RelayIdleState {
+    #[yaserde(rename = "closed")]
     Closed,
+    #[yaserde(rename = "open")]
     Open,
-
     __Unknown__(String),
 }
 
@@ -4491,6 +4381,8 @@ impl Default for RelayIdleState {
     }
 }
 
+impl Validate for RelayIdleState {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RelayOutputSettings {
@@ -4498,9 +4390,9 @@ pub struct RelayOutputSettings {
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: RelayMode,
 
-    // Time after which the relay returns to its idle state if it is in monostable
-    // mode. If the Mode field is set to bistable mode the value of the parameter
-    // can be ignored.
+    // Time after which the relay returns to its idle state if it is in
+    // monostable mode. If the Mode field is set to bistable mode the value of
+    // the parameter can be ignored.
     #[yaserde(prefix = "tt", rename = "DelayTime")]
     pub delay_time: xs::Duration,
 
@@ -4509,11 +4401,12 @@ pub struct RelayOutputSettings {
     pub idle_state: RelayIdleState,
 }
 
+impl Validate for RelayOutputSettings {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum RelayMode {
     Monostable,
     Bistable,
-
     __Unknown__(String),
 }
 
@@ -4523,29 +4416,27 @@ impl Default for RelayMode {
     }
 }
 
+impl Validate for RelayMode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RelayOutput {
     #[yaserde(prefix = "tt", rename = "Properties")]
     pub properties: RelayOutputSettings,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
 
+impl Validate for RelayOutput {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum DigitalIdleState {
+    #[yaserde(rename = "closed")]
     Closed,
+    #[yaserde(rename = "open")]
     Open,
-
     __Unknown__(String),
 }
 
@@ -4555,24 +4446,21 @@ impl Default for DigitalIdleState {
     }
 }
 
+impl Validate for DigitalIdleState {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct DigitalInput {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Indicate the Digital IdleState status.
     #[yaserde(attribute, rename = "IdleState")]
     pub idle_state: Option<DigitalIdleState>,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
+
+impl Validate for DigitalInput {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4581,18 +4469,19 @@ pub struct Ptznode {
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Option<Name>,
 
-    // A list of Coordinate Systems available for the PTZ Node. For each Coordinate
-    // System, the PTZ Node MUST specify its allowed range.
+    // A list of Coordinate Systems available for the PTZ Node. For each
+    // Coordinate System, the PTZ Node MUST specify its allowed range.
     #[yaserde(prefix = "tt", rename = "SupportedPTZSpaces")]
     pub supported_ptz_spaces: Ptzspaces,
 
-    // All preset operations MUST be available for this PTZ Node if one preset is
-    // supported.
+    // All preset operations MUST be available for this PTZ Node if one preset
+    // is supported.
     #[yaserde(prefix = "tt", rename = "MaximumNumberOfPresets")]
     pub maximum_number_of_presets: i32,
 
-    // A boolean operator specifying the availability of a home position. If set to
-    // true, the Home Position Operations MUST be available for this PTZ Node.
+    // A boolean operator specifying the availability of a home position. If set
+    // to true, the Home Position Operations MUST be available for this PTZ
+    // Node.
     #[yaserde(prefix = "tt", rename = "HomeSupported")]
     pub home_supported: bool,
 
@@ -4604,8 +4493,8 @@ pub struct Ptznode {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtznodeExtension>,
 
-    // Indication whether the HomePosition of a Node is fixed or it can be changed
-    // via the SetHomePosition command.
+    // Indication whether the HomePosition of a Node is fixed or it can be
+    // changed via the SetHomePosition command.
     #[yaserde(attribute, rename = "FixedHomePosition")]
     pub fixed_home_position: Option<bool>,
 
@@ -4613,21 +4502,16 @@ pub struct Ptznode {
     #[yaserde(attribute, rename = "GeoMove")]
     pub geo_move: Option<bool>,
 
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
 
+impl Validate for Ptznode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PtznodeExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Detail of supported Preset Tour feature.
     #[yaserde(prefix = "tt", rename = "SupportedPresetTour")]
     pub supported_preset_tour: Option<PtzpresetTourSupported>,
@@ -4636,19 +4520,20 @@ pub struct PtznodeExtension {
     pub extension: Option<PtznodeExtension2>,
 }
 
+impl Validate for PtznodeExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtznodeExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtznodeExtension2 {}
+
+impl Validate for PtznodeExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PtzpresetTourSupported {
-    // Indicates number of preset tours that can be created. Required preset tour
-    // operations shall be available for this PTZ Node if one or more preset tour is
-    // supported.
+    // Indicates number of preset tours that can be created. Required preset
+    // tour operations shall be available for this PTZ Node if one or more
+    // preset tour is supported.
     #[yaserde(prefix = "tt", rename = "MaximumNumberOfPresetTours")]
     pub maximum_number_of_preset_tours: i32,
 
@@ -4658,27 +4543,26 @@ pub struct PtzpresetTourSupported {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtzpresetTourSupportedExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourSupported {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourSupportedExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourSupportedExtension {}
+
+impl Validate for PtzpresetTourSupportedExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Ptzconfiguration {
-    // A mandatory reference to the PTZ Node that the PTZ Configuration belongs to.
+    // A mandatory reference to the PTZ Node that the PTZ Configuration belongs
+    // to.
     #[yaserde(prefix = "tt", rename = "NodeToken")]
     pub node_token: ReferenceToken,
 
-    // If the PTZ Node supports absolute Pan/Tilt movements, it shall specify one
-    // Absolute Pan/Tilt Position Space as default.
+    // If the PTZ Node supports absolute Pan/Tilt movements, it shall specify
+    // one Absolute Pan/Tilt Position Space as default.
     #[yaserde(prefix = "tt", rename = "DefaultAbsolutePantTiltPositionSpace")]
     pub default_absolute_pant_tilt_position_space: Option<String>,
 
@@ -4687,8 +4571,8 @@ pub struct Ptzconfiguration {
     #[yaserde(prefix = "tt", rename = "DefaultAbsoluteZoomPositionSpace")]
     pub default_absolute_zoom_position_space: Option<String>,
 
-    // If the PTZ Node supports relative Pan/Tilt movements, it shall specify one
-    // RelativePan/Tilt Translation Space as default.
+    // If the PTZ Node supports relative Pan/Tilt movements, it shall specify
+    // one RelativePan/Tilt Translation Space as default.
     #[yaserde(prefix = "tt", rename = "DefaultRelativePanTiltTranslationSpace")]
     pub default_relative_pan_tilt_translation_space: Option<String>,
 
@@ -4697,8 +4581,8 @@ pub struct Ptzconfiguration {
     #[yaserde(prefix = "tt", rename = "DefaultRelativeZoomTranslationSpace")]
     pub default_relative_zoom_translation_space: Option<String>,
 
-    // If the PTZ Node supports continuous Pan/Tilt movements, it shall specify one
-    // Continuous Pan/Tilt Velocity Space as default.
+    // If the PTZ Node supports continuous Pan/Tilt movements, it shall specify
+    // one Continuous Pan/Tilt Velocity Space as default.
     #[yaserde(prefix = "tt", rename = "DefaultContinuousPanTiltVelocitySpace")]
     pub default_continuous_pan_tilt_velocity_space: Option<String>,
 
@@ -4707,8 +4591,8 @@ pub struct Ptzconfiguration {
     #[yaserde(prefix = "tt", rename = "DefaultContinuousZoomVelocitySpace")]
     pub default_continuous_zoom_velocity_space: Option<String>,
 
-    // If the PTZ Node supports absolute or relative PTZ movements, it shall specify
-    // corresponding default Pan/Tilt and Zoom speeds.
+    // If the PTZ Node supports absolute or relative PTZ movements, it shall
+    // specify corresponding default Pan/Tilt and Zoom speeds.
     #[yaserde(prefix = "tt", rename = "DefaultPTZSpeed")]
     pub default_ptz_speed: Option<Ptzspeed>,
 
@@ -4717,11 +4601,11 @@ pub struct Ptzconfiguration {
     #[yaserde(prefix = "tt", rename = "DefaultPTZTimeout")]
     pub default_ptz_timeout: Option<xs::Duration>,
 
-    // The Pan/Tilt limits element should be present for a PTZ Node that supports an
-    // absolute Pan/Tilt. If the element is present it signals the support for
-    // configurable Pan/Tilt limits. If limits are enabled, the Pan/Tilt movements
-    // shall always stay within the specified range. The Pan/Tilt limits are
-    // disabled by setting the limits to –INF or +INF.
+    // The Pan/Tilt limits element should be present for a PTZ Node that
+    // supports an absolute Pan/Tilt. If the element is present it signals the
+    // support for configurable Pan/Tilt limits. If limits are enabled, the
+    // Pan/Tilt movements shall always stay within the specified range. The
+    // Pan/Tilt limits are disabled by setting the limits to –INF or +INF.
     #[yaserde(prefix = "tt", rename = "PanTiltLimits")]
     pub pan_tilt_limits: Option<PanTiltLimits>,
 
@@ -4744,13 +4628,10 @@ pub struct Ptzconfiguration {
     #[yaserde(attribute, rename = "PresetRamp")]
     pub preset_ramp: Option<i32>,
 
-    // The optional acceleration ramp used by the device when executing PresetTours.
+    // The optional acceleration ramp used by the device when executing
+    // PresetTours.
     #[yaserde(attribute, rename = "PresetTourRamp")]
     pub preset_tour_ramp: Option<i32>,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -4766,12 +4647,11 @@ pub struct Ptzconfiguration {
     pub token: ReferenceToken,
 }
 
+impl Validate for Ptzconfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PtzconfigurationExtension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Optional element to configure PT Control Direction related features.
     #[yaserde(prefix = "tt", rename = "PTControlDirection")]
     pub pt_control_direction: Option<PtcontrolDirection>,
@@ -4780,12 +4660,13 @@ pub struct PtzconfigurationExtension {
     pub extension: Option<PtzconfigurationExtension2>,
 }
 
+impl Validate for PtzconfigurationExtension {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzconfigurationExtension2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzconfigurationExtension2 {}
+
+impl Validate for PtzconfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4794,28 +4675,22 @@ pub struct PtcontrolDirection {
     #[yaserde(prefix = "tt", rename = "EFlip")]
     pub e_flip: Option<Eflip>,
 
-    // Optional element to configure related parameters for reversing of PT Control
-    // Direction.
+    // Optional element to configure related parameters for reversing of PT
+    // Control Direction.
     #[yaserde(prefix = "tt", rename = "Reverse")]
     pub reverse: Option<Reverse>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtcontrolDirectionExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtcontrolDirection {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtcontrolDirectionExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct PtcontrolDirectionExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for PtcontrolDirectionExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4823,13 +4698,9 @@ pub struct Eflip {
     // Parameter to enable/disable E-Flip feature.
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: EflipMode,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Eflip {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4837,20 +4708,17 @@ pub struct Reverse {
     // Parameter to enable/disable Reverse feature.
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: ReverseMode,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Reverse {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum EflipMode {
+    #[yaserde(rename = "OFF")]
     Off,
+    #[yaserde(rename = "ON")]
     On,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -4860,13 +4728,17 @@ impl Default for EflipMode {
     }
 }
 
+impl Validate for EflipMode {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ReverseMode {
+    #[yaserde(rename = "OFF")]
     Off,
+    #[yaserde(rename = "ON")]
     On,
+    #[yaserde(rename = "AUTO")]
     Auto,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -4875,6 +4747,8 @@ impl Default for ReverseMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for ReverseMode {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4886,9 +4760,6 @@ pub struct PtzconfigurationOptions {
     // A timeout Range within which Timeouts are accepted by the PTZ Node.
     #[yaserde(prefix = "tt", rename = "PTZTimeout")]
     pub ptz_timeout: DurationRange,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
 
     // Supported options for PT Direction Control.
     #[yaserde(prefix = "tt", rename = "PTControlDirection")]
@@ -4902,17 +4773,15 @@ pub struct PtzconfigurationOptions {
     // highest acceleration corresponds to the maximum index.
     #[yaserde(attribute, rename = "PTZRamps")]
     pub ptz_ramps: Option<IntAttrList>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzconfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzconfigurationOptions2 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzconfigurationOptions2 {}
+
+impl Validate for PtzconfigurationOptions2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4927,17 +4796,15 @@ pub struct PtcontrolDirectionOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtcontrolDirectionOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtcontrolDirectionOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtcontrolDirectionOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtcontrolDirectionOptionsExtension {}
+
+impl Validate for PtcontrolDirectionOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4948,17 +4815,15 @@ pub struct EflipOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<EflipOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for EflipOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct EflipOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct EflipOptionsExtension {}
+
+impl Validate for EflipOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4969,17 +4834,15 @@ pub struct ReverseOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ReverseOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ReverseOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ReverseOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ReverseOptionsExtension {}
+
+impl Validate for ReverseOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4989,6 +4852,8 @@ pub struct PanTiltLimits {
     pub range: Space2DDescription,
 }
 
+impl Validate for PanTiltLimits {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ZoomLimits {
@@ -4997,29 +4862,33 @@ pub struct ZoomLimits {
     pub range: Space1DDescription,
 }
 
+impl Validate for ZoomLimits {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Ptzspaces {
     // The Generic Pan/Tilt Position space is provided by every PTZ node that
-    // supports absolute Pan/Tilt, since it does not relate to a specific physical
-    // range.
+    // supports absolute Pan/Tilt, since it does not relate to a specific
+    // physical range.
     // Instead, the range should be defined as the full range of the PTZ unit
-    // normalized to the range -1 to 1 resulting in the following space description.
+    // normalized to the range -1 to 1 resulting in the following space
+    // description.
     #[yaserde(prefix = "tt", rename = "AbsolutePanTiltPositionSpace")]
     pub absolute_pan_tilt_position_space: Vec<Space2DDescription>,
 
-    // The Generic Zoom Position Space is provided by every PTZ node that supports
-    // absolute Zoom, since it does not relate to a specific physical range.
-    // Instead, the range should be defined as the full range of the Zoom normalized
-    // to the range 0 (wide) to 1 (tele).
+    // The Generic Zoom Position Space is provided by every PTZ node that
+    // supports absolute Zoom, since it does not relate to a specific physical
+    // range.
+    // Instead, the range should be defined as the full range of the Zoom
+    // normalized to the range 0 (wide) to 1 (tele).
     // There is no assumption about how the generic zoom range is mapped to
     // magnification, FOV or other physical zoom dimension.
     #[yaserde(prefix = "tt", rename = "AbsoluteZoomPositionSpace")]
     pub absolute_zoom_position_space: Vec<Space1DDescription>,
 
     // The Generic Pan/Tilt translation space is provided by every PTZ node that
-    // supports relative Pan/Tilt, since it does not relate to a specific physical
-    // range.
+    // supports relative Pan/Tilt, since it does not relate to a specific
+    // physical range.
     // Instead, the range should be defined as the full positive and negative
     // translation range of the PTZ unit normalized to the range -1 to 1,
     // where positive translation would mean clockwise rotation or movement in
@@ -5031,11 +4900,11 @@ pub struct Ptzspaces {
     // supports relative Zoom, since it does not relate to a specific physical
     // range.
     // Instead, the corresponding absolute range should be defined as the full
-    // positive and negative translation range of the Zoom normalized to the range
-    // -1 to1,
+    // positive and negative translation range of the Zoom normalized to the
+    // range -1 to1,
     // where a positive translation maps to a movement in TELE direction. The
-    // translation is signed to indicate direction (negative is to wide, positive is
-    // to tele).
+    // translation is signed to indicate direction (negative is to wide,
+    // positive is to tele).
     // There is no assumption about how the generic zoom range is mapped to
     // magnification, FOV or other physical zoom dimension. This results in the
     // following space description.
@@ -5054,15 +4923,15 @@ pub struct Ptzspaces {
     pub continuous_pan_tilt_velocity_space: Vec<Space2DDescription>,
 
     // The generic zoom velocity space specifies a zoom factor velocity without
-    // knowing the underlying physical model. The range should be normalized from -1
-    // to 1,
+    // knowing the underlying physical model. The range should be normalized
+    // from -1 to 1,
     // where a positive velocity would map to TELE direction. A generic zoom
     // velocity space description resembles the following.
     #[yaserde(prefix = "tt", rename = "ContinuousZoomVelocitySpace")]
     pub continuous_zoom_velocity_space: Vec<Space1DDescription>,
 
-    // The speed space specifies the speed for a Pan/Tilt movement when moving to an
-    // absolute position or to a relative translation.
+    // The speed space specifies the speed for a Pan/Tilt movement when moving
+    // to an absolute position or to a relative translation.
     // In contrast to the velocity spaces, speed spaces do not contain any
     // directional information. The speed of a combined Pan/Tilt
     // movement is represented by a single non-negative scalar value.
@@ -5078,17 +4947,15 @@ pub struct Ptzspaces {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtzspacesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ptzspaces {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzspacesExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzspacesExtension {}
+
+impl Validate for PtzspacesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5106,6 +4973,8 @@ pub struct Space2DDescription {
     pub y_range: FloatRange,
 }
 
+impl Validate for Space2DDescription {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Space1DDescription {
@@ -5118,12 +4987,14 @@ pub struct Space1DDescription {
     pub x_range: FloatRange,
 }
 
+impl Validate for Space1DDescription {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Ptzspeed {
-    // Pan and tilt speed. The x component corresponds to pan and the y component to
-    // tilt. If omitted in a request, the current (if any) PanTilt movement should
-    // not be affected.
+    // Pan and tilt speed. The x component corresponds to pan and the y
+    // component to tilt. If omitted in a request, the current (if any) PanTilt
+    // movement should not be affected.
     #[yaserde(prefix = "tt", rename = "PanTilt")]
     pub pan_tilt: Option<Vector2D>,
 
@@ -5132,6 +5003,8 @@ pub struct Ptzspeed {
     #[yaserde(prefix = "tt", rename = "Zoom")]
     pub zoom: Option<Vector1D>,
 }
+
+impl Validate for Ptzspeed {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5146,13 +5019,24 @@ pub struct Ptzpreset {
 
     #[yaserde(attribute, rename = "token")]
     pub token: Option<ReferenceToken>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ptzpreset {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct AuxiliaryData(pub String);
+
+impl Validate for AuxiliaryData {
+    fn validate(&self) -> Result<(), String> {
+        if self.0.len() > "128".parse().unwrap() {
+            return Err(format!(
+                "MaxLength validation error. \nExpected: 0 length <= 128 \nActual: 0 length == {}",
+                self.0.len()
+            ));
+        }
+        Ok(())
+    }
+}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum PtzpresetTourState {
@@ -5160,7 +5044,6 @@ pub enum PtzpresetTourState {
     Touring,
     Paused,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -5170,12 +5053,13 @@ impl Default for PtzpresetTourState {
     }
 }
 
+impl Validate for PtzpresetTourState {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum PtzpresetTourDirection {
     Forward,
     Backward,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -5185,13 +5069,14 @@ impl Default for PtzpresetTourDirection {
     }
 }
 
+impl Validate for PtzpresetTourDirection {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum PtzpresetTourOperation {
     Start,
     Stop,
     Pause,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -5200,6 +5085,8 @@ impl Default for PtzpresetTourOperation {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for PtzpresetTourOperation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5231,17 +5118,15 @@ pub struct PresetTour {
     // Unique identifier of this preset tour.
     #[yaserde(attribute, rename = "token")]
     pub token: Option<ReferenceToken>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PresetTour {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourExtension {}
+
+impl Validate for PtzpresetTourExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5250,41 +5135,36 @@ pub struct PtzpresetTourSpot {
     #[yaserde(prefix = "tt", rename = "PresetDetail")]
     pub preset_detail: PtzpresetTourPresetDetail,
 
-    // Optional parameter to specify Pan/Tilt and Zoom speed on moving toward this
-    // tour spot.
+    // Optional parameter to specify Pan/Tilt and Zoom speed on moving toward
+    // this tour spot.
     #[yaserde(prefix = "tt", rename = "Speed")]
     pub speed: Option<Ptzspeed>,
 
-    // Optional parameter to specify time duration of staying on this tour sport.
+    // Optional parameter to specify time duration of staying on this tour
+    // sport.
     #[yaserde(prefix = "tt", rename = "StayTime")]
     pub stay_time: Option<xs::Duration>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtzpresetTourSpotExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourSpot {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourSpotExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourSpotExtension {}
+
+impl Validate for PtzpresetTourSpotExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PtzpresetTourPresetDetail {
-    #[yaserde(prefix = "tt", rename = "PtzpresetTourPresetDetailChoice")]
-    pub ptzpreset_tour_preset_detail_choice: PtzpresetTourPresetDetailChoice,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
+    #[yaserde(prefix = "tt", rename = "PTZPresetTourPresetDetailChoice")]
+    pub ptz_preset_tour_preset_detail_choice: PtzpresetTourPresetDetailChoice,
 }
+
+impl Validate for PtzpresetTourPresetDetail {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum PtzpresetTourPresetDetailChoice {
@@ -5294,9 +5174,9 @@ pub enum PtzpresetTourPresetDetailChoice {
     // Node. "False" to this parameter shall be treated as an invalid argument.
     Home(bool),
     // Option to specify the preset position with vector of PTZ node directly.
+    #[yaserde(rename = "PTZPosition")]
     Ptzposition(Ptzvector),
     TypeExtension(PtzpresetTourTypeExtension),
-
     __Unknown__(String),
 }
 
@@ -5306,12 +5186,13 @@ impl Default for PtzpresetTourPresetDetailChoice {
     }
 }
 
+impl Validate for PtzpresetTourPresetDetailChoice {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourTypeExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourTypeExtension {}
+
+impl Validate for PtzpresetTourTypeExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5326,17 +5207,15 @@ pub struct PtzpresetTourStatus {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtzpresetTourStatusExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourStatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourStatusExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourStatusExtension {}
+
+impl Validate for PtzpresetTourStatusExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5350,8 +5229,8 @@ pub struct PtzpresetTourStartingCondition {
     #[yaserde(prefix = "tt", rename = "RecurringDuration")]
     pub recurring_duration: Option<xs::Duration>,
 
-    // Optional parameter to choose which direction the preset tour goes. Forward
-    // shall be chosen in case it is omitted.
+    // Optional parameter to choose which direction the preset tour goes.
+    // Forward shall be chosen in case it is omitted.
     #[yaserde(prefix = "tt", rename = "Direction")]
     pub direction: Option<PtzpresetTourDirection>,
 
@@ -5359,21 +5238,19 @@ pub struct PtzpresetTourStartingCondition {
     pub extension: Option<PtzpresetTourStartingConditionExtension>,
 
     // Execute presets in random order. If set to true and Direction is also
-    // present, Direction will be ignored and presets of the Tour will be recalled
-    // randomly.
+    // present, Direction will be ignored and presets of the Tour will be
+    // recalled randomly.
     #[yaserde(attribute, rename = "RandomPresetOrder")]
     pub random_preset_order: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourStartingCondition {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourStartingConditionExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourStartingConditionExtension {}
+
+impl Validate for PtzpresetTourStartingConditionExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5389,31 +5266,24 @@ pub struct PtzpresetTourOptions {
     // Supported options for Preset Tour Spot.
     #[yaserde(prefix = "tt", rename = "TourSpot")]
     pub tour_spot: PtzpresetTourSpotOptions,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PtzpresetTourSpotOptions {
-    // Supported options for detail definition of preset position of the tour spot.
+    // Supported options for detail definition of preset position of the tour
+    // spot.
     #[yaserde(prefix = "tt", rename = "PresetDetail")]
     pub preset_detail: PtzpresetTourPresetDetailOptions,
 
     // Supported range of stay time for a tour spot.
     #[yaserde(prefix = "tt", rename = "StayTime")]
     pub stay_time: DurationRange,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourSpotOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5436,17 +5306,15 @@ pub struct PtzpresetTourPresetDetailOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtzpresetTourPresetDetailOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourPresetDetailOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourPresetDetailOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourPresetDetailOptionsExtension {}
+
+impl Validate for PtzpresetTourPresetDetailOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5465,30 +5333,24 @@ pub struct PtzpresetTourStartingConditionOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PtzpresetTourStartingConditionOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpresetTourStartingConditionOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzpresetTourStartingConditionOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PtzpresetTourStartingConditionOptionsExtension {}
+
+impl Validate for PtzpresetTourStartingConditionOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ImagingStatus {
     #[yaserde(prefix = "tt", rename = "FocusStatus")]
     pub focus_status: FocusStatus,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImagingStatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5504,13 +5366,9 @@ pub struct FocusStatus {
     // Error status of focus.
     #[yaserde(prefix = "tt", rename = "Error")]
     pub error: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FocusStatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5529,19 +5387,16 @@ pub struct FocusConfiguration {
     // If set to 0.0, infinity will be used.
     #[yaserde(prefix = "tt", rename = "FarLimit")]
     pub far_limit: f64,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FocusConfiguration {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum AutoFocusMode {
+    #[yaserde(rename = "AUTO")]
     Auto,
+    #[yaserde(rename = "MANUAL")]
     Manual,
-
     __Unknown__(String),
 }
 
@@ -5551,12 +5406,13 @@ impl Default for AutoFocusMode {
     }
 }
 
+impl Validate for AutoFocusMode {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Afmodes {
     // Focus of a moving camera is updated only once after stopping a pan, tilt or
     // zoom movement.
     OnceAfterMove,
-
     __Unknown__(String),
 }
 
@@ -5565,6 +5421,8 @@ impl Default for Afmodes {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for Afmodes {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5611,17 +5469,15 @@ pub struct ImagingSettings {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImagingSettingsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImagingSettings {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingSettingsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ImagingSettingsExtension {}
+
+impl Validate for ImagingSettingsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5672,17 +5528,20 @@ pub struct Exposure {
     #[yaserde(prefix = "tt", rename = "Gain")]
     pub gain: f64,
 
-    // The fixed attenuation of input light affected by the iris (dB). 0dB maps to a
-    // fully opened iris.
+    // The fixed attenuation of input light affected by the iris (dB). 0dB maps
+    // to a fully opened iris.
     #[yaserde(prefix = "tt", rename = "Iris")]
     pub iris: f64,
 }
 
+impl Validate for Exposure {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum WideDynamicMode {
+    #[yaserde(rename = "OFF")]
     Off,
+    #[yaserde(rename = "ON")]
     On,
-
     __Unknown__(String),
 }
 
@@ -5691,6 +5550,8 @@ impl Default for WideDynamicMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for WideDynamicMode {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5704,14 +5565,17 @@ pub struct WideDynamicRange {
     pub level: f64,
 }
 
+impl Validate for WideDynamicRange {}
+
 // Enumeration describing the available backlight compenstation modes.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum BacklightCompensationMode {
     // Backlight compensation is disabled.
+    #[yaserde(rename = "OFF")]
     Off,
     // Backlight compensation is enabled.
+    #[yaserde(rename = "ON")]
     On,
-
     __Unknown__(String),
 }
 
@@ -5720,6 +5584,8 @@ impl Default for BacklightCompensationMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for BacklightCompensationMode {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5733,11 +5599,12 @@ pub struct BacklightCompensation {
     pub level: f64,
 }
 
+impl Validate for BacklightCompensation {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ExposurePriority {
     LowNoise,
     FrameRate,
-
     __Unknown__(String),
 }
 
@@ -5746,6 +5613,8 @@ impl Default for ExposurePriority {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for ExposurePriority {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5779,13 +5648,9 @@ pub struct ImagingOptions {
 
     #[yaserde(prefix = "tt", rename = "WhiteBalance")]
     pub white_balance: WhiteBalanceOptions,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImagingOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5797,6 +5662,8 @@ pub struct WideDynamicRangeOptions {
     pub level: FloatRange,
 }
 
+impl Validate for WideDynamicRangeOptions {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct BacklightCompensationOptions {
@@ -5806,6 +5673,8 @@ pub struct BacklightCompensationOptions {
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: FloatRange,
 }
+
+impl Validate for BacklightCompensationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5822,6 +5691,8 @@ pub struct FocusOptions {
     #[yaserde(prefix = "tt", rename = "FarLimit")]
     pub far_limit: FloatRange,
 }
+
+impl Validate for FocusOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5860,6 +5731,8 @@ pub struct ExposureOptions {
     pub iris: FloatRange,
 }
 
+impl Validate for ExposureOptions {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct WhiteBalanceOptions {
@@ -5872,6 +5745,8 @@ pub struct WhiteBalanceOptions {
     #[yaserde(prefix = "tt", rename = "YbGain")]
     pub yb_gain: FloatRange,
 }
+
+impl Validate for WhiteBalanceOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5889,6 +5764,8 @@ pub struct FocusMove {
     pub continuous: Option<ContinuousFocus>,
 }
 
+impl Validate for FocusMove {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AbsoluteFocus {
@@ -5900,6 +5777,8 @@ pub struct AbsoluteFocus {
     #[yaserde(prefix = "tt", rename = "Speed")]
     pub speed: Option<f64>,
 }
+
+impl Validate for AbsoluteFocus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5913,6 +5792,8 @@ pub struct RelativeFocus {
     pub speed: Option<f64>,
 }
 
+impl Validate for RelativeFocus {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ContinuousFocus {
@@ -5920,6 +5801,8 @@ pub struct ContinuousFocus {
     #[yaserde(prefix = "tt", rename = "Speed")]
     pub speed: f64,
 }
+
+impl Validate for ContinuousFocus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5934,6 +5817,8 @@ pub struct MoveOptions {
     pub continuous: Option<ContinuousFocusOptions>,
 }
 
+impl Validate for MoveOptions {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AbsoluteFocusOptions {
@@ -5945,6 +5830,8 @@ pub struct AbsoluteFocusOptions {
     #[yaserde(prefix = "tt", rename = "Speed")]
     pub speed: Option<FloatRange>,
 }
+
+impl Validate for AbsoluteFocusOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5958,6 +5845,8 @@ pub struct RelativeFocusOptions {
     pub speed: FloatRange,
 }
 
+impl Validate for RelativeFocusOptions {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ContinuousFocusOptions {
@@ -5966,11 +5855,14 @@ pub struct ContinuousFocusOptions {
     pub speed: FloatRange,
 }
 
+impl Validate for ContinuousFocusOptions {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ExposureMode {
+    #[yaserde(rename = "AUTO")]
     Auto,
+    #[yaserde(rename = "MANUAL")]
     Manual,
-
     __Unknown__(String),
 }
 
@@ -5980,11 +5872,14 @@ impl Default for ExposureMode {
     }
 }
 
+impl Validate for ExposureMode {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Enabled {
+    #[yaserde(rename = "ENABLED")]
     Enabled,
+    #[yaserde(rename = "DISABLED")]
     Disabled,
-
     __Unknown__(String),
 }
 
@@ -5994,11 +5889,14 @@ impl Default for Enabled {
     }
 }
 
+impl Validate for Enabled {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum WhiteBalanceMode {
+    #[yaserde(rename = "AUTO")]
     Auto,
+    #[yaserde(rename = "MANUAL")]
     Manual,
-
     __Unknown__(String),
 }
 
@@ -6008,12 +5906,16 @@ impl Default for WhiteBalanceMode {
     }
 }
 
+impl Validate for WhiteBalanceMode {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum IrCutFilterMode {
+    #[yaserde(rename = "ON")]
     On,
+    #[yaserde(rename = "OFF")]
     Off,
+    #[yaserde(rename = "AUTO")]
     Auto,
-
     __Unknown__(String),
 }
 
@@ -6022,6 +5924,8 @@ impl Default for IrCutFilterMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for IrCutFilterMode {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6037,13 +5941,9 @@ pub struct WhiteBalance {
     // Bgain (unitless).
     #[yaserde(prefix = "tt", rename = "CbGain")]
     pub cb_gain: f64,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for WhiteBalance {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6054,17 +5954,15 @@ pub struct ImagingStatus20 {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImagingStatus20Extension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImagingStatus20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingStatus20Extension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ImagingStatus20Extension {}
+
+impl Validate for ImagingStatus20Extension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6083,17 +5981,15 @@ pub struct FocusStatus20 {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<FocusStatus20Extension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FocusStatus20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct FocusStatus20Extension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct FocusStatus20Extension {}
+
+impl Validate for FocusStatus20Extension {}
 
 // Type describing the ImagingSettings of a VideoSource. The supported options
 // and ranges can be obtained via the GetOptions command.
@@ -6142,17 +6038,13 @@ pub struct ImagingSettings20 {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImagingSettingsExtension20>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImagingSettings20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ImagingSettingsExtension20 {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Optional element to configure Image Stabilization feature.
     #[yaserde(prefix = "tt", rename = "ImageStabilization")]
     pub image_stabilization: Option<ImageStabilization>,
@@ -6161,17 +6053,21 @@ pub struct ImagingSettingsExtension20 {
     pub extension: Option<ImagingSettingsExtension202>,
 }
 
+impl Validate for ImagingSettingsExtension20 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ImagingSettingsExtension202 {
-    // An optional parameter applied to only auto mode to adjust timing of toggling
-    // Ir cut filter.
+    // An optional parameter applied to only auto mode to adjust timing of
+    // toggling Ir cut filter.
     #[yaserde(prefix = "tt", rename = "IrCutFilterAutoAdjustment")]
     pub ir_cut_filter_auto_adjustment: Vec<IrCutFilterAutoAdjustment>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImagingSettingsExtension203>,
 }
+
+impl Validate for ImagingSettingsExtension202 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6192,12 +6088,13 @@ pub struct ImagingSettingsExtension203 {
     pub extension: Option<ImagingSettingsExtension204>,
 }
 
+impl Validate for ImagingSettingsExtension203 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingSettingsExtension204 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ImagingSettingsExtension204 {}
+
+impl Validate for ImagingSettingsExtension204 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6212,25 +6109,25 @@ pub struct ImageStabilization {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImageStabilizationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImageStabilization {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImageStabilizationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ImageStabilizationExtension {}
+
+impl Validate for ImageStabilizationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ImageStabilizationMode {
+    #[yaserde(rename = "OFF")]
     Off,
+    #[yaserde(rename = "ON")]
     On,
+    #[yaserde(rename = "AUTO")]
     Auto,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -6240,39 +6137,39 @@ impl Default for ImageStabilizationMode {
     }
 }
 
+impl Validate for ImageStabilizationMode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct IrCutFilterAutoAdjustment {
-    // Specifies which boundaries to automatically toggle Ir cut filter following
-    // parameters are applied to. Its options shall be chosen from
+    // Specifies which boundaries to automatically toggle Ir cut filter
+    // following parameters are applied to. Its options shall be chosen from
     // tt:IrCutFilterAutoBoundaryType.
     #[yaserde(prefix = "tt", rename = "BoundaryType")]
     pub boundary_type: String,
 
     // Adjusts boundary exposure level for toggling Ir cut filter to on/off
-    // specified with unitless normalized value from +1.0 to -1.0. Zero is default
-    // and -1.0 is the darkest adjustment (Unitless).
+    // specified with unitless normalized value from +1.0 to -1.0. Zero is
+    // default and -1.0 is the darkest adjustment (Unitless).
     #[yaserde(prefix = "tt", rename = "BoundaryOffset")]
     pub boundary_offset: Option<f64>,
 
-    // Delay time of toggling Ir cut filter to on/off after crossing of the boundary
-    // exposure levels.
+    // Delay time of toggling Ir cut filter to on/off after crossing of the
+    // boundary exposure levels.
     #[yaserde(prefix = "tt", rename = "ResponseTime")]
     pub response_time: Option<xs::Duration>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<IrCutFilterAutoAdjustmentExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for IrCutFilterAutoAdjustment {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct IrCutFilterAutoAdjustmentExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct IrCutFilterAutoAdjustmentExtension {}
+
+impl Validate for IrCutFilterAutoAdjustmentExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum IrCutFilterAutoBoundaryType {
@@ -6280,7 +6177,6 @@ pub enum IrCutFilterAutoBoundaryType {
     ToOn,
     ToOff,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -6289,6 +6185,8 @@ impl Default for IrCutFilterAutoBoundaryType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for IrCutFilterAutoBoundaryType {}
 
 // Type describing whether WDR mode is enabled or disabled (on/off).
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -6303,6 +6201,8 @@ pub struct WideDynamicRange20 {
     pub level: Option<f64>,
 }
 
+impl Validate for WideDynamicRange20 {}
+
 // Type describing whether BLC mode is enabled or disabled (on/off).
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6315,6 +6215,8 @@ pub struct BacklightCompensation20 {
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<f64>,
 }
+
+impl Validate for BacklightCompensation20 {}
 
 // Type describing the exposure settings.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -6350,13 +6252,15 @@ pub struct Exposure20 {
     #[yaserde(prefix = "tt", rename = "MaxGain")]
     pub max_gain: Option<f64>,
 
-    // Minimum value of the iris range allowed to be used by the algorithm. 0dB maps
-    // to a fully opened iris and positive values map to higher attenuation.
+    // Minimum value of the iris range allowed to be used by the algorithm. 0dB
+    // maps to a fully opened iris and positive values map to higher
+    // attenuation.
     #[yaserde(prefix = "tt", rename = "MinIris")]
     pub min_iris: Option<f64>,
 
-    // Maximum value of the iris range allowed to be used by the algorithm. 0dB maps
-    // to a fully opened iris and positive values map to higher attenuation.
+    // Maximum value of the iris range allowed to be used by the algorithm. 0dB
+    // maps to a fully opened iris and positive values map to higher
+    // attenuation.
     #[yaserde(prefix = "tt", rename = "MaxIris")]
     pub max_iris: Option<f64>,
 
@@ -6368,11 +6272,13 @@ pub struct Exposure20 {
     #[yaserde(prefix = "tt", rename = "Gain")]
     pub gain: Option<f64>,
 
-    // The fixed attenuation of input light affected by the iris (dB). 0dB maps to a
-    // fully opened iris and positive values map to higher attenuation.
+    // The fixed attenuation of input light affected by the iris (dB). 0dB maps
+    // to a fully opened iris and positive values map to higher attenuation.
     #[yaserde(prefix = "tt", rename = "Iris")]
     pub iris: Option<f64>,
 }
+
+impl Validate for Exposure20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6382,31 +6288,31 @@ pub struct ToneCompensation {
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: String,
 
-    // Optional level parameter specified with unitless normalized value from 0.0 to
-    // +1.0.
+    // Optional level parameter specified with unitless normalized value from
+    // 0.0 to +1.0.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<f64>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ToneCompensationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ToneCompensation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ToneCompensationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ToneCompensationExtension {}
+
+impl Validate for ToneCompensationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ToneCompensationMode {
+    #[yaserde(rename = "OFF")]
     Off,
+    #[yaserde(rename = "ON")]
     On,
+    #[yaserde(rename = "AUTO")]
     Auto,
-
     __Unknown__(String),
 }
 
@@ -6416,39 +6322,41 @@ impl Default for ToneCompensationMode {
     }
 }
 
+impl Validate for ToneCompensationMode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Defogging {
-    // Parameter to enable/disable or automatic Defogging feature. Its options shall
-    // be chosen from tt:DefoggingMode Type.
+    // Parameter to enable/disable or automatic Defogging feature. Its options
+    // shall be chosen from tt:DefoggingMode Type.
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: String,
 
-    // Optional level parameter specified with unitless normalized value from 0.0 to
-    // +1.0.
+    // Optional level parameter specified with unitless normalized value from
+    // 0.0 to +1.0.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<f64>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<DefoggingExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Defogging {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct DefoggingExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct DefoggingExtension {}
+
+impl Validate for DefoggingExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum DefoggingMode {
+    #[yaserde(rename = "OFF")]
     Off,
+    #[yaserde(rename = "ON")]
     On,
+    #[yaserde(rename = "AUTO")]
     Auto,
-
     __Unknown__(String),
 }
 
@@ -6458,20 +6366,18 @@ impl Default for DefoggingMode {
     }
 }
 
+impl Validate for DefoggingMode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NoiseReduction {
-    // Level parameter specified with unitless normalized value from 0.0 to +1.0.
-    // Level=0 means no noise reduction or minimal noise reduction.
+    // Level parameter specified with unitless normalized value from 0.0 to
+    // +1.0. Level=0 means no noise reduction or minimal noise reduction.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: f64,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for NoiseReduction {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6518,17 +6424,13 @@ pub struct ImagingOptions20 {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImagingOptions20Extension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImagingOptions20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ImagingOptions20Extension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Options of parameters for Image Stabilization feature.
     #[yaserde(prefix = "tt", rename = "ImageStabilization")]
     pub image_stabilization: Option<ImageStabilizationOptions>,
@@ -6536,6 +6438,8 @@ pub struct ImagingOptions20Extension {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImagingOptions20Extension2>,
 }
+
+impl Validate for ImagingOptions20Extension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6547,6 +6451,8 @@ pub struct ImagingOptions20Extension2 {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImagingOptions20Extension3>,
 }
+
+impl Validate for ImagingOptions20Extension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6567,12 +6473,13 @@ pub struct ImagingOptions20Extension3 {
     pub extension: Option<ImagingOptions20Extension4>,
 }
 
+impl Validate for ImagingOptions20Extension3 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingOptions20Extension4 {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ImagingOptions20Extension4 {}
+
+impl Validate for ImagingOptions20Extension4 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6587,17 +6494,15 @@ pub struct ImageStabilizationOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ImageStabilizationOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ImageStabilizationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImageStabilizationOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ImageStabilizationOptionsExtension {}
+
+impl Validate for ImageStabilizationOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6618,17 +6523,15 @@ pub struct IrCutFilterAutoAdjustmentOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<IrCutFilterAutoAdjustmentOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for IrCutFilterAutoAdjustmentOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct IrCutFilterAutoAdjustmentOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct IrCutFilterAutoAdjustmentOptionsExtension {}
+
+impl Validate for IrCutFilterAutoAdjustmentOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6639,6 +6542,8 @@ pub struct WideDynamicRangeOptions20 {
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<FloatRange>,
 }
+
+impl Validate for WideDynamicRangeOptions20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6651,6 +6556,8 @@ pub struct BacklightCompensationOptions20 {
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<FloatRange>,
 }
+
+impl Validate for BacklightCompensationOptions20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6700,6 +6607,8 @@ pub struct ExposureOptions20 {
     pub iris: Option<FloatRange>,
 }
 
+impl Validate for ExposureOptions20 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MoveOptions20 {
@@ -6716,6 +6625,8 @@ pub struct MoveOptions20 {
     pub continuous: Option<ContinuousFocusOptions>,
 }
 
+impl Validate for MoveOptions20 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RelativeFocusOptions20 {
@@ -6727,6 +6638,8 @@ pub struct RelativeFocusOptions20 {
     #[yaserde(prefix = "tt", rename = "Speed")]
     pub speed: Option<FloatRange>,
 }
+
+impl Validate for RelativeFocusOptions20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6745,17 +6658,15 @@ pub struct WhiteBalance20 {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<WhiteBalance20Extension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for WhiteBalance20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct WhiteBalance20Extension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct WhiteBalance20Extension {}
+
+impl Validate for WhiteBalance20Extension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6781,17 +6692,15 @@ pub struct FocusConfiguration20 {
     // Zero or more modes as defined in enumeration tt:AFModes.
     #[yaserde(attribute, rename = "AFMode")]
     pub af_mode: Option<StringAttrList>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FocusConfiguration20 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct FocusConfiguration20Extension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct FocusConfiguration20Extension {}
+
+impl Validate for FocusConfiguration20Extension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6810,12 +6719,13 @@ pub struct WhiteBalanceOptions20 {
     pub extension: Option<WhiteBalanceOptions20Extension>,
 }
 
+impl Validate for WhiteBalanceOptions20 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct WhiteBalanceOptions20Extension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct WhiteBalanceOptions20Extension {}
+
+impl Validate for WhiteBalanceOptions20Extension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6840,16 +6750,18 @@ pub struct FocusOptions20 {
     pub extension: Option<FocusOptions20Extension>,
 }
 
+impl Validate for FocusOptions20 {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FocusOptions20Extension {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // Supported options for auto focus. Options shall be chosen from tt:AFModes.
+    // Supported options for auto focus. Options shall be chosen from
+    // tt:AFModes.
     #[yaserde(prefix = "tt", rename = "AFModes")]
     pub af_modes: Option<StringAttrList>,
 }
+
+impl Validate for FocusOptions20Extension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6862,13 +6774,9 @@ pub struct ToneCompensationOptions {
     // Indicates whether or not support Level parameter for Tone Compensation.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ToneCompensationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6881,13 +6789,9 @@ pub struct DefoggingOptions {
     // Indicates whether or not support Level parameter for Defogging.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for DefoggingOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6895,23 +6799,20 @@ pub struct NoiseReductionOptions {
     // Indicates whether or not support Level parameter for NoiseReduction.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for NoiseReductionOptions {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct TopicNamespaceLocation(pub String);
+
+impl Validate for TopicNamespaceLocation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum PropertyOperation {
     Initialized,
     Deleted,
     Changed,
-
     __Unknown__(String),
 }
 
@@ -6920,6 +6821,8 @@ impl Default for PropertyOperation {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for PropertyOperation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6943,17 +6846,15 @@ pub struct Message {
 
     #[yaserde(attribute, rename = "PropertyOperation")]
     pub property_operation: Option<PropertyOperation>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Message {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct MessageExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct MessageExtension {}
+
+impl Validate for MessageExtension {}
 
 // List of parameters according to the corresponding ItemListDescription.
 // Each item in the list shall have a unique name.
@@ -6970,10 +6871,9 @@ pub struct ItemList {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ItemListExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ItemList {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6987,25 +6887,23 @@ pub struct SimpleItemType {
     pub value: String,
 }
 
+impl Validate for SimpleItemType {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ElementItemType {
-    // XML tree contiaing the element value as defined in the corresponding
-    // description.
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Item name.
     #[yaserde(attribute, rename = "Name")]
     pub name: String,
 }
 
+impl Validate for ElementItemType {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ItemListExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ItemListExtension {}
+
+impl Validate for ItemListExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7017,8 +6915,8 @@ pub struct MessageDescription {
     #[yaserde(prefix = "tt", rename = "Source")]
     pub source: Option<ItemListDescription>,
 
-    // Describes optional message payload parameters that may be used as key. E.g.
-    // object IDs of tracked objects are conveyed as key.
+    // Describes optional message payload parameters that may be used as key.
+    // E.g. object IDs of tracked objects are conveyed as key.
     #[yaserde(prefix = "tt", rename = "Key")]
     pub key: Option<ItemListDescription>,
 
@@ -7034,17 +6932,15 @@ pub struct MessageDescription {
     // which contains relevant information for only a single point in time.
     #[yaserde(attribute, rename = "IsProperty")]
     pub is_property: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MessageDescription {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct MessageDescriptionExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct MessageDescriptionExtension {}
+
+impl Validate for MessageDescriptionExtension {}
 
 // Describes a list of items. Each item in the list shall have a unique name.
 // The list is designed as linear structure without optional or unbounded
@@ -7064,10 +6960,9 @@ pub struct ItemListDescription {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ItemListDescriptionExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ItemListDescription {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7079,6 +6974,8 @@ pub struct SimpleItemDescriptionType {
     #[yaserde(attribute, rename = "Type")]
     pub _type: String,
 }
+
+impl Validate for SimpleItemDescriptionType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7092,12 +6989,13 @@ pub struct ElementItemDescriptionType {
     pub _type: String,
 }
 
+impl Validate for ElementItemDescriptionType {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ItemListDescriptionExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ItemListDescriptionExtension {}
+
+impl Validate for ItemListDescriptionExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7106,14 +7004,14 @@ pub struct Polyline {
     pub point: Vec<Vector>,
 }
 
-// type Polyline = Polyline;
+impl Validate for Polyline {}
 
+// pub type Polyline = Polyline;
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Direction {
     Left,
     Right,
     Any,
-
     __Unknown__(String),
 }
 
@@ -7123,6 +7021,8 @@ impl Default for Direction {
     }
 }
 
+impl Validate for Direction {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AnalyticsEngineConfiguration {
@@ -7131,17 +7031,15 @@ pub struct AnalyticsEngineConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<AnalyticsEngineConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AnalyticsEngineConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AnalyticsEngineConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct AnalyticsEngineConfigurationExtension {}
+
+impl Validate for AnalyticsEngineConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7151,22 +7049,21 @@ pub struct RuleEngineConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<RuleEngineConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RuleEngineConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct RuleEngineConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct RuleEngineConfigurationExtension {}
+
+impl Validate for RuleEngineConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Config {
-    // List of configuration parameters as defined in the correspding description.
+    // List of configuration parameters as defined in the correspding
+    // description.
     #[yaserde(prefix = "tt", rename = "Parameters")]
     pub parameters: ItemList,
 
@@ -7174,31 +7071,33 @@ pub struct Config {
     #[yaserde(attribute, rename = "Name")]
     pub name: String,
 
-    // The Type attribute specifies the type of rule and shall be equal to value of
-    // one of Name attributes of ConfigDescription elements returned by
+    // The Type attribute specifies the type of rule and shall be equal to value
+    // of one of Name attributes of ConfigDescription elements returned by
     // GetSupportedRules and GetSupportedAnalyticsModules command.
     #[yaserde(attribute, rename = "Type")]
     pub _type: String,
 }
+
+impl Validate for Config {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ConfigDescription {
     // List describing the configuration parameters. The names of the parameters
     // must be unique. If possible SimpleItems
-    // should be used to transport the information to ease parsing of dynamically
-    // defined messages by a client
+    // should be used to transport the information to ease parsing of
+    // dynamically defined messages by a client
     // application.
     #[yaserde(prefix = "tt", rename = "Parameters")]
     pub parameters: ItemListDescription,
 
-    // The analytics modules and rule engine produce Events, which must be listed
-    // within the Analytics Module Description. In order to do so
-    // the structure of the Message is defined and consists of three groups: Source,
-    // Key, and Data. It is recommended to use SimpleItemDescriptions wherever
-    // applicable.
-    // The name of all Items must be unique within all Items contained in any group
-    // of this Message.
+    // The analytics modules and rule engine produce Events, which must be
+    // listed within the Analytics Module Description. In order to do so
+    // the structure of the Message is defined and consists of three groups:
+    // Source, Key, and Data. It is recommended to use SimpleItemDescriptions
+    // wherever applicable.
+    // The name of all Items must be unique within all Items contained in any
+    // group of this Message.
     // Depending on the component multiple parameters or none may be needed to
     // identify the component uniquely.
     #[yaserde(prefix = "tt", rename = "Messages")]
@@ -7207,50 +7106,73 @@ pub struct ConfigDescription {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ConfigDescriptionExtension>,
 
-    // The Name attribute (e.g. "tt::LineDetector") uniquely identifies the type of
-    // rule, not a type definition in a schema.
+    // The Name attribute (e.g. "tt::LineDetector") uniquely identifies the type
+    // of rule, not a type definition in a schema.
     #[yaserde(attribute, rename = "Name")]
     pub name: String,
 
-    // The fixed attribute signals that it is not allowed to add or remove this type
-    // of configuration.
+    // The fixed attribute signals that it is not allowed to add or remove this
+    // type of configuration.
     #[yaserde(attribute, rename = "fixed")]
     pub fixed: Option<bool>,
 
     // The maxInstances attribute signals the maximum number of instances per
     // configuration.
     #[yaserde(attribute, rename = "maxInstances")]
-    pub max_instances: Option<i64>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
+    pub max_instances: Option<xs::Integer>,
 }
+
+impl Validate for ConfigDescription {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MessagesType {
-    // The ParentTopic labels the message (e.g. "nn:RuleEngine/LineCrossing"). The
-    // real message can extend the ParentTopic
+    // The ParentTopic labels the message (e.g. "nn:RuleEngine/LineCrossing").
+    // The real message can extend the ParentTopic
     // by for example the name of the instaniated rule (e.g.
     // "nn:RuleEngine/LineCrossing/corssMyFirstLine").
-    // Even without knowing the complete topic name, the subscriber will be able to
-    // distiguish the
-    // messages produced by different rule instances of the same type via the Source
-    // fields of the message.
+    // Even without knowing the complete topic name, the subscriber will be able
+    // to distiguish the
+    // messages produced by different rule instances of the same type via the
+    // Source fields of the message.
     // There the name of the rule instance, which produced the message, must be
     // listed.
     #[yaserde(prefix = "tt", rename = "ParentTopic")]
     pub parent_topic: String,
 
-    pub base: MessageDescription,
+    // Set of tokens producing this message. The list may only contain
+    // SimpleItemDescription items.
+    // The set of tokens identify the component within the WS-Endpoint, which is
+    // responsible for the producing the message.
+    #[yaserde(prefix = "tt", rename = "Source")]
+    pub source: Option<ItemListDescription>,
+
+    // Describes optional message payload parameters that may be used as key.
+    // E.g. object IDs of tracked objects are conveyed as key.
+    #[yaserde(prefix = "tt", rename = "Key")]
+    pub key: Option<ItemListDescription>,
+
+    // Describes the payload of the message.
+    #[yaserde(prefix = "tt", rename = "Data")]
+    pub data: Option<ItemListDescription>,
+
+    #[yaserde(prefix = "tt", rename = "Extension")]
+    pub extension: Option<MessageDescriptionExtension>,
+
+    // Must be set to true when the described Message relates to a property. An
+    // alternative term of "property" is a "state" in contrast to a pure event,
+    // which contains relevant information for only a single point in time.
+    #[yaserde(attribute, rename = "IsProperty")]
+    pub is_property: Option<bool>,
 }
+
+impl Validate for MessagesType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ConfigDescriptionExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct ConfigDescriptionExtension {}
+
+impl Validate for ConfigDescriptionExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7265,17 +7187,15 @@ pub struct SupportedRules {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SupportedRulesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SupportedRules {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SupportedRulesExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct SupportedRulesExtension {}
+
+impl Validate for SupportedRulesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7284,8 +7204,8 @@ pub struct SupportedAnalyticsModules {
     // files.
     // These schema files describe the types and elements used in the analytics
     // module descriptions.
-    // Analytics module descriptions that reference types or elements imported from
-    // any ONVIF defined schema files
+    // Analytics module descriptions that reference types or elements imported
+    // from any ONVIF defined schema files
     // need not explicitly list those schema files.
     #[yaserde(prefix = "tt", rename = "AnalyticsModuleContentSchemaLocation")]
     pub analytics_module_content_schema_location: Vec<String>,
@@ -7295,17 +7215,15 @@ pub struct SupportedAnalyticsModules {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SupportedAnalyticsModulesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SupportedAnalyticsModules {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SupportedAnalyticsModulesExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct SupportedAnalyticsModulesExtension {}
+
+impl Validate for SupportedAnalyticsModulesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7313,13 +7231,9 @@ pub struct PolygonConfiguration {
     // Contains Polygon configuration for rule parameters
     #[yaserde(prefix = "tt", rename = "Polygon")]
     pub polygon: Polygon,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PolygonConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7330,17 +7244,15 @@ pub struct PolylineArray {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PolylineArrayExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PolylineArray {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PolylineArrayExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PolylineArrayExtension {}
+
+impl Validate for PolylineArrayExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7348,31 +7260,24 @@ pub struct PolylineArrayConfiguration {
     // Contains PolylineArray configuration data
     #[yaserde(prefix = "tt", rename = "PolylineArray")]
     pub polyline_array: PolylineArray,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PolylineArrayConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MotionExpression {
-    // Motion Expression data structure contains motion expression which is based on
-    // Scene Descriptor schema with XPATH syntax. The Type argument could allow
-    // introduction of different dialects
+    // Motion Expression data structure contains motion expression which is
+    // based on Scene Descriptor schema with XPATH syntax. The Type argument
+    // could allow introduction of different dialects
     #[yaserde(prefix = "tt", rename = "Expression")]
     pub expression: String,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(attribute, rename = "Type")]
     pub _type: Option<String>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MotionExpression {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7380,37 +7285,29 @@ pub struct MotionExpressionConfiguration {
     // Contains Rule MotionExpression configuration
     #[yaserde(prefix = "tt", rename = "MotionExpression")]
     pub motion_expression: MotionExpression,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MotionExpressionConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct CellLayout {
-    // Mapping of the cell grid to the Video frame. The cell grid is starting from
-    // the upper left corner and x dimension is going from left to right and the y
-    // dimension from up to down.
+    // Mapping of the cell grid to the Video frame. The cell grid is starting
+    // from the upper left corner and x dimension is going from left to right
+    // and the y dimension from up to down.
     #[yaserde(prefix = "tt", rename = "Transformation")]
     pub transformation: Transformation,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Number of columns of the cell grid (x dimension)
     #[yaserde(attribute, rename = "Columns")]
-    pub columns: i64,
+    pub columns: xs::Integer,
 
     // Number of rows of the cell grid (y dimension)
     #[yaserde(attribute, rename = "Rows")]
-    pub rows: i64,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
+    pub rows: xs::Integer,
 }
+
+impl Validate for CellLayout {}
 
 // Configuration of the streaming and coding settings of a Video window.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -7420,18 +7317,18 @@ pub struct PaneConfiguration {
     #[yaserde(prefix = "tt", rename = "PaneName")]
     pub pane_name: Option<String>,
 
-    // If the device has audio outputs, this element contains a pointer to the audio
-    // output that is associated with the pane. A client
+    // If the device has audio outputs, this element contains a pointer to the
+    // audio output that is associated with the pane. A client
     // can retrieve the available audio outputs of a device using the
     // GetAudioOutputs command of the DeviceIO service.
     #[yaserde(prefix = "tt", rename = "AudioOutputToken")]
     pub audio_output_token: Option<ReferenceToken>,
 
-    // If the device has audio sources, this element contains a pointer to the audio
-    // source that is associated with this pane.
-    // The audio connection from a decoder device to the NVT is established using
-    // the backchannel mechanism. A client can retrieve the available audio sources
-    // of a device using the GetAudioSources command of the
+    // If the device has audio sources, this element contains a pointer to the
+    // audio source that is associated with this pane.
+    // The audio connection from a decoder device to the NVT is established
+    // using the backchannel mechanism. A client can retrieve the available
+    // audio sources of a device using the GetAudioSources command of the
     // DeviceIO service.
     #[yaserde(prefix = "tt", rename = "AudioSourceToken")]
     pub audio_source_token: Option<ReferenceToken>,
@@ -7442,9 +7339,9 @@ pub struct PaneConfiguration {
     pub audio_encoder_configuration: Option<AudioEncoderConfiguration>,
 
     // A pointer to a Receiver that has the necessary information to receive
-    // data from a Transmitter. This Receiver can be connected and the network video
-    // decoder displays the received data on the specified outputs. A client can
-    // retrieve the available Receivers using the
+    // data from a Transmitter. This Receiver can be connected and the network
+    // video decoder displays the received data on the specified outputs. A
+    // client can retrieve the available Receivers using the
     // GetReceivers command of the Receiver Service.
     #[yaserde(prefix = "tt", rename = "ReceiverToken")]
     pub receiver_token: Option<ReferenceToken>,
@@ -7452,13 +7349,9 @@ pub struct PaneConfiguration {
     // A unique identifier in the display device.
     #[yaserde(prefix = "tt", rename = "Token")]
     pub token: ReferenceToken,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PaneConfiguration {}
 
 // A pane layout describes one Video window of a display. It links a pane
 // configuration to a region of the screen.
@@ -7473,13 +7366,9 @@ pub struct PaneLayout {
     // coordinate values are espressed in normalized units [-1.0, 1.0].
     #[yaserde(prefix = "tt", rename = "Area")]
     pub area: Rectangle,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PaneLayout {}
 
 // A layout describes a set of Video windows that are displayed simultaniously
 // on a display.
@@ -7492,43 +7381,38 @@ pub struct Layout {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<LayoutExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Layout {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct LayoutExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct LayoutExtension {}
+
+impl Validate for LayoutExtension {}
 
 // This type contains the Audio and Video coding capabilities of a display
 // service.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct CodingCapabilities {
-    // If the device supports audio encoding this section describes the supported
-    // codecs and their configuration.
+    // If the device supports audio encoding this section describes the
+    // supported codecs and their configuration.
     #[yaserde(prefix = "tt", rename = "AudioEncodingCapabilities")]
     pub audio_encoding_capabilities: Option<AudioEncoderConfigurationOptions>,
 
-    // If the device supports audio decoding this section describes the supported
-    // codecs and their settings.
+    // If the device supports audio decoding this section describes the
+    // supported codecs and their settings.
     #[yaserde(prefix = "tt", rename = "AudioDecodingCapabilities")]
     pub audio_decoding_capabilities: Option<AudioDecoderConfigurationOptions>,
 
-    // This section describes the supported video codesc and their configuration.
+    // This section describes the supported video codesc and their
+    // configuration.
     #[yaserde(prefix = "tt", rename = "VideoDecodingCapabilities")]
     pub video_decoding_capabilities: VideoDecoderConfigurationOptions,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for CodingCapabilities {}
 
 // The options supported for a display layout.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -7540,40 +7424,36 @@ pub struct LayoutOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<LayoutOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for LayoutOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct LayoutOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct LayoutOptionsExtension {}
+
+impl Validate for LayoutOptionsExtension {}
 
 // Description of a pane layout describing a complete display layout.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PaneLayoutOptions {
-    // List of areas assembling a layout. Coordinate values are in the range [-1.0,
-    // 1.0].
+    // List of areas assembling a layout. Coordinate values are in the range
+    // [-1.0, 1.0].
     #[yaserde(prefix = "tt", rename = "Area")]
     pub area: Vec<Rectangle>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<PaneOptionExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PaneLayoutOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PaneOptionExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct PaneOptionExtension {}
+
+impl Validate for PaneOptionExtension {}
 
 // Description of a receiver, including its token and configuration.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -7586,13 +7466,9 @@ pub struct Receiver {
     // Describes the configuration of the receiver.
     #[yaserde(prefix = "tt", rename = "Configuration")]
     pub configuration: ReceiverConfiguration,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Receiver {}
 
 // Describes the configuration of a receiver.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -7609,13 +7485,9 @@ pub struct ReceiverConfiguration {
     // Stream connection parameters.
     #[yaserde(prefix = "tt", rename = "StreamSetup")]
     pub stream_setup: StreamSetup,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ReceiverConfiguration {}
 
 // Specifies a receiver connection mode.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -7630,7 +7502,6 @@ pub enum ReceiverMode {
     NeverConnect,
     // This case should never happen.
     Unknown,
-
     __Unknown__(String),
 }
 
@@ -7639,6 +7510,8 @@ impl Default for ReceiverMode {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for ReceiverMode {}
 
 // Specifies the current connection state of the receiver.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -7651,7 +7524,6 @@ pub enum ReceiverState {
     Connected,
     // This case should never happen.
     Unknown,
-
     __Unknown__(String),
 }
 
@@ -7661,30 +7533,33 @@ impl Default for ReceiverState {
     }
 }
 
+impl Validate for ReceiverState {}
+
 // Contains information about a receiver's current state.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ReceiverStateInformation {
-    // The connection state of the receiver may have one of the following states:
+    // The connection state of the receiver may have one of the following
+    // states:
     #[yaserde(prefix = "tt", rename = "State")]
     pub state: ReceiverState,
 
     // Indicates whether or not the receiver was created automatically.
     #[yaserde(prefix = "tt", rename = "AutoCreated")]
     pub auto_created: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ReceiverStateInformation {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct ReceiverReference(pub ReferenceToken);
 
+impl Validate for ReceiverReference {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct RecordingReference(pub ReferenceToken);
+
+impl Validate for RecordingReference {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7692,20 +7567,21 @@ pub struct SourceReference {
     #[yaserde(prefix = "tt", rename = "Token")]
     pub token: ReferenceToken,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
     #[yaserde(attribute, rename = "Type")]
     pub _type: Option<String>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SourceReference {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct TrackReference(pub ReferenceToken);
 
+impl Validate for TrackReference {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct Description(pub String);
+
+impl Validate for Description {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7715,13 +7591,9 @@ pub struct DateTimeRange {
 
     #[yaserde(prefix = "tt", rename = "Until")]
     pub until: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for DateTimeRange {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7737,20 +7609,16 @@ pub struct RecordingSummary {
     // The device contains this many recordings.
     #[yaserde(prefix = "tt", rename = "NumberRecordings")]
     pub number_recordings: i32,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingSummary {}
 
 // A structure for defining a limited scope when searching in recorded data.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct SearchScope {
-    // A list of sources that are included in the scope. If this list is included,
-    // only data from one of these sources shall be searched.
+    // A list of sources that are included in the scope. If this list is
+    // included, only data from one of these sources shall be searched.
     #[yaserde(prefix = "tt", rename = "IncludedSources")]
     pub included_sources: Vec<SourceReference>,
 
@@ -7768,25 +7636,21 @@ pub struct SearchScope {
     // Extension point
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SearchScopeExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SearchScope {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SearchScopeExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct SearchScopeExtension {}
+
+impl Validate for SearchScopeExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct EventFilter {
-    // //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+pub struct EventFilter {}
+
+impl Validate for EventFilter {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7802,35 +7666,29 @@ pub struct PtzpositionFilter {
     // If true, search for when entering the specified PTZ volume.
     #[yaserde(prefix = "tt", rename = "EnterOrExit")]
     pub enter_or_exit: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for PtzpositionFilter {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MetadataFilter {
     #[yaserde(prefix = "tt", rename = "MetadataStreamFilter")]
     pub metadata_stream_filter: XpathExpression,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MetadataFilter {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct XpathExpression(pub String);
 
+impl Validate for XpathExpression {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FindRecordingResultList {
-    // The state of the search when the result is returned. Indicates if there can
-    // be more results, or if the search is completed.
+    // The state of the search when the result is returned. Indicates if there
+    // can be more results, or if the search is completed.
     #[yaserde(prefix = "tt", rename = "SearchState")]
     pub search_state: SearchState,
 
@@ -7840,11 +7698,13 @@ pub struct FindRecordingResultList {
     pub recording_information: Vec<RecordingInformation>,
 }
 
+impl Validate for FindRecordingResultList {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FindEventResultList {
-    // The state of the search when the result is returned. Indicates if there can
-    // be more results, or if the search is completed.
+    // The state of the search when the result is returned. Indicates if there
+    // can be more results, or if the search is completed.
     #[yaserde(prefix = "tt", rename = "SearchState")]
     pub search_state: SearchState,
 
@@ -7852,6 +7712,8 @@ pub struct FindEventResultList {
     #[yaserde(prefix = "tt", rename = "Result")]
     pub result: Vec<FindEventResult>,
 }
+
+impl Validate for FindEventResultList {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7861,8 +7723,8 @@ pub struct FindEventResult {
     #[yaserde(prefix = "tt", rename = "RecordingToken")]
     pub recording_token: RecordingReference,
 
-    // A reference to the track where this event was found. Empty string if no track
-    // is associated with this event.
+    // A reference to the track where this event was found. Empty string if no
+    // track is associated with this event.
     #[yaserde(prefix = "tt", rename = "TrackToken")]
     pub track_token: TrackReference,
 
@@ -7875,31 +7737,29 @@ pub struct FindEventResult {
     pub event: wsnt::NotificationMessageHolderType,
 
     // If true, indicates that the event is a virtual event generated for this
-    // particular search session to give the state of a property at the start time
-    // of the search.
+    // particular search session to give the state of a property at the start
+    // time of the search.
     #[yaserde(prefix = "tt", rename = "StartStateEvent")]
     pub start_state_event: bool,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FindEventResult {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FindPTZPositionResultList {
-    // The state of the search when the result is returned. Indicates if there can
-    // be more results, or if the search is completed.
+    // The state of the search when the result is returned. Indicates if there
+    // can be more results, or if the search is completed.
     #[yaserde(prefix = "tt", rename = "SearchState")]
     pub search_state: SearchState,
 
-    // A FindPTZPositionResult structure for each found PTZ position matching the
-    // search.
+    // A FindPTZPositionResult structure for each found PTZ position matching
+    // the search.
     #[yaserde(prefix = "tt", rename = "Result")]
     pub result: Vec<FindPTZPositionResult>,
 }
+
+impl Validate for FindPTZPositionResultList {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7919,27 +7779,25 @@ pub struct FindPTZPositionResult {
     // The PTZ position.
     #[yaserde(prefix = "tt", rename = "Position")]
     pub position: Ptzvector,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FindPTZPositionResult {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FindMetadataResultList {
-    // The state of the search when the result is returned. Indicates if there can
-    // be more results, or if the search is completed.
+    // The state of the search when the result is returned. Indicates if there
+    // can be more results, or if the search is completed.
     #[yaserde(prefix = "tt", rename = "SearchState")]
     pub search_state: SearchState,
 
-    // A FindMetadataResult structure for each found set of Metadata matching the
-    // search.
+    // A FindMetadataResult structure for each found set of Metadata matching
+    // the search.
     #[yaserde(prefix = "tt", rename = "Result")]
     pub result: Vec<FindMetadataResult>,
 }
+
+impl Validate for FindMetadataResultList {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7952,16 +7810,13 @@ pub struct FindMetadataResult {
     #[yaserde(prefix = "tt", rename = "TrackToken")]
     pub track_token: TrackReference,
 
-    // The point in time when the matching metadata occurs in the metadata track.
+    // The point in time when the matching metadata occurs in the metadata
+    // track.
     #[yaserde(prefix = "tt", rename = "Time")]
     pub time: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FindMetadataResult {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum SearchState {
@@ -7974,7 +7829,6 @@ pub enum SearchState {
     // The state of the search is unknown. (This is not a valid response from
     // GetSearchState.)
     Unknown,
-
     __Unknown__(String),
 }
 
@@ -7984,8 +7838,12 @@ impl Default for SearchState {
     }
 }
 
+impl Validate for SearchState {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct JobToken(pub ReferenceToken);
+
+impl Validate for JobToken {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7993,10 +7851,10 @@ pub struct RecordingInformation {
     #[yaserde(prefix = "tt", rename = "RecordingToken")]
     pub recording_token: RecordingReference,
 
-    // Information about the source of the recording. This gives a description of
-    // where the data in the recording comes from. Since a single
-    // recording is intended to record related material, there is just one source.
-    // It is indicates the physical location or the
+    // Information about the source of the recording. This gives a description
+    // of where the data in the recording comes from. Since a single
+    // recording is intended to record related material, there is just one
+    // source. It is indicates the physical location or the
     // major data source for the recording. Currently the recordingconfiguration
     // cannot describe each individual data source.
     #[yaserde(prefix = "tt", rename = "Source")]
@@ -8011,34 +7869,31 @@ pub struct RecordingInformation {
     #[yaserde(prefix = "tt", rename = "Content")]
     pub content: Description,
 
-    // Basic information about the track. Note that a track may represent a single
-    // contiguous time span or consist of multiple slices.
+    // Basic information about the track. Note that a track may represent a
+    // single contiguous time span or consist of multiple slices.
     #[yaserde(prefix = "tt", rename = "Track")]
     pub track: Vec<TrackInformation>,
 
     #[yaserde(prefix = "tt", rename = "RecordingStatus")]
     pub recording_status: RecordingStatus,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingInformation {}
 
 // A set of informative desciptions of a data source. The Search searvice allows
 // a client to filter on recordings based on information in this structure.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingSourceInformation {
-    // Identifier for the source chosen by the client that creates the structure.
-    // This identifier is opaque to the device. Clients may use any type of URI for
-    // this field. A device shall support at least 128 characters.
+    // Identifier for the source chosen by the client that creates the
+    // structure.
+    // This identifier is opaque to the device. Clients may use any type of URI
+    // for this field. A device shall support at least 128 characters.
     #[yaserde(prefix = "tt", rename = "SourceId")]
     pub source_id: String,
 
-    // Informative user readable name of the source, e.g. "Camera23". A device shall
-    // support at least 20 characters.
+    // Informative user readable name of the source, e.g. "Camera23". A device
+    // shall support at least 20 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Name,
 
@@ -8055,13 +7910,9 @@ pub struct RecordingSourceInformation {
     // support at least 128 characters.
     #[yaserde(prefix = "tt", rename = "Address")]
     pub address: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingSourceInformation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum RecordingStatus {
@@ -8072,7 +7923,6 @@ pub enum RecordingStatus {
     Removed,
     // This case should never happen.
     Unknown,
-
     __Unknown__(String),
 }
 
@@ -8081,6 +7931,8 @@ impl Default for RecordingStatus {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for RecordingStatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8104,13 +7956,9 @@ pub struct TrackInformation {
     // The stop date and time of the newest recorded data in the track.
     #[yaserde(prefix = "tt", rename = "DataTo")]
     pub data_to: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for TrackInformation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum TrackType {
@@ -8119,7 +7967,6 @@ pub enum TrackType {
     Metadata,
     // Placeholder for future extension.
     Extended,
-
     __Unknown__(String),
 }
 
@@ -8128,6 +7975,8 @@ impl Default for TrackType {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for TrackType {}
 
 // A set of media attributes valid for a recording at a point in time or for a
 // time interval.
@@ -8146,18 +7995,14 @@ pub struct MediaAttributes {
     #[yaserde(prefix = "tt", rename = "From")]
     pub from: String,
 
-    // The attributes are valid until this point in time in the recording. Can be
-    // equal to 'From' to indicate that the attributes are only known to be valid
-    // for this particular point in time.
+    // The attributes are valid until this point in time in the recording. Can
+    // be equal to 'From' to indicate that the attributes are only known to be
+    // valid for this particular point in time.
     #[yaserde(prefix = "tt", rename = "Until")]
     pub until: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MediaAttributes {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8167,8 +8012,8 @@ pub struct TrackAttributes {
     #[yaserde(prefix = "tt", rename = "TrackInformation")]
     pub track_information: TrackInformation,
 
-    // If the track is a video track, exactly one of this structure shall be present
-    // and contain the video attributes.
+    // If the track is a video track, exactly one of this structure shall be
+    // present and contain the video attributes.
     #[yaserde(prefix = "tt", rename = "VideoAttributes")]
     pub video_attributes: Option<VideoAttributes>,
 
@@ -8184,17 +8029,15 @@ pub struct TrackAttributes {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<TrackAttributesExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for TrackAttributes {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct TrackAttributesExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct TrackAttributesExtension {}
+
+impl Validate for TrackAttributesExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8219,13 +8062,9 @@ pub struct VideoAttributes {
     // Average framerate in frames per second.
     #[yaserde(prefix = "tt", rename = "Framerate")]
     pub framerate: f64,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for VideoAttributes {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8234,27 +8073,23 @@ pub struct AudioAttributes {
     #[yaserde(prefix = "tt", rename = "Bitrate")]
     pub bitrate: Option<i32>,
 
-    // Audio encoding of the track. Use values from tt:AudioEncoding for G711 and
-    // AAC. Otherwise use values from tt:AudioEncodingMimeNames and
+    // Audio encoding of the track. Use values from tt:AudioEncoding for G711
+    // and AAC. Otherwise use values from tt:AudioEncodingMimeNames and
     #[yaserde(prefix = "tt", rename = "Encoding")]
     pub encoding: String,
 
     // The sample rate in kHz.
     #[yaserde(prefix = "tt", rename = "Samplerate")]
     pub samplerate: i32,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioAttributes {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct MetadataAttributes {
-    // Indicates that there can be PTZ data in the metadata track in the specified
-    // time interval.
+    // Indicates that there can be PTZ data in the metadata track in the
+    // specified time interval.
     #[yaserde(prefix = "tt", rename = "CanContainPTZ")]
     pub can_contain_ptz: bool,
 
@@ -8268,21 +8103,19 @@ pub struct MetadataAttributes {
     #[yaserde(prefix = "tt", rename = "CanContainNotifications")]
     pub can_contain_notifications: bool,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // List of all PTZ spaces active for recording. Note that events are only
     // recorded on position changes and the actual point of recording may not
     // necessarily contain an event of the specified type.
     #[yaserde(attribute, rename = "PtzSpaces")]
     pub ptz_spaces: Option<StringAttrList>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MetadataAttributes {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct RecordingJobReference(pub ReferenceToken);
+
+impl Validate for RecordingJobReference {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8296,8 +8129,8 @@ pub struct RecordingConfiguration {
     pub content: Description,
 
     // Sspecifies the maximum time that data in any track within the
-    // recording shall be stored. The device shall delete any data older than the
-    // maximum retention
+    // recording shall be stored. The device shall delete any data older than
+    // the maximum retention
     // time. Such data shall not be accessible anymore. If the
     // MaximumRetentionPeriod is set to 0,
     // the device shall not limit the retention time of stored data, except by
@@ -8307,33 +8140,25 @@ pub struct RecordingConfiguration {
     // recordings to free up storage space for new recordings.
     #[yaserde(prefix = "tt", rename = "MaximumRetentionTime")]
     pub maximum_retention_time: xs::Duration,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct TrackConfiguration {
     // Type of the track. It shall be equal to the strings “Video”,
-    // “Audio” or “Metadata”. The track shall only be able to hold data of
-    // that type.
+    // “Audio” or “Metadata”. The track shall only be able to hold data
+    // of that type.
     #[yaserde(prefix = "tt", rename = "TrackType")]
     pub track_type: TrackType,
 
     // Informative description of the track.
     #[yaserde(prefix = "tt", rename = "Description")]
     pub description: Description,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for TrackConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8349,13 +8174,9 @@ pub struct GetRecordingsResponseItem {
     // List of tracks.
     #[yaserde(prefix = "tt", rename = "Tracks")]
     pub tracks: GetTracksResponseList,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for GetRecordingsResponseItem {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8363,10 +8184,9 @@ pub struct GetTracksResponseList {
     // Configuration of a track.
     #[yaserde(prefix = "tt", rename = "Track")]
     pub track: Vec<GetTracksResponseItem>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for GetTracksResponseList {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8378,13 +8198,9 @@ pub struct GetTracksResponseItem {
     // Configuration of the track.
     #[yaserde(prefix = "tt", rename = "Configuration")]
     pub configuration: TrackConfiguration,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for GetTracksResponseItem {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8393,10 +8209,11 @@ pub struct RecordingJobConfiguration {
     #[yaserde(prefix = "tt", rename = "RecordingToken")]
     pub recording_token: RecordingReference,
 
-    // The mode of the job. If it is idle, nothing shall happen. If it is active,
-    // the device shall try
-    // to obtain data from the receivers. A client shall use GetRecordingJobState to
-    // determine if data transfer is really taking place.
+    // The mode of the job. If it is idle, nothing shall happen. If it is
+    // active, the device shall try
+    // to obtain data from the receivers. A client shall use
+    // GetRecordingJobState to determine if data transfer is really taking
+    // place.
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: RecordingJobMode,
 
@@ -8404,12 +8221,12 @@ pub struct RecordingJobConfiguration {
     // that store data to
     // the same track, the device will only store the data for the recording job
     // with the highest
-    // priority. The priority is specified per recording job, but the device shall
-    // determine the priority
+    // priority. The priority is specified per recording job, but the device
+    // shall determine the priority
     // of each track individually. If there are two recording jobs with the same
     // priority, the device
-    // shall record the data corresponding to the recording job that was activated
-    // the latest.
+    // shall record the data corresponding to the recording job that was
+    // activated the latest.
     #[yaserde(prefix = "tt", rename = "Priority")]
     pub priority: i32,
 
@@ -8420,35 +8237,36 @@ pub struct RecordingJobConfiguration {
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<RecordingJobConfigurationExtension>,
 
-    // This attribute adds an additional requirement for activating the recording
-    // job.
-    // If this optional field is provided the job shall only record if the schedule
-    // exists and is active.
+    // This attribute adds an additional requirement for activating the
+    // recording job.
+    // If this optional field is provided the job shall only record if the
+    // schedule exists and is active.
     #[yaserde(attribute, rename = "ScheduleToken")]
     pub schedule_token: Option<String>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingJobConfiguration {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct RecordingJobMode(pub String);
 
+impl Validate for RecordingJobMode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct RecordingJobConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct RecordingJobConfigurationExtension {}
+
+impl Validate for RecordingJobConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingJobSource {
-    // This field shall be a reference to the source of the data. The type of the
-    // source
-    // is determined by the attribute Type in the SourceToken structure. If Type is
-    // http://www.onvif.org/ver10/schema/Receiver, the token is a ReceiverReference.
-    // In this case
+    // This field shall be a reference to the source of the data. The type of
+    // the source
+    // is determined by the attribute Type in the SourceToken structure. If Type
+    // is
+    // http://www.onvif.org/ver10/schema/Receiver, the token is a
+    // ReceiverReference. In this case
     // the device shall receive the data over the network. If Type is
     // http://www.onvif.org/ver10/schema/Profile, the token identifies a media
     // profile, instructing the
@@ -8457,7 +8275,8 @@ pub struct RecordingJobSource {
     pub source_token: Option<SourceReference>,
 
     // If this field is TRUE, and if the SourceToken is omitted, the device
-    // shall create a receiver object (through the receiver service) and assign the
+    // shall create a receiver object (through the receiver service) and assign
+    // the
     // ReceiverReference to the SourceToken field. When retrieving the
     // RecordingJobConfiguration
     // from the device, the AutoCreateReceiver field shall never be present.
@@ -8470,24 +8289,23 @@ pub struct RecordingJobSource {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<RecordingJobSourceExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingJobSource {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct RecordingJobSourceExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct RecordingJobSourceExtension {}
+
+impl Validate for RecordingJobSourceExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingJobTrack {
-    // If the received RTSP stream contains multiple tracks of the same type, the
-    // SourceTag differentiates between those Tracks. This field can be ignored in
-    // case of recording a local source.
+    // If the received RTSP stream contains multiple tracks of the same type,
+    // the
+    // SourceTag differentiates between those Tracks. This field can be ignored
+    // in case of recording a local source.
     #[yaserde(prefix = "tt", rename = "SourceTag")]
     pub source_tag: String,
 
@@ -8496,13 +8314,9 @@ pub struct RecordingJobTrack {
     // received data.
     #[yaserde(prefix = "tt", rename = "Destination")]
     pub destination: TrackReference,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingJobTrack {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8511,7 +8325,8 @@ pub struct RecordingJobStateInformation {
     #[yaserde(prefix = "tt", rename = "RecordingToken")]
     pub recording_token: RecordingReference,
 
-    // Holds the aggregated state over the whole RecordingJobInformation structure.
+    // Holds the aggregated state over the whole RecordingJobInformation
+    // structure.
     #[yaserde(prefix = "tt", rename = "State")]
     pub state: RecordingJobState,
 
@@ -8521,20 +8336,20 @@ pub struct RecordingJobStateInformation {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<RecordingJobStateInformationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingJobStateInformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct RecordingJobStateInformationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct RecordingJobStateInformationExtension {}
+
+impl Validate for RecordingJobStateInformationExtension {}
 
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct RecordingJobState(pub String);
+
+impl Validate for RecordingJobState {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8543,30 +8358,26 @@ pub struct RecordingJobStateSource {
     #[yaserde(prefix = "tt", rename = "SourceToken")]
     pub source_token: SourceReference,
 
-    // Holds the aggregated state over all substructures of RecordingJobStateSource.
+    // Holds the aggregated state over all substructures of
+    // RecordingJobStateSource.
     #[yaserde(prefix = "tt", rename = "State")]
     pub state: RecordingJobState,
 
     // List of track items.
     #[yaserde(prefix = "tt", rename = "Tracks")]
     pub tracks: RecordingJobStateTracks,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingJobStateSource {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingJobStateTracks {
     #[yaserde(prefix = "tt", rename = "Track")]
     pub track: Vec<RecordingJobStateTrack>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingJobStateTracks {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8579,25 +8390,21 @@ pub struct RecordingJobStateTrack {
     #[yaserde(prefix = "tt", rename = "Destination")]
     pub destination: TrackReference,
 
-    // Optionally holds an implementation defined string value that describes the
-    // error.
+    // Optionally holds an implementation defined string value that describes
+    // the error.
     // The string should be in the English language.
     #[yaserde(prefix = "tt", rename = "Error")]
     pub error: Option<String>,
 
     // Provides the job state of the track. The valid
-    // values of state shall be “Idle”, “Active” and “Error”. If state
-    // equals “Error”, the Error field may be filled in with an implementation
-    // defined value.
+    // values of state shall be “Idle”, “Active” and “Error”. If
+    // state equals “Error”, the Error field may be filled in with an
+    // implementation defined value.
     #[yaserde(prefix = "tt", rename = "State")]
     pub state: RecordingJobState,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for RecordingJobStateTrack {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8607,13 +8414,9 @@ pub struct GetRecordingJobsResponseItem {
 
     #[yaserde(prefix = "tt", rename = "JobConfiguration")]
     pub job_configuration: RecordingJobConfiguration,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for GetRecordingJobsResponseItem {}
 
 // Configuration parameters for the replay service.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -8622,26 +8425,15 @@ pub struct ReplayConfiguration {
     // The RTSP session timeout.
     #[yaserde(prefix = "tt", rename = "SessionTimeout")]
     pub session_timeout: xs::Duration,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ReplayConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AnalyticsEngine {
     #[yaserde(prefix = "tt", rename = "AnalyticsEngineConfiguration")]
     pub analytics_engine_configuration: AnalyticsDeviceEngineConfiguration,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -8657,6 +8449,8 @@ pub struct AnalyticsEngine {
     pub token: ReferenceToken,
 }
 
+impl Validate for AnalyticsEngine {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AnalyticsDeviceEngineConfiguration {
@@ -8665,17 +8459,15 @@ pub struct AnalyticsDeviceEngineConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<AnalyticsDeviceEngineConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AnalyticsDeviceEngineConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AnalyticsDeviceEngineConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct AnalyticsDeviceEngineConfigurationExtension {}
+
+impl Validate for AnalyticsDeviceEngineConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8685,13 +8477,9 @@ pub struct EngineConfiguration {
 
     #[yaserde(prefix = "tt", rename = "AnalyticsEngineInputInfo")]
     pub analytics_engine_input_info: AnalyticsEngineInputInfo,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for EngineConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8701,17 +8489,15 @@ pub struct AnalyticsEngineInputInfo {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<AnalyticsEngineInputInfoExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AnalyticsEngineInputInfo {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AnalyticsEngineInputInfoExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct AnalyticsEngineInputInfoExtension {}
+
+impl Validate for AnalyticsEngineInputInfoExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8725,13 +8511,6 @@ pub struct AnalyticsEngineInput {
     #[yaserde(prefix = "tt", rename = "MetadataInput")]
     pub metadata_input: MetadataInput,
 
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Name,
@@ -8745,6 +8524,8 @@ pub struct AnalyticsEngineInput {
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
+
+impl Validate for AnalyticsEngineInput {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8757,17 +8538,15 @@ pub struct SourceIdentification {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SourceIdentificationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for SourceIdentification {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SourceIdentificationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct SourceIdentificationExtension {}
+
+impl Validate for SourceIdentificationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8777,17 +8556,15 @@ pub struct MetadataInput {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<MetadataInputExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MetadataInput {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct MetadataInputExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct MetadataInputExtension {}
+
+impl Validate for MetadataInputExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8796,8 +8573,8 @@ pub struct AnalyticsEngineControl {
     #[yaserde(prefix = "tt", rename = "EngineToken")]
     pub engine_token: ReferenceToken,
 
-    // Token of the analytics engine configuration (VideoAnalyticsConfiguration) in
-    // effect.
+    // Token of the analytics engine configuration (VideoAnalyticsConfiguration)
+    // in effect.
     #[yaserde(prefix = "tt", rename = "EngineConfigToken")]
     pub engine_config_token: ReferenceToken,
 
@@ -8805,8 +8582,8 @@ pub struct AnalyticsEngineControl {
     #[yaserde(prefix = "tt", rename = "InputToken")]
     pub input_token: Vec<ReferenceToken>,
 
-    // Tokens of the receiver providing media input data. The order of ReceiverToken
-    // shall exactly match the order of InputToken.
+    // Tokens of the receiver providing media input data. The order of
+    // ReceiverToken shall exactly match the order of InputToken.
     #[yaserde(prefix = "tt", rename = "ReceiverToken")]
     pub receiver_token: Vec<ReferenceToken>,
 
@@ -8818,13 +8595,6 @@ pub struct AnalyticsEngineControl {
 
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: ModeOfOperation,
-
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 
     // User readable name. Length up to 64 characters.
     #[yaserde(prefix = "tt", rename = "Name")]
@@ -8840,13 +8610,14 @@ pub struct AnalyticsEngineControl {
     pub token: ReferenceToken,
 }
 
+impl Validate for AnalyticsEngineControl {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ModeOfOperation {
     Idle,
     Active,
     // This case should never happen.
     Unknown,
-
     __Unknown__(String),
 }
 
@@ -8855,6 +8626,8 @@ impl Default for ModeOfOperation {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for ModeOfOperation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8865,13 +8638,9 @@ pub struct AnalyticsStateInformation {
 
     #[yaserde(prefix = "tt", rename = "State")]
     pub state: AnalyticsState,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AnalyticsStateInformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8881,13 +8650,9 @@ pub struct AnalyticsState {
 
     #[yaserde(prefix = "tt", rename = "State")]
     pub state: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AnalyticsState {}
 
 // Action Engine Event Payload data structure contains the information about the
 // ONVIF command invocations. Since this event could be generated by other or
@@ -8911,26 +8676,22 @@ pub struct ActionEngineEventPayload {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ActionEngineEventPayloadExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ActionEngineEventPayload {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ActionEngineEventPayloadExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct ActionEngineEventPayloadExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for ActionEngineEventPayloadExtension {}
 
 // AudioClassType acceptable values are;
 // gun_shot, scream, glass_breaking, tire_screech
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct AudioClassType(pub String);
+
+impl Validate for AudioClassType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8939,17 +8700,13 @@ pub struct AudioClassCandidate {
     #[yaserde(prefix = "tt", rename = "Type")]
     pub _type: AudioClassType,
 
-    // A likelihood/probability that the corresponding audio event belongs to this
-    // class. The sum of the likelihoods shall NOT exceed 1
+    // A likelihood/probability that the corresponding audio event belongs to
+    // this class. The sum of the likelihoods shall NOT exceed 1
     #[yaserde(prefix = "tt", rename = "Likelihood")]
     pub likelihood: f64,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioClassCandidate {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8960,21 +8717,15 @@ pub struct AudioClassDescriptor {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<AudioClassDescriptorExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for AudioClassDescriptor {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct AudioClassDescriptorExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct AudioClassDescriptorExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for AudioClassDescriptorExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -8984,13 +8735,9 @@ pub struct ActiveConnection {
 
     #[yaserde(prefix = "tt", rename = "CurrentFps")]
     pub current_fps: f64,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ActiveConnection {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9002,31 +8749,25 @@ pub struct ProfileStatus {
     pub extension: Option<ProfileStatusExtension>,
 }
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ProfileStatusExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for ProfileStatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Osdreference {
-    // //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+pub struct ProfileStatusExtension {}
+
+impl Validate for ProfileStatusExtension {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct Osdreference {}
+
+impl Validate for Osdreference {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Osdtype {
     Text,
     Image,
     Extended,
-
     __Unknown__(String),
 }
 
@@ -9035,6 +8776,8 @@ impl Default for Osdtype {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for Osdtype {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9048,21 +8791,15 @@ pub struct OsdposConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<OsdposConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for OsdposConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdposConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdposConfigurationExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdposConfigurationExtension {}
 
 // The value range of "Transparent" could be defined by vendors only should
 // follow this rule: the minimum value means non-transparent and the maximum
@@ -9075,10 +8812,9 @@ pub struct Osdcolor {
 
     #[yaserde(attribute, rename = "Transparent")]
     pub transparent: Option<i32>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Osdcolor {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9087,15 +8823,15 @@ pub struct OsdtextConfiguration {
     #[yaserde(prefix = "tt", rename = "Type")]
     pub _type: String,
 
-    // List of supported OSD date formats. This element shall be present when the
-    // value of Type field has Date or DateAndTime. The following DateFormat are
-    // defined:
+    // List of supported OSD date formats. This element shall be present when
+    // the value of Type field has Date or DateAndTime. The following DateFormat
+    // are defined:
     #[yaserde(prefix = "tt", rename = "DateFormat")]
     pub date_format: Option<String>,
 
-    // List of supported OSD time formats. This element shall be present when the
-    // value of Type field has Time or DateAndTime. The following TimeFormat are
-    // defined:
+    // List of supported OSD time formats. This element shall be present when
+    // the value of Type field has Time or DateAndTime. The following TimeFormat
+    // are defined:
     #[yaserde(prefix = "tt", rename = "TimeFormat")]
     pub time_format: Option<String>,
 
@@ -9122,21 +8858,15 @@ pub struct OsdtextConfiguration {
     // false the PlainText content will not be persistent across device reboots.
     #[yaserde(attribute, rename = "IsPersistentText")]
     pub is_persistent_text: Option<bool>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for OsdtextConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdtextConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdtextConfigurationExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdtextConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9147,21 +8877,15 @@ pub struct OsdimgConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<OsdimgConfigurationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for OsdimgConfiguration {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdimgConfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdimgConfigurationExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdimgConfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9178,10 +8902,9 @@ pub struct ColorspaceRange {
     // Acceptable values are the same as in tt:Color.
     #[yaserde(prefix = "tt", rename = "Colorspace")]
     pub colorspace: String,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ColorspaceRange {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum ColorOptionsChoice {
@@ -9189,7 +8912,6 @@ pub enum ColorOptionsChoice {
     ColorList(Vec<Color>),
     // Define the range of color supported.
     ColorspaceRange(Vec<ColorspaceRange>),
-
     __Unknown__(String),
 }
 
@@ -9199,17 +8921,18 @@ impl Default for ColorOptionsChoice {
     }
 }
 
+impl Validate for ColorOptionsChoice {}
+
 // Describe the colors supported. Either list each color or define the range of
 // color values.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct ColorOptions {
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
     #[yaserde(flatten)]
     pub color_options_choice: ColorOptionsChoice,
 }
+
+impl Validate for ColorOptions {}
 
 // Describe the option of the color and its transparency.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -9225,27 +8948,22 @@ pub struct OsdcolorOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<OsdcolorOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for OsdcolorOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdcolorOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdcolorOptionsExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdcolorOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct OsdtextOptions {
-    // List of supported OSD text type. When a device indicates the supported number
-    // relating to Text type in MaximumNumberOfOSDs, the type shall be presented.
+    // List of supported OSD text type. When a device indicates the supported
+    // number relating to Text type in MaximumNumberOfOSDs, the type shall be
+    // presented.
     #[yaserde(prefix = "tt", rename = "Type")]
     pub _type: Vec<String>,
 
@@ -9271,21 +8989,15 @@ pub struct OsdtextOptions {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<OsdtextOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for OsdtextOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdtextOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdtextOptionsExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdtextOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9312,21 +9024,15 @@ pub struct OsdimgOptions {
     // The maximum height (in pixels) of the image that can be uploaded.
     #[yaserde(attribute, rename = "MaxHeight")]
     pub max_height: Option<i32>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for OsdimgOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdimgOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdimgOptionsExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdimgOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9343,38 +9049,31 @@ pub struct Osdconfiguration {
     #[yaserde(prefix = "tt", rename = "Position")]
     pub position: OsdposConfiguration,
 
-    // Text configuration of OSD. It shall be present when the value of Type field
-    // is Text.
+    // Text configuration of OSD. It shall be present when the value of Type
+    // field is Text.
     #[yaserde(prefix = "tt", rename = "TextString")]
     pub text_string: Option<OsdtextConfiguration>,
 
-    // Image configuration of OSD. It shall be present when the value of Type field
-    // is Image
+    // Image configuration of OSD. It shall be present when the value of Type
+    // field is Image
     #[yaserde(prefix = "tt", rename = "Image")]
     pub image: Option<OsdimgConfiguration>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<OsdconfigurationExtension>,
 
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
-
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
     pub token: ReferenceToken,
 }
 
+impl Validate for Osdconfiguration {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdconfigurationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdconfigurationExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdconfigurationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9396,25 +9095,25 @@ pub struct MaximumNumberOfOSDs {
 
     #[yaserde(attribute, rename = "DateAndTime")]
     pub date_and_time: Option<i32>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for MaximumNumberOfOSDs {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct OsdconfigurationOptions {
-    // The maximum number of OSD configurations supported for the specified video
-    // source configuration. If the configuration does not support OSDs, this value
-    // shall be zero and the Type and PositionOption elements are ignored. If a
-    // device limits the number of instances by OSDType, it shall indicate the
-    // supported number for each type via the related attribute.
+    // The maximum number of OSD configurations supported for the specified
+    // video source configuration. If the configuration does not support OSDs,
+    // this value shall be zero and the Type and PositionOption elements are
+    // ignored. If a device limits the number of instances by OSDType, it shall
+    // indicate the supported number for each type via the related attribute.
     #[yaserde(prefix = "tt", rename = "MaximumNumberOfOSDs")]
     pub maximum_number_of_os_ds: MaximumNumberOfOSDs,
 
     // List supported type of OSD configuration. When a device indicates the
-    // supported number for each types in MaximumNumberOfOSDs, related type shall be
-    // presented. A device shall return Option element relating to listed type.
+    // supported number for each types in MaximumNumberOfOSDs, related type
+    // shall be presented. A device shall return Option element relating to
+    // listed type.
     #[yaserde(prefix = "tt", rename = "Type")]
     pub _type: Vec<Osdtype>,
 
@@ -9422,33 +9121,27 @@ pub struct OsdconfigurationOptions {
     #[yaserde(prefix = "tt", rename = "PositionOption")]
     pub position_option: Vec<String>,
 
-    // Option of the OSD text configuration. This element shall be returned if the
-    // device is signaling the support for Text.
+    // Option of the OSD text configuration. This element shall be returned if
+    // the device is signaling the support for Text.
     #[yaserde(prefix = "tt", rename = "TextOption")]
     pub text_option: Option<OsdtextOptions>,
 
-    // Option of the OSD image configuration. This element shall be returned if the
-    // device is signaling the support for Image.
+    // Option of the OSD image configuration. This element shall be returned if
+    // the device is signaling the support for Image.
     #[yaserde(prefix = "tt", rename = "ImageOption")]
     pub image_option: Option<OsdimgOptions>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<OsdconfigurationOptionsExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for OsdconfigurationOptions {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct OsdconfigurationOptionsExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct OsdconfigurationOptionsExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for OsdconfigurationOptionsExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9460,13 +9153,9 @@ pub struct FileProgress {
     // Normalized percentage completion for uploading the exported file
     #[yaserde(prefix = "tt", rename = "Progress")]
     pub progress: f64,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for FileProgress {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9477,21 +9166,15 @@ pub struct ArrayOfFileProgress {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ArrayOfFileProgressExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for ArrayOfFileProgress {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ArrayOfFileProgressExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct ArrayOfFileProgressExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for ArrayOfFileProgressExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -9506,18 +9189,12 @@ pub struct StorageReferencePath {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<StorageReferencePathExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for StorageReferencePath {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct StorageReferencePathExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
+pub struct StorageReferencePathExtension {}
 
-// //
-//TODO: any_attribute macros
-//  pub any_attribute: AnyAttribute,
-}
+impl Validate for StorageReferencePathExtension {}
