@@ -3,15 +3,13 @@ pub mod common;
 #[allow(unused_imports)]
 pub mod metadatastream;
 pub mod onvif;
-#[allow(unused_imports)]
 pub mod radiometry;
-#[allow(unused_imports)]
 pub mod rules;
 pub mod soap_envelope;
 pub mod types;
+pub mod validate;
 pub mod xmlmime;
 pub mod xop;
-pub mod xs;
 
 // wsdl:
 #[allow(unused_imports)]

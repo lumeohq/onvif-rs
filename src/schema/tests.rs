@@ -2,9 +2,11 @@ use super::*;
 
 use crate::transport;
 use crate::utils::xml_eq::assert_xml_eq;
+use assert_approx_eq::assert_approx_eq;
 use async_trait::async_trait;
 use common;
 use onvif as tt;
+use xsd_types::types as xs;
 
 pub struct FakeTransport {
     pub response: String,
@@ -284,7 +286,7 @@ fn duration_serialization() {
         uri: "http://a/b/c".to_string(),
         invalid_after_connect: false,
         invalid_after_reboot: true,
-        timeout: crate::schema::xs::Duration {
+        timeout: xs::Duration {
             seconds: 60.0,
             ..Default::default()
         },
@@ -321,7 +323,7 @@ fn duration_deserialization() {
     assert_eq!(des.uri, "http://a/b/c".to_string());
     assert_eq!(des.invalid_after_connect, false);
     assert_eq!(des.invalid_after_reboot, true);
-    assert_eq!(des.timeout.seconds, 60.0);
+    assert_approx_eq!(des.timeout.seconds, 60.0);
 }
 
 #[tokio::test]

@@ -5,19 +5,31 @@
 // xmlns:xs="http://www.w3.org/2001/XMLSchema"
 // xmlns:tt="http://www.onvif.org/ver10/schema"
 
+use crate::schema::validate::Validate;
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
 use std::str::FromStr;
 use yaserde::{YaDeserialize, YaSerialize};
 
-//generated file
 // Unique identifier for a physical or logical resource.
 // Tokens should be assigned such that they are unique within a device. Tokens
 // must be at least unique within its class.
 // Length up to 64 characters.
 #[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
 pub struct ReferenceToken(pub String);
+
+impl Validate for ReferenceToken {
+    fn validate(&self) -> Result<(), String> {
+        if self.0.len() > "64".parse().unwrap() {
+            return Err(format!(
+                "MaxLength validation error. \nExpected: 0 length <= 64 \nActual: 0 length == {}",
+                self.0.len()
+            ));
+        }
+        Ok(())
+    }
+}
 
 // Range of values greater equal Min value and less equal Max value.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -29,6 +41,8 @@ pub struct IntRange {
     #[yaserde(prefix = "tt", rename = "Max")]
     pub max: i32,
 }
+
+impl Validate for IntRange {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -44,6 +58,8 @@ pub struct Vector2D {
     pub space: Option<String>,
 }
 
+impl Validate for Vector2D {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Vector1D {
@@ -55,11 +71,13 @@ pub struct Vector1D {
     pub space: Option<String>,
 }
 
+impl Validate for Vector1D {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Ptzvector {
-    // Pan and tilt position. The x component corresponds to pan and the y component
-    // to tilt.
+    // Pan and tilt position. The x component corresponds to pan and the y
+    // component to tilt.
     #[yaserde(prefix = "tt", rename = "PanTilt")]
     pub pan_tilt: Option<Vector2D>,
 
@@ -67,6 +85,8 @@ pub struct Ptzvector {
     #[yaserde(prefix = "tt", rename = "Zoom")]
     pub zoom: Option<Vector1D>,
 }
+
+impl Validate for Ptzvector {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -77,8 +97,8 @@ pub struct Ptzstatus {
     #[yaserde(prefix = "tt", rename = "Position")]
     pub position: Option<Ptzvector>,
 
-    // Indicates if the Pan/Tilt/Zoom device unit is currently moving, idle or in an
-    // unknown state.
+    // Indicates if the Pan/Tilt/Zoom device unit is currently moving, idle or
+    // in an unknown state.
     #[yaserde(prefix = "tt", rename = "MoveStatus")]
     pub move_status: Option<PtzmoveStatus>,
 
@@ -89,13 +109,9 @@ pub struct Ptzstatus {
     // Specifies the UTC time when this status was generated.
     #[yaserde(prefix = "tt", rename = "UtcTime")]
     pub utc_time: String,
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Ptzstatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -107,12 +123,16 @@ pub struct PtzmoveStatus {
     pub zoom: Option<MoveStatus>,
 }
 
+impl Validate for PtzmoveStatus {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum MoveStatus {
+    #[yaserde(rename = "IDLE")]
     Idle,
+    #[yaserde(rename = "MOVING")]
     Moving,
+    #[yaserde(rename = "UNKNOWN")]
     Unknown,
-
     __Unknown__(String),
 }
 
@@ -121,6 +141,8 @@ impl Default for MoveStatus {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for MoveStatus {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -131,6 +153,8 @@ pub struct Vector {
     #[yaserde(attribute, rename = "y")]
     pub y: Option<f64>,
 }
+
+impl Validate for Vector {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -148,6 +172,8 @@ pub struct Rectangle {
     pub left: Option<f64>,
 }
 
+impl Validate for Rectangle {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Polygon {
@@ -155,8 +181,9 @@ pub struct Polygon {
     pub point: Vec<Vector>,
 }
 
-// type Polygon = Polygon;
+impl Validate for Polygon {}
 
+// pub type Polygon = Polygon;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Color {
@@ -173,6 +200,8 @@ pub struct Color {
     #[yaserde(attribute, rename = "Colorspace")]
     pub colorspace: Option<String>,
 }
+
+impl Validate for Color {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -200,6 +229,8 @@ pub struct ColorCovariance {
     pub colorspace: Option<String>,
 }
 
+impl Validate for ColorCovariance {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Transformation {
@@ -211,24 +242,19 @@ pub struct Transformation {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<TransformationExtension>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for Transformation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct TransformationExtension {
-    //TODO: yaserde macro for any element
-//  pub any: AnyElement,
-}
+pub struct TransformationExtension {}
+
+impl Validate for TransformationExtension {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct GeoLocation {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // East west location as angle.
     #[yaserde(attribute, rename = "lon")]
     pub lon: Option<f64>,
@@ -240,17 +266,13 @@ pub struct GeoLocation {
     // Hight in meters above sea level.
     #[yaserde(attribute, rename = "elevation")]
     pub elevation: Option<f64>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for GeoLocation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct GeoOrientation {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Rotation around the x axis.
     #[yaserde(attribute, rename = "roll")]
     pub roll: Option<f64>,
@@ -262,17 +284,13 @@ pub struct GeoOrientation {
     // Rotation around the z axis.
     #[yaserde(attribute, rename = "yaw")]
     pub yaw: Option<f64>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for GeoOrientation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct LocalLocation {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // East west location as angle.
     #[yaserde(attribute, rename = "x")]
     pub x: Option<f64>,
@@ -284,17 +302,13 @@ pub struct LocalLocation {
     // Offset in meters from the sea level.
     #[yaserde(attribute, rename = "z")]
     pub z: Option<f64>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for LocalLocation {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct LocalOrientation {
-    //TODO: yaserde macro for any element
-    //  pub any: AnyElement,
-
     // Rotation around the y axis.
     #[yaserde(attribute, rename = "pan")]
     pub pan: Option<f64>,
@@ -306,17 +320,15 @@ pub struct LocalOrientation {
     // Rotation around the x axis.
     #[yaserde(attribute, rename = "roll")]
     pub roll: Option<f64>,
-    // //
-    //TODO: any_attribute macros
-    //  pub any_attribute: AnyAttribute,
 }
+
+impl Validate for LocalOrientation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Entity {
     Device,
     VideoSource,
     AudioSource,
-
     __Unknown__(String),
 }
 
@@ -325,6 +337,8 @@ impl Default for Entity {
         Self::__Unknown__("No valid variants".into())
     }
 }
+
+impl Validate for Entity {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -345,7 +359,8 @@ pub struct LocationEntity {
     #[yaserde(prefix = "tt", rename = "LocalOrientation")]
     pub local_orientation: Option<LocalOrientation>,
 
-    // Entity type the entry refers to, use a value from the tt:Entity enumeration.
+    // Entity type the entry refers to, use a value from the tt:Entity
+    // enumeration.
     #[yaserde(attribute, rename = "Entity")]
     pub entity: Option<String>,
 
@@ -357,7 +372,8 @@ pub struct LocationEntity {
     #[yaserde(attribute, rename = "Fixed")]
     pub fixed: Option<bool>,
 
-    // Optional reference to the XAddr of another devices DeviceManagement service.
+    // Optional reference to the XAddr of another devices DeviceManagement
+    // service.
     #[yaserde(attribute, rename = "GeoSource")]
     pub geo_source: Option<String>,
 
@@ -365,3 +381,5 @@ pub struct LocationEntity {
     #[yaserde(attribute, rename = "AutoGeo")]
     pub auto_geo: Option<bool>,
 }
+
+impl Validate for LocationEntity {}
