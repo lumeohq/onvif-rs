@@ -263,3 +263,27 @@ pub async fn get_device_information<T: transport::Transport>(
 ) -> Result<GetDeviceInformationResponse, transport::Error> {
     transport::request(transport, request).await
 }
+
+#[derive(Default, PartialEq, Debug, YaSerialize)]
+#[yaserde(
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+)]
+pub struct GetNetworkInterfaces {}
+
+#[derive(Default, PartialEq, Debug, YaDeserialize)]
+#[yaserde(
+    prefix = "tds",
+    namespace = "tds: http://www.onvif.org/ver10/device/wsdl"
+)]
+pub struct GetNetworkInterfacesResponse {
+    #[yaserde(prefix = "tds", rename = "NetworkInterfaces")]
+    pub network_interfaces: Vec<tt::NetworkInterface>,
+}
+
+pub async fn get_network_interfaces<T: transport::Transport>(
+    transport: &T,
+    request: &GetNetworkInterfaces,
+) -> Result<GetNetworkInterfacesResponse, transport::Error> {
+    transport::request(transport, request).await
+}
