@@ -562,10 +562,8 @@ fn float_list_deserialization() {
 }
 
 #[test]
-#[ignore]
 fn nested_structs_with_same_named_attributes() {
-    // Yaserde incorrectly parses XML when nested struct has same named
-    // attribute as the current struct (`token` in this case)
+    // https://github.com/media-io/yaserde/issues/12#issuecomment-601235031
     let ser = r#"
         <?xml version="1.0" encoding="utf-8"?>
         <tt:Profile token="a" xmlns:tt="http://www.onvif.org/ver10/schema">
@@ -580,10 +578,13 @@ fn nested_structs_with_same_named_attributes() {
 }
 
 #[test]
-#[ignore]
 fn nested_structs_with_same_named_fields() {
     // yaserde::de::from_str returns Err when nested struct has same named
     // field as the current struct (`extension` in this case)
+    // https://github.com/media-io/yaserde/issues/51
+    // So for now we have to disable extensions until the issue is fixed.
+    // This test enforces us to comment out extensions from generated code
+    // otherwise we will fail at runtime.
     let ser = r#"
         <?xml version="1.0" encoding="utf-8"?>
         <tt:Profile xmlns:tt="http://www.onvif.org/ver10/schema">
@@ -591,5 +592,6 @@ fn nested_structs_with_same_named_fields() {
         </tt:Profile>
         "#;
 
-    let _des: tt::Profile = yaserde::de::from_str(&ser).unwrap();
+    let des: tt::Profile = yaserde::de::from_str(&ser).unwrap();
+    assert_eq!(des, Default::default());
 }

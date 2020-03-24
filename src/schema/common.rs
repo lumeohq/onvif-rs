@@ -16,7 +16,7 @@ use yaserde::{YaDeserialize, YaSerialize};
 // Tokens should be assigned such that they are unique within a device. Tokens
 // must be at least unique within its class.
 // Length up to 64 characters.
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ReferenceToken(pub String);
 
 impl Validate for ReferenceToken {

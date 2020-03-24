@@ -48,7 +48,7 @@ pub struct DeviceEntity {
 impl Validate for DeviceEntity {}
 
 // User readable name. Length up to 64 characters.
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Name(pub String);
 
 impl Validate for Name {
@@ -142,22 +142,22 @@ pub struct IntList {
 
 impl Validate for IntList {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct IntAttrList(pub Vec<i32>);
 
 impl Validate for IntAttrList {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct FloatAttrList(pub Vec<f64>);
 
 impl Validate for FloatAttrList {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct StringAttrList(pub Vec<String>);
 
 impl Validate for StringAttrList {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ReferenceTokenList(pub Vec<ReferenceToken>);
 
 impl Validate for ReferenceTokenList {}
@@ -208,8 +208,8 @@ pub struct VideoSource {
     #[yaserde(prefix = "tt", rename = "Imaging")]
     pub imaging: Option<ImagingSettings>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoSourceExtension>,
 
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
@@ -225,9 +225,8 @@ pub struct VideoSourceExtension {
     // 2.00 is supported.
     #[yaserde(prefix = "tt", rename = "Imaging")]
     pub imaging: Option<ImagingSettings20>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoSourceExtension2>,
 }
 
 impl Validate for VideoSourceExtension {}
@@ -291,8 +290,8 @@ pub struct Profile {
     pub metadata_configuration: Option<MetadataConfiguration>,
 
     // Extensions defined in ONVIF 2.0
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ProfileExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ProfileExtension>,
 
     // Unique identifier of the profile.
     #[yaserde(attribute, rename = "token")]
@@ -316,9 +315,8 @@ pub struct ProfileExtension {
     // Optional configuration of the Audio decoder.
     #[yaserde(prefix = "tt", rename = "AudioDecoderConfiguration")]
     pub audio_decoder_configuration: Option<AudioDecoderConfiguration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ProfileExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ProfileExtension2>,
 }
 
 impl Validate for ProfileExtension {}
@@ -370,8 +368,8 @@ pub struct VideoSourceConfiguration {
     #[yaserde(prefix = "tt", rename = "Bounds")]
     pub bounds: IntRectangle,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoSourceConfigurationExtension>,
 
     // Readonly parameter signalling Source configuration's view mode, for
     // devices supporting different view modes as defined in tt:viewModes.
@@ -402,9 +400,8 @@ pub struct VideoSourceConfigurationExtension {
     // parameters.
     #[yaserde(prefix = "tt", rename = "Rotate")]
     pub rotate: Option<Rotate>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceConfigurationExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoSourceConfigurationExtension2>,
 }
 
 impl Validate for VideoSourceConfigurationExtension {}
@@ -437,9 +434,8 @@ pub struct Rotate {
     // rotation.
     #[yaserde(prefix = "tt", rename = "Degree")]
     pub degree: Option<i32>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<RotateExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<RotateExtension>,
 }
 
 impl Validate for Rotate {}
@@ -550,8 +546,8 @@ pub struct VideoSourceConfigurationOptions {
     #[yaserde(prefix = "tt", rename = "VideoSourceTokensAvailable")]
     pub video_source_tokens_available: Vec<ReferenceToken>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceConfigurationOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoSourceConfigurationOptionsExtension>,
 
     // Maximum number of profiles.
     #[yaserde(attribute, rename = "MaximumNumberOfProfiles")]
@@ -566,9 +562,8 @@ pub struct VideoSourceConfigurationOptionsExtension {
     // Options of parameters for Rotation feature.
     #[yaserde(prefix = "tt", rename = "Rotate")]
     pub rotate: Option<RotateOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceConfigurationOptionsExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoSourceConfigurationOptionsExtension2>,
 }
 
 impl Validate for VideoSourceConfigurationOptionsExtension {}
@@ -594,8 +589,8 @@ pub struct RotateOptions {
     #[yaserde(prefix = "tt", rename = "DegreeList")]
     pub degree_list: Option<IntList>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<RotateOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<RotateOptionsExtension>,
 
     // After setting the rotation, if a device starts to reboot this value is
     // true.
@@ -907,8 +902,8 @@ pub struct VideoEncoderConfigurationOptions {
     #[yaserde(prefix = "tt", rename = "H264")]
     pub h264: Option<H264Options>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoEncoderOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoEncoderOptionsExtension>,
 
     // Indicates the support for the GuaranteedFrameRate attribute on the
     // VideoEncoderConfiguration element.
@@ -932,9 +927,8 @@ pub struct VideoEncoderOptionsExtension {
     // Optional H.264 encoder settings ranges.
     #[yaserde(prefix = "tt", rename = "H264")]
     pub h264: Option<H264Options2>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoEncoderOptionsExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoEncoderOptionsExtension2>,
 }
 
 impl Validate for VideoEncoderOptionsExtension {}
@@ -1325,9 +1319,8 @@ pub struct AudioSourceConfigurationOptions {
     // Tokens of the audio source the configuration can be used for.
     #[yaserde(prefix = "tt", rename = "InputTokensAvailable")]
     pub input_tokens_available: Vec<ReferenceToken>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<AudioSourceOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<AudioSourceOptionsExtension>,
 }
 
 impl Validate for AudioSourceConfigurationOptions {}
@@ -1556,8 +1549,8 @@ pub struct MetadataConfiguration {
     #[yaserde(prefix = "tt", rename = "AnalyticsEngineConfiguration")]
     pub analytics_engine_configuration: Option<AnalyticsEngineConfiguration>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MetadataConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MetadataConfigurationExtension>,
 
     // Optional parameter to configure compression type of Metadata payload. Use
     // values from enumeration MetadataCompressionType.
@@ -1631,8 +1624,8 @@ pub struct MetadataConfigurationOptions {
     #[yaserde(prefix = "tt", rename = "PTZStatusFilterOptions")]
     pub ptz_status_filter_options: PtzstatusFilterOptions,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MetadataConfigurationOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MetadataConfigurationOptionsExtension>,
 
     // True if the device is able to stream the Geo Located positions of each
     // target.
@@ -1649,9 +1642,8 @@ pub struct MetadataConfigurationOptionsExtension {
     // from tt:MetadataCompressionType.
     #[yaserde(prefix = "tt", rename = "CompressionType")]
     pub compression_type: Vec<String>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MetadataConfigurationOptionsExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MetadataConfigurationOptionsExtension2>,
 }
 
 impl Validate for MetadataConfigurationOptionsExtension {}
@@ -1698,9 +1690,8 @@ pub struct PtzstatusFilterOptions {
     // True if the device is able to stream zoom position information.
     #[yaserde(prefix = "tt", rename = "ZoomPositionSupported")]
     pub zoom_position_supported: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzstatusFilterOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzstatusFilterOptionsExtension>,
 }
 
 impl Validate for PtzstatusFilterOptions {}
@@ -1730,8 +1721,8 @@ pub struct VideoOutput {
     #[yaserde(prefix = "tt", rename = "AspectRatio")]
     pub aspect_ratio: Option<f64>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoOutputExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoOutputExtension>,
 
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
@@ -1792,9 +1783,8 @@ pub struct VideoDecoderConfigurationOptions {
     // supported codecs and configurations
     #[yaserde(prefix = "tt", rename = "Mpeg4DecOptions")]
     pub mpeg_4_dec_options: Option<Mpeg4DecOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoDecoderConfigurationOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<VideoDecoderConfigurationOptionsExtension>,
 }
 
 impl Validate for VideoDecoderConfigurationOptions {}
@@ -1972,9 +1962,8 @@ pub struct AudioDecoderConfigurationOptions {
     // the supported configurations
     #[yaserde(prefix = "tt", rename = "G726DecOptions")]
     pub g726_dec_options: Option<G726DecOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<AudioDecoderConfigurationOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<AudioDecoderConfigurationOptionsExtension>,
 }
 
 impl Validate for AudioDecoderConfigurationOptions {}
@@ -2219,8 +2208,8 @@ pub struct NetworkInterface {
     #[yaserde(prefix = "tt", rename = "IPv6")]
     pub i_pv_6: Vec<Ipv6NetworkInterface>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkInterfaceExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkInterfaceExtension>,
 
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
@@ -2241,14 +2230,13 @@ pub struct NetworkInterfaceExtension {
 
     #[yaserde(prefix = "tt", rename = "Dot11")]
     pub dot_11: Vec<Dot11Configuration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkInterfaceExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkInterfaceExtension2>,
 }
 
 impl Validate for NetworkInterfaceExtension {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct NetworkInterfaceConfigPriority(pub xs::Integer);
 
 impl Validate for NetworkInterfaceConfigPriority {
@@ -2326,7 +2314,7 @@ impl Default for Duplex {
 
 impl Validate for Duplex {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct IanaIfTypes(pub i32);
 
 impl Validate for IanaIfTypes {}
@@ -2425,9 +2413,8 @@ pub struct Ipv6Configuration {
     // List of IPv6 addresses configured by using router advertisment.
     #[yaserde(prefix = "tt", rename = "FromRA")]
     pub from_ra: Vec<PrefixedIPv6Address>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<Ipv6ConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<Ipv6ConfigurationExtension>,
 }
 
 impl Validate for Ipv6Configuration {}
@@ -2469,9 +2456,8 @@ pub struct NetworkProtocol {
     // The port that is used by the protocol.
     #[yaserde(prefix = "tt", rename = "Port")]
     pub port: Vec<i32>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkProtocolExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkProtocolExtension>,
 }
 
 impl Validate for NetworkProtocol {}
@@ -2538,9 +2524,8 @@ pub struct NetworkHost {
     // DNS name.
     #[yaserde(prefix = "tt", rename = "DNSname")]
     pub dn_sname: Option<Dnsname>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkHostExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkHostExtension>,
 }
 
 impl Validate for NetworkHost {}
@@ -2583,7 +2568,7 @@ pub struct PrefixedIPv4Address {
 
 impl Validate for PrefixedIPv4Address {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Ipv4Address(pub String);
 
 impl Validate for Ipv4Address {}
@@ -2602,12 +2587,12 @@ pub struct PrefixedIPv6Address {
 
 impl Validate for PrefixedIPv6Address {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Ipv6Address(pub String);
 
 impl Validate for Ipv6Address {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct HwAddress(pub String);
 
 impl Validate for HwAddress {}
@@ -2629,7 +2614,7 @@ impl Default for Iptype {
 
 impl Validate for Iptype {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Dnsname(pub String);
 
 impl Validate for Dnsname {}
@@ -2644,9 +2629,8 @@ pub struct HostnameInformation {
     // Indicates the hostname.
     #[yaserde(prefix = "tt", rename = "Name")]
     pub name: Option<String>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<HostnameInformationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<HostnameInformationExtension>,
 }
 
 impl Validate for HostnameInformation {}
@@ -2675,9 +2659,8 @@ pub struct Dnsinformation {
     // List of manually entered DNS addresses.
     #[yaserde(prefix = "tt", rename = "DNSManual")]
     pub dns_manual: Vec<Ipaddress>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<DnsinformationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<DnsinformationExtension>,
 }
 
 impl Validate for Dnsinformation {}
@@ -2702,9 +2685,8 @@ pub struct Ntpinformation {
     // List of manually entered NTP addresses.
     #[yaserde(prefix = "tt", rename = "NTPManual")]
     pub ntp_manual: Vec<NetworkHost>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NtpinformationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NtpinformationExtension>,
 }
 
 impl Validate for Ntpinformation {}
@@ -2715,7 +2697,7 @@ pub struct NtpinformationExtension {}
 
 impl Validate for NtpinformationExtension {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Domain(pub String);
 
 impl Validate for Domain {}
@@ -2749,9 +2731,8 @@ pub struct DynamicDNSInformation {
     // Time to live.
     #[yaserde(prefix = "tt", rename = "TTL")]
     pub ttl: Option<xs::Duration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<DynamicDNSInformationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<DynamicDNSInformationExtension>,
 }
 
 impl Validate for DynamicDNSInformation {}
@@ -2800,9 +2781,8 @@ pub struct NetworkInterfaceSetConfiguration {
     // IPv6 network interface configuration.
     #[yaserde(prefix = "tt", rename = "IPv6")]
     pub i_pv_6: Vec<Ipv6NetworkInterfaceSetConfiguration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkInterfaceSetConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkInterfaceSetConfigurationExtension>,
 }
 
 impl Validate for NetworkInterfaceSetConfiguration {}
@@ -2815,9 +2795,8 @@ pub struct NetworkInterfaceSetConfigurationExtension {
 
     #[yaserde(prefix = "tt", rename = "Dot11")]
     pub dot_11: Vec<Dot11Configuration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkInterfaceSetConfigurationExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkInterfaceSetConfigurationExtension2>,
 }
 
 impl Validate for NetworkInterfaceSetConfigurationExtension {}
@@ -2890,9 +2869,8 @@ pub struct NetworkZeroConfiguration {
     // The zero-configuration IPv4 address(es)
     #[yaserde(prefix = "tt", rename = "Addresses")]
     pub addresses: Vec<Ipv4Address>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkZeroConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkZeroConfigurationExtension>,
 }
 
 impl Validate for NetworkZeroConfiguration {}
@@ -2904,9 +2882,8 @@ pub struct NetworkZeroConfigurationExtension {
     // further interfaces.
     #[yaserde(prefix = "tt", rename = "Additional")]
     pub additional: Vec<NetworkZeroConfiguration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkZeroConfigurationExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkZeroConfigurationExtension2>,
 }
 
 impl Validate for NetworkZeroConfigurationExtension {}
@@ -2928,9 +2905,8 @@ pub struct IpaddressFilter {
 
     #[yaserde(prefix = "tt", rename = "IPv6Address")]
     pub i_pv_6_address: Vec<PrefixedIPv6Address>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<IpaddressFilterExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<IpaddressFilterExtension>,
 }
 
 impl Validate for IpaddressFilter {}
@@ -2962,7 +2938,7 @@ pub struct Dot11Configuration {
 
 impl Validate for Dot11Configuration {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Dot11SSIDType(pub String);
 
 impl Validate for Dot11SSIDType {
@@ -3014,9 +2990,8 @@ pub struct Dot11SecurityConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Dot1X")]
     pub dot_1x: Option<ReferenceToken>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<Dot11SecurityConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<Dot11SecurityConfigurationExtension>,
 }
 
 impl Validate for Dot11SecurityConfiguration {}
@@ -3066,7 +3041,7 @@ impl Default for Dot11Cipher {
 
 impl Validate for Dot11Cipher {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Dot11PSK(pub String);
 
 impl Validate for Dot11PSK {
@@ -3081,7 +3056,7 @@ impl Validate for Dot11PSK {
     }
 }
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Dot11PSKPassphrase(pub String);
 
 impl Validate for Dot11PSKPassphrase {}
@@ -3100,9 +3075,8 @@ pub struct Dot11PSKSet {
     // 32 to 126 (decimal),inclusive.
     #[yaserde(prefix = "tt", rename = "Passphrase")]
     pub passphrase: Option<Dot11PSKPassphrase>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<Dot11PSKSetExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<Dot11PSKSetExtension>,
 }
 
 impl Validate for Dot11PSKSet {}
@@ -3224,9 +3198,8 @@ pub struct Dot11AvailableNetworks {
 
     #[yaserde(prefix = "tt", rename = "SignalStrength")]
     pub signal_strength: Option<Dot11SignalStrength>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<Dot11AvailableNetworksExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<Dot11AvailableNetworksExtension>,
 }
 
 impl Validate for Dot11AvailableNetworks {}
@@ -3284,9 +3257,8 @@ pub struct Capabilities {
     // PTZ capabilities
     #[yaserde(prefix = "tt", rename = "PTZ")]
     pub ptz: Vec<Ptzcapabilities>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<CapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<CapabilitiesExtension>,
 }
 
 impl Validate for Capabilities {}
@@ -3367,9 +3339,8 @@ pub struct DeviceCapabilities {
     // Security capabilities.
     #[yaserde(prefix = "tt", rename = "Security")]
     pub security: Option<SecurityCapabilities>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<DeviceCapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<DeviceCapabilitiesExtension>,
 }
 
 impl Validate for DeviceCapabilities {}
@@ -3416,9 +3387,8 @@ pub struct Iocapabilities {
     // Number of relay outputs.
     #[yaserde(prefix = "tt", rename = "RelayOutputs")]
     pub relay_outputs: Option<i32>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<IocapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<IocapabilitiesExtension>,
 }
 
 impl Validate for Iocapabilities {}
@@ -3431,9 +3401,8 @@ pub struct IocapabilitiesExtension {
 
     #[yaserde(prefix = "tt", rename = "AuxiliaryCommands")]
     pub auxiliary_commands: Vec<AuxiliaryData>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: IocapabilitiesExtension2,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: IocapabilitiesExtension2,
 }
 
 impl Validate for IocapabilitiesExtension {}
@@ -3454,9 +3423,8 @@ pub struct MediaCapabilities {
     // Streaming capabilities.
     #[yaserde(prefix = "tt", rename = "StreamingCapabilities")]
     pub streaming_capabilities: RealTimeStreamingCapabilities,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MediaCapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MediaCapabilitiesExtension>,
 }
 
 impl Validate for MediaCapabilities {}
@@ -3484,9 +3452,8 @@ pub struct RealTimeStreamingCapabilities {
     // Indicates whether or not RTP/RTSP/TCP is supported.
     #[yaserde(prefix = "tt", rename = "RTP_RTSP_TCP")]
     pub rtp_rtsp_tcp: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<RealTimeStreamingCapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<RealTimeStreamingCapabilitiesExtension>,
 }
 
 impl Validate for RealTimeStreamingCapabilities {}
@@ -3525,9 +3492,8 @@ pub struct NetworkCapabilities {
     // Indicates whether or not is supported.
     #[yaserde(prefix = "tt", rename = "DynDNS")]
     pub dyn_dns: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkCapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkCapabilitiesExtension>,
 }
 
 impl Validate for NetworkCapabilities {}
@@ -3537,9 +3503,8 @@ impl Validate for NetworkCapabilities {}
 pub struct NetworkCapabilitiesExtension {
     #[yaserde(prefix = "tt", rename = "Dot11Configuration")]
     pub dot_11_configuration: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkCapabilitiesExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<NetworkCapabilitiesExtension2>,
 }
 
 impl Validate for NetworkCapabilitiesExtension {}
@@ -3584,9 +3549,8 @@ pub struct SecurityCapabilities {
     // Indicates whether or not WS-Security REL token is supported.
     #[yaserde(prefix = "tt", rename = "RELToken")]
     pub rel_token: bool,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SecurityCapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SecurityCapabilitiesExtension>,
 }
 
 impl Validate for SecurityCapabilities {}
@@ -3596,9 +3560,8 @@ impl Validate for SecurityCapabilities {}
 pub struct SecurityCapabilitiesExtension {
     #[yaserde(prefix = "tt", rename = "TLS1.0")]
     pub tls1_0: bool,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SecurityCapabilitiesExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SecurityCapabilitiesExtension2>,
 }
 
 impl Validate for SecurityCapabilitiesExtension {}
@@ -3649,9 +3612,8 @@ pub struct SystemCapabilities {
     // Indicates supported ONVIF version(s).
     #[yaserde(prefix = "tt", rename = "SupportedVersions")]
     pub supported_versions: Vec<OnvifVersion>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SystemCapabilitiesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SystemCapabilitiesExtension>,
 }
 
 impl Validate for SystemCapabilities {}
@@ -3670,9 +3632,8 @@ pub struct SystemCapabilitiesExtension {
 
     #[yaserde(prefix = "tt", rename = "HttpSupportInformation")]
     pub http_support_information: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SystemCapabilitiesExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SystemCapabilitiesExtension2>,
 }
 
 impl Validate for SystemCapabilitiesExtension {}
@@ -3842,9 +3803,8 @@ pub struct AnalyticsDeviceCapabilities {
     // Obsolete property.
     #[yaserde(prefix = "tt", rename = "RuleSupport")]
     pub rule_support: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<AnalyticsDeviceExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<AnalyticsDeviceExtension>,
 }
 
 impl Validate for AnalyticsDeviceCapabilities {}
@@ -4019,9 +3979,8 @@ pub struct SystemDateTime {
     // Date and time in local format.
     #[yaserde(prefix = "tt", rename = "LocalDateTime")]
     pub local_date_time: Option<DateTime>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SystemDateTimeExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SystemDateTimeExtension>,
 }
 
 impl Validate for SystemDateTime {}
@@ -4137,9 +4096,8 @@ pub struct User {
     // User level string.
     #[yaserde(prefix = "tt", rename = "UserLevel")]
     pub user_level: UserLevel,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<UserExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<UserExtension>,
 }
 
 impl Validate for User {}
@@ -4164,9 +4122,8 @@ pub struct CertificateGenerationParameters {
 
     #[yaserde(prefix = "tt", rename = "ValidNotAfter")]
     pub valid_not_after: Option<String>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<CertificateGenerationParametersExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<CertificateGenerationParametersExtension>,
 }
 
 impl Validate for CertificateGenerationParameters {}
@@ -4254,9 +4211,8 @@ pub struct CertificateInformation {
 
     #[yaserde(prefix = "tt", rename = "Validity")]
     pub validity: Option<DateTimeRange>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<CertificateInformationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<CertificateInformationExtension>,
 }
 
 impl Validate for CertificateInformation {}
@@ -4297,9 +4253,8 @@ pub struct Dot1XConfiguration {
 
     #[yaserde(prefix = "tt", rename = "EAPMethodConfiguration")]
     pub eap_method_configuration: Option<EapmethodConfiguration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<Dot1XConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<Dot1XConfigurationExtension>,
 }
 
 impl Validate for Dot1XConfiguration {}
@@ -4321,9 +4276,8 @@ pub struct EapmethodConfiguration {
     // shall never be returned on a get method.
     #[yaserde(prefix = "tt", rename = "Password")]
     pub password: Option<String>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<EapMethodExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<EapMethodExtension>,
 }
 
 impl Validate for EapmethodConfiguration {}
@@ -4490,8 +4444,8 @@ pub struct Ptznode {
     #[yaserde(prefix = "tt", rename = "AuxiliaryCommands")]
     pub auxiliary_commands: Vec<AuxiliaryData>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtznodeExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtznodeExtension>,
 
     // Indication whether the HomePosition of a Node is fixed or it can be
     // changed via the SetHomePosition command.
@@ -4515,9 +4469,8 @@ pub struct PtznodeExtension {
     // Detail of supported Preset Tour feature.
     #[yaserde(prefix = "tt", rename = "SupportedPresetTour")]
     pub supported_preset_tour: Option<PtzpresetTourSupported>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtznodeExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtznodeExtension2>,
 }
 
 impl Validate for PtznodeExtension {}
@@ -4540,9 +4493,8 @@ pub struct PtzpresetTourSupported {
     // Indicates which preset tour operations are available for this PTZ Node.
     #[yaserde(prefix = "tt", rename = "PTZPresetTourOperation")]
     pub ptz_preset_tour_operation: Vec<PtzpresetTourOperation>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzpresetTourSupportedExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzpresetTourSupportedExtension>,
 }
 
 impl Validate for PtzpresetTourSupported {}
@@ -4617,8 +4569,8 @@ pub struct Ptzconfiguration {
     #[yaserde(prefix = "tt", rename = "ZoomLimits")]
     pub zoom_limits: Option<ZoomLimits>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzconfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzconfigurationExtension>,
 
     // The optional acceleration ramp used by the device when moving.
     #[yaserde(attribute, rename = "MoveRamp")]
@@ -4655,9 +4607,8 @@ pub struct PtzconfigurationExtension {
     // Optional element to configure PT Control Direction related features.
     #[yaserde(prefix = "tt", rename = "PTControlDirection")]
     pub pt_control_direction: Option<PtcontrolDirection>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzconfigurationExtension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzconfigurationExtension2>,
 }
 
 impl Validate for PtzconfigurationExtension {}
@@ -4679,9 +4630,8 @@ pub struct PtcontrolDirection {
     // Control Direction.
     #[yaserde(prefix = "tt", rename = "Reverse")]
     pub reverse: Option<Reverse>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtcontrolDirectionExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtcontrolDirectionExtension>,
 }
 
 impl Validate for PtcontrolDirection {}
@@ -4765,8 +4715,8 @@ pub struct PtzconfigurationOptions {
     #[yaserde(prefix = "tt", rename = "PTControlDirection")]
     pub pt_control_direction: Option<PtcontrolDirectionOptions>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzconfigurationOptions2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzconfigurationOptions2>,
 
     // The list of acceleration ramps supported by the device. The
     // smallest acceleration value corresponds to the minimal index, the
@@ -4793,9 +4743,8 @@ pub struct PtcontrolDirectionOptions {
     // Supported options for Reverse feature.
     #[yaserde(prefix = "tt", rename = "Reverse")]
     pub reverse: Option<ReverseOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtcontrolDirectionOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtcontrolDirectionOptionsExtension>,
 }
 
 impl Validate for PtcontrolDirectionOptions {}
@@ -4812,9 +4761,8 @@ pub struct EflipOptions {
     // Options of EFlip mode parameter.
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: Vec<EflipMode>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<EflipOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<EflipOptionsExtension>,
 }
 
 impl Validate for EflipOptions {}
@@ -4831,9 +4779,8 @@ pub struct ReverseOptions {
     // Options of Reverse mode parameter.
     #[yaserde(prefix = "tt", rename = "Mode")]
     pub mode: Vec<ReverseMode>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ReverseOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ReverseOptionsExtension>,
 }
 
 impl Validate for ReverseOptions {}
@@ -4944,9 +4891,8 @@ pub struct Ptzspaces {
     // directional information.
     #[yaserde(prefix = "tt", rename = "ZoomSpeedSpace")]
     pub zoom_speed_space: Vec<Space1DDescription>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzspacesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzspacesExtension>,
 }
 
 impl Validate for Ptzspaces {}
@@ -5023,7 +4969,7 @@ pub struct Ptzpreset {
 
 impl Validate for Ptzpreset {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct AuxiliaryData(pub String);
 
 impl Validate for AuxiliaryData {
@@ -5112,8 +5058,8 @@ pub struct PresetTour {
     #[yaserde(prefix = "tt", rename = "TourSpot")]
     pub tour_spot: Vec<PtzpresetTourSpot>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzpresetTourExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzpresetTourExtension>,
 
     // Unique identifier of this preset tour.
     #[yaserde(attribute, rename = "token")]
@@ -5144,9 +5090,8 @@ pub struct PtzpresetTourSpot {
     // sport.
     #[yaserde(prefix = "tt", rename = "StayTime")]
     pub stay_time: Option<xs::Duration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzpresetTourSpotExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzpresetTourSpotExtension>,
 }
 
 impl Validate for PtzpresetTourSpot {}
@@ -5204,9 +5149,8 @@ pub struct PtzpresetTourStatus {
     // Indicates a tour spot currently staying.
     #[yaserde(prefix = "tt", rename = "CurrentTourSpot")]
     pub current_tour_spot: Option<PtzpresetTourSpot>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzpresetTourStatusExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzpresetTourStatusExtension>,
 }
 
 impl Validate for PtzpresetTourStatus {}
@@ -5234,8 +5178,8 @@ pub struct PtzpresetTourStartingCondition {
     #[yaserde(prefix = "tt", rename = "Direction")]
     pub direction: Option<PtzpresetTourDirection>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzpresetTourStartingConditionExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzpresetTourStartingConditionExtension>,
 
     // Execute presets in random order. If set to true and Direction is also
     // present, Direction will be ignored and presets of the Tour will be
@@ -5303,9 +5247,8 @@ pub struct PtzpresetTourPresetDetailOptions {
     // Supported range of Zoom for a tour spot.
     #[yaserde(prefix = "tt", rename = "ZoomPositionSpace")]
     pub zoom_position_space: Option<Space1DDescription>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzpresetTourPresetDetailOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzpresetTourPresetDetailOptionsExtension>,
 }
 
 impl Validate for PtzpresetTourPresetDetailOptions {}
@@ -5330,9 +5273,8 @@ pub struct PtzpresetTourStartingConditionOptions {
     // Supported options for Direction of Preset Tour.
     #[yaserde(prefix = "tt", rename = "Direction")]
     pub direction: Vec<PtzpresetTourDirection>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzpresetTourStartingConditionOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PtzpresetTourStartingConditionOptionsExtension>,
 }
 
 impl Validate for PtzpresetTourStartingConditionOptions {}
@@ -5466,9 +5408,8 @@ pub struct ImagingSettings {
     // White balance settings.
     #[yaserde(prefix = "tt", rename = "WhiteBalance")]
     pub white_balance: Option<WhiteBalance>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingSettingsExtension>,
 }
 
 impl Validate for ImagingSettings {}
@@ -5951,9 +5892,8 @@ pub struct ImagingStatus20 {
     // Status of focus.
     #[yaserde(prefix = "tt", rename = "FocusStatus20")]
     pub focus_status_20: Option<FocusStatus20>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingStatus20Extension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingStatus20Extension>,
 }
 
 impl Validate for ImagingStatus20 {}
@@ -5978,9 +5918,8 @@ pub struct FocusStatus20 {
     // Error status of focus.
     #[yaserde(prefix = "tt", rename = "Error")]
     pub error: Option<String>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<FocusStatus20Extension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<FocusStatus20Extension>,
 }
 
 impl Validate for FocusStatus20 {}
@@ -6035,9 +5974,8 @@ pub struct ImagingSettings20 {
     // White balance settings.
     #[yaserde(prefix = "tt", rename = "WhiteBalance")]
     pub white_balance: Option<WhiteBalance20>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension20>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingSettingsExtension20>,
 }
 
 impl Validate for ImagingSettings20 {}
@@ -6048,9 +5986,8 @@ pub struct ImagingSettingsExtension20 {
     // Optional element to configure Image Stabilization feature.
     #[yaserde(prefix = "tt", rename = "ImageStabilization")]
     pub image_stabilization: Option<ImageStabilization>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension202>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingSettingsExtension202>,
 }
 
 impl Validate for ImagingSettingsExtension20 {}
@@ -6062,9 +5999,8 @@ pub struct ImagingSettingsExtension202 {
     // toggling Ir cut filter.
     #[yaserde(prefix = "tt", rename = "IrCutFilterAutoAdjustment")]
     pub ir_cut_filter_auto_adjustment: Vec<IrCutFilterAutoAdjustment>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension203>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingSettingsExtension203>,
 }
 
 impl Validate for ImagingSettingsExtension202 {}
@@ -6083,9 +6019,8 @@ pub struct ImagingSettingsExtension203 {
     // Optional element to configure Image Noise Reduction.
     #[yaserde(prefix = "tt", rename = "NoiseReduction")]
     pub noise_reduction: Option<NoiseReduction>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension204>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingSettingsExtension204>,
 }
 
 impl Validate for ImagingSettingsExtension203 {}
@@ -6106,9 +6041,8 @@ pub struct ImageStabilization {
     // Optional level parameter (unit unspecified)
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<f64>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImageStabilizationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImageStabilizationExtension>,
 }
 
 impl Validate for ImageStabilization {}
@@ -6158,9 +6092,8 @@ pub struct IrCutFilterAutoAdjustment {
     // boundary exposure levels.
     #[yaserde(prefix = "tt", rename = "ResponseTime")]
     pub response_time: Option<xs::Duration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<IrCutFilterAutoAdjustmentExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<IrCutFilterAutoAdjustmentExtension>,
 }
 
 impl Validate for IrCutFilterAutoAdjustment {}
@@ -6292,9 +6225,8 @@ pub struct ToneCompensation {
     // 0.0 to +1.0.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<f64>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ToneCompensationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ToneCompensationExtension>,
 }
 
 impl Validate for ToneCompensation {}
@@ -6336,9 +6268,8 @@ pub struct Defogging {
     // 0.0 to +1.0.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<f64>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<DefoggingExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<DefoggingExtension>,
 }
 
 impl Validate for Defogging {}
@@ -6421,9 +6352,8 @@ pub struct ImagingOptions20 {
     // Valid range of WhiteBalance.
     #[yaserde(prefix = "tt", rename = "WhiteBalance")]
     pub white_balance: Option<WhiteBalanceOptions20>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingOptions20Extension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingOptions20Extension>,
 }
 
 impl Validate for ImagingOptions20 {}
@@ -6434,9 +6364,8 @@ pub struct ImagingOptions20Extension {
     // Options of parameters for Image Stabilization feature.
     #[yaserde(prefix = "tt", rename = "ImageStabilization")]
     pub image_stabilization: Option<ImageStabilizationOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingOptions20Extension2>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingOptions20Extension2>,
 }
 
 impl Validate for ImagingOptions20Extension {}
@@ -6447,9 +6376,8 @@ pub struct ImagingOptions20Extension2 {
     // Options of parameters for adjustment of Ir cut filter auto mode.
     #[yaserde(prefix = "tt", rename = "IrCutFilterAutoAdjustment")]
     pub ir_cut_filter_auto_adjustment: Option<IrCutFilterAutoAdjustmentOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingOptions20Extension3>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingOptions20Extension3>,
 }
 
 impl Validate for ImagingOptions20Extension2 {}
@@ -6468,9 +6396,8 @@ pub struct ImagingOptions20Extension3 {
     // Options of parameter for Noise Reduction feature.
     #[yaserde(prefix = "tt", rename = "NoiseReductionOptions")]
     pub noise_reduction_options: Option<NoiseReductionOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingOptions20Extension4>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImagingOptions20Extension4>,
 }
 
 impl Validate for ImagingOptions20Extension3 {}
@@ -6491,9 +6418,8 @@ pub struct ImageStabilizationOptions {
     // Valid range of the Image Stabilization.
     #[yaserde(prefix = "tt", rename = "Level")]
     pub level: Option<FloatRange>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImageStabilizationOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ImageStabilizationOptionsExtension>,
 }
 
 impl Validate for ImageStabilizationOptions {}
@@ -6520,9 +6446,8 @@ pub struct IrCutFilterAutoAdjustmentOptions {
     // Supported range of delay time for toggling Ir cut filter.
     #[yaserde(prefix = "tt", rename = "ResponseTimeRange")]
     pub response_time_range: Option<DurationRange>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<IrCutFilterAutoAdjustmentOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<IrCutFilterAutoAdjustmentOptionsExtension>,
 }
 
 impl Validate for IrCutFilterAutoAdjustmentOptions {}
@@ -6655,9 +6580,8 @@ pub struct WhiteBalance20 {
     // Bgain (unitless).
     #[yaserde(prefix = "tt", rename = "CbGain")]
     pub cb_gain: Option<f64>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<WhiteBalance20Extension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<WhiteBalance20Extension>,
 }
 
 impl Validate for WhiteBalance20 {}
@@ -6686,8 +6610,8 @@ pub struct FocusConfiguration20 {
     #[yaserde(prefix = "tt", rename = "FarLimit")]
     pub far_limit: Option<f64>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<FocusConfiguration20Extension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<FocusConfiguration20Extension>,
 
     // Zero or more modes as defined in enumeration tt:AFModes.
     #[yaserde(attribute, rename = "AFMode")]
@@ -6714,9 +6638,8 @@ pub struct WhiteBalanceOptions20 {
 
     #[yaserde(prefix = "tt", rename = "YbGain")]
     pub yb_gain: Option<FloatRange>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<WhiteBalanceOptions20Extension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<WhiteBalanceOptions20Extension>,
 }
 
 impl Validate for WhiteBalanceOptions20 {}
@@ -6745,9 +6668,8 @@ pub struct FocusOptions20 {
     // Valid range of FarLimit.
     #[yaserde(prefix = "tt", rename = "FarLimit")]
     pub far_limit: Option<FloatRange>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<FocusOptions20Extension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<FocusOptions20Extension>,
 }
 
 impl Validate for FocusOptions20 {}
@@ -6803,7 +6725,7 @@ pub struct NoiseReductionOptions {
 
 impl Validate for NoiseReductionOptions {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct TopicNamespaceLocation(pub String);
 
 impl Validate for TopicNamespaceLocation {}
@@ -6838,9 +6760,8 @@ pub struct Message {
     #[yaserde(prefix = "tt", rename = "Data")]
     pub data: Option<ItemList>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MessageExtension>,
-
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MessageExtension>,
     #[yaserde(attribute, rename = "UtcTime")]
     pub utc_time: String,
 
@@ -6868,9 +6789,8 @@ pub struct ItemList {
     // Complex value structure.
     #[yaserde(prefix = "tt", rename = "ElementItem")]
     pub element_item: Vec<ElementItemType>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ItemListExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ItemListExtension>,
 }
 
 impl Validate for ItemList {}
@@ -6924,8 +6844,8 @@ pub struct MessageDescription {
     #[yaserde(prefix = "tt", rename = "Data")]
     pub data: Option<ItemListDescription>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MessageDescriptionExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MessageDescriptionExtension>,
 
     // Must be set to true when the described Message relates to a property. An
     // alternative term of "property" is a "state" in contrast to a pure event,
@@ -6957,9 +6877,8 @@ pub struct ItemListDescription {
     // Description of a complex type. The Type must reference a defined type.
     #[yaserde(prefix = "tt", rename = "ElementItemDescription")]
     pub element_item_description: Vec<ElementItemDescriptionType>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ItemListDescriptionExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ItemListDescriptionExtension>,
 }
 
 impl Validate for ItemListDescription {}
@@ -7028,9 +6947,8 @@ impl Validate for Direction {}
 pub struct AnalyticsEngineConfiguration {
     #[yaserde(prefix = "tt", rename = "AnalyticsModule")]
     pub analytics_module: Vec<Config>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<AnalyticsEngineConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<AnalyticsEngineConfigurationExtension>,
 }
 
 impl Validate for AnalyticsEngineConfiguration {}
@@ -7046,9 +6964,8 @@ impl Validate for AnalyticsEngineConfigurationExtension {}
 pub struct RuleEngineConfiguration {
     #[yaserde(prefix = "tt", rename = "Rule")]
     pub rule: Vec<Config>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<RuleEngineConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<RuleEngineConfigurationExtension>,
 }
 
 impl Validate for RuleEngineConfiguration {}
@@ -7103,8 +7020,8 @@ pub struct ConfigDescription {
     #[yaserde(prefix = "tt", rename = "Messages")]
     pub messages: Vec<MessagesType>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ConfigDescriptionExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ConfigDescriptionExtension>,
 
     // The Name attribute (e.g. "tt::LineDetector") uniquely identifies the type
     // of rule, not a type definition in a schema.
@@ -7156,8 +7073,8 @@ pub struct MessagesType {
     #[yaserde(prefix = "tt", rename = "Data")]
     pub data: Option<ItemListDescription>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MessageDescriptionExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MessageDescriptionExtension>,
 
     // Must be set to true when the described Message relates to a property. An
     // alternative term of "property" is a "state" in contrast to a pure event,
@@ -7184,9 +7101,8 @@ pub struct SupportedRules {
     // List of rules supported by the Video Analytics configuration..
     #[yaserde(prefix = "tt", rename = "RuleDescription")]
     pub rule_description: Vec<ConfigDescription>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SupportedRulesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SupportedRulesExtension>,
 }
 
 impl Validate for SupportedRules {}
@@ -7212,9 +7128,8 @@ pub struct SupportedAnalyticsModules {
 
     #[yaserde(prefix = "tt", rename = "AnalyticsModuleDescription")]
     pub analytics_module_description: Vec<ConfigDescription>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SupportedAnalyticsModulesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SupportedAnalyticsModulesExtension>,
 }
 
 impl Validate for SupportedAnalyticsModules {}
@@ -7241,9 +7156,8 @@ pub struct PolylineArray {
     // Contains array of Polyline
     #[yaserde(prefix = "tt", rename = "Segment")]
     pub segment: Vec<Polyline>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PolylineArrayExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PolylineArrayExtension>,
 }
 
 impl Validate for PolylineArray {}
@@ -7378,9 +7292,8 @@ pub struct Layout {
     // List of panes assembling the display layout.
     #[yaserde(prefix = "tt", rename = "PaneLayout")]
     pub pane_layout: Vec<PaneLayout>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<LayoutExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<LayoutExtension>,
 }
 
 impl Validate for Layout {}
@@ -7421,9 +7334,8 @@ pub struct LayoutOptions {
     // Lists the possible Pane Layouts of the Video Output
     #[yaserde(prefix = "tt", rename = "PaneLayoutOptions")]
     pub pane_layout_options: Vec<PaneLayoutOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<LayoutOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<LayoutOptionsExtension>,
 }
 
 impl Validate for LayoutOptions {}
@@ -7442,9 +7354,8 @@ pub struct PaneLayoutOptions {
     // [-1.0, 1.0].
     #[yaserde(prefix = "tt", rename = "Area")]
     pub area: Vec<Rectangle>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PaneOptionExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<PaneOptionExtension>,
 }
 
 impl Validate for PaneLayoutOptions {}
@@ -7551,12 +7462,12 @@ pub struct ReceiverStateInformation {
 
 impl Validate for ReceiverStateInformation {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ReceiverReference(pub ReferenceToken);
 
 impl Validate for ReceiverReference {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct RecordingReference(pub ReferenceToken);
 
 impl Validate for RecordingReference {}
@@ -7573,12 +7484,12 @@ pub struct SourceReference {
 
 impl Validate for SourceReference {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct TrackReference(pub ReferenceToken);
 
 impl Validate for TrackReference {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Description(pub String);
 
 impl Validate for Description {}
@@ -7632,10 +7543,9 @@ pub struct SearchScope {
     // shall be searched.
     #[yaserde(prefix = "tt", rename = "RecordingInformationFilter")]
     pub recording_information_filter: Option<XpathExpression>,
-
     // Extension point
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SearchScopeExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SearchScopeExtension>,
 }
 
 impl Validate for SearchScope {}
@@ -7679,7 +7589,7 @@ pub struct MetadataFilter {
 
 impl Validate for MetadataFilter {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct XpathExpression(pub String);
 
 impl Validate for XpathExpression {}
@@ -7840,7 +7750,7 @@ impl Default for SearchState {
 
 impl Validate for SearchState {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct JobToken(pub ReferenceToken);
 
 impl Validate for JobToken {}
@@ -8026,9 +7936,8 @@ pub struct TrackAttributes {
     // present and contain the metadata attributes.
     #[yaserde(prefix = "tt", rename = "MetadataAttributes")]
     pub metadata_attributes: Option<MetadataAttributes>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<TrackAttributesExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<TrackAttributesExtension>,
 }
 
 impl Validate for TrackAttributes {}
@@ -8112,7 +8021,7 @@ pub struct MetadataAttributes {
 
 impl Validate for MetadataAttributes {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct RecordingJobReference(pub ReferenceToken);
 
 impl Validate for RecordingJobReference {}
@@ -8234,8 +8143,8 @@ pub struct RecordingJobConfiguration {
     #[yaserde(prefix = "tt", rename = "Source")]
     pub source: Vec<RecordingJobSource>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<RecordingJobConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<RecordingJobConfigurationExtension>,
 
     // This attribute adds an additional requirement for activating the
     // recording job.
@@ -8247,7 +8156,7 @@ pub struct RecordingJobConfiguration {
 
 impl Validate for RecordingJobConfiguration {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct RecordingJobMode(pub String);
 
 impl Validate for RecordingJobMode {}
@@ -8286,9 +8195,8 @@ pub struct RecordingJobSource {
     // List of tracks associated with the recording.
     #[yaserde(prefix = "tt", rename = "Tracks")]
     pub tracks: Vec<RecordingJobTrack>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<RecordingJobSourceExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<RecordingJobSourceExtension>,
 }
 
 impl Validate for RecordingJobSource {}
@@ -8333,9 +8241,8 @@ pub struct RecordingJobStateInformation {
     // Identifies the data source of the recording job.
     #[yaserde(prefix = "tt", rename = "Sources")]
     pub sources: Vec<RecordingJobStateSource>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<RecordingJobStateInformationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<RecordingJobStateInformationExtension>,
 }
 
 impl Validate for RecordingJobStateInformation {}
@@ -8346,7 +8253,7 @@ pub struct RecordingJobStateInformationExtension {}
 
 impl Validate for RecordingJobStateInformationExtension {}
 
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct RecordingJobState(pub String);
 
 impl Validate for RecordingJobState {}
@@ -8456,9 +8363,8 @@ impl Validate for AnalyticsEngine {}
 pub struct AnalyticsDeviceEngineConfiguration {
     #[yaserde(prefix = "tt", rename = "EngineConfiguration")]
     pub engine_configuration: Vec<EngineConfiguration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<AnalyticsDeviceEngineConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<AnalyticsDeviceEngineConfigurationExtension>,
 }
 
 impl Validate for AnalyticsDeviceEngineConfiguration {}
@@ -8486,9 +8392,8 @@ impl Validate for EngineConfiguration {}
 pub struct AnalyticsEngineInputInfo {
     #[yaserde(prefix = "tt", rename = "InputInfo")]
     pub input_info: Option<Config>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<AnalyticsEngineInputInfoExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<AnalyticsEngineInputInfoExtension>,
 }
 
 impl Validate for AnalyticsEngineInputInfo {}
@@ -8535,9 +8440,8 @@ pub struct SourceIdentification {
 
     #[yaserde(prefix = "tt", rename = "Token")]
     pub token: Vec<ReferenceToken>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SourceIdentificationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<SourceIdentificationExtension>,
 }
 
 impl Validate for SourceIdentification {}
@@ -8553,9 +8457,8 @@ impl Validate for SourceIdentificationExtension {}
 pub struct MetadataInput {
     #[yaserde(prefix = "tt", rename = "MetadataConfig")]
     pub metadata_config: Vec<Config>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MetadataInputExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<MetadataInputExtension>,
 }
 
 impl Validate for MetadataInput {}
@@ -8673,9 +8576,8 @@ pub struct ActionEngineEventPayload {
     // Fault Message
     #[yaserde(prefix = "tt", rename = "Fault")]
     pub fault: soapenv::Fault,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ActionEngineEventPayloadExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ActionEngineEventPayloadExtension>,
 }
 
 impl Validate for ActionEngineEventPayload {}
@@ -8688,7 +8590,7 @@ impl Validate for ActionEngineEventPayloadExtension {}
 
 // AudioClassType acceptable values are;
 // gun_shot, scream, glass_breaking, tire_screech
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct AudioClassType(pub String);
 
 impl Validate for AudioClassType {}
@@ -8714,9 +8616,8 @@ pub struct AudioClassDescriptor {
     // Array of audio class label and class probability
     #[yaserde(prefix = "tt", rename = "ClassCandidate")]
     pub class_candidate: Vec<AudioClassCandidate>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<AudioClassDescriptorExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<AudioClassDescriptorExtension>,
 }
 
 impl Validate for AudioClassDescriptor {}
@@ -8744,9 +8645,8 @@ impl Validate for ActiveConnection {}
 pub struct ProfileStatus {
     #[yaserde(prefix = "tt", rename = "ActiveConnections")]
     pub active_connections: Vec<ActiveConnection>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ProfileStatusExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ProfileStatusExtension>,
 }
 
 impl Validate for ProfileStatus {}
@@ -8788,9 +8688,8 @@ pub struct OsdposConfiguration {
 
     #[yaserde(prefix = "tt", rename = "Pos")]
     pub pos: Option<Vector>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdposConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdposConfigurationExtension>,
 }
 
 impl Validate for OsdposConfiguration {}
@@ -8851,8 +8750,8 @@ pub struct OsdtextConfiguration {
     #[yaserde(prefix = "tt", rename = "PlainText")]
     pub plain_text: Option<String>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdtextConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdtextConfigurationExtension>,
 
     // This flag is applicable for Type Plain and defaults to true. When set to
     // false the PlainText content will not be persistent across device reboots.
@@ -8874,9 +8773,8 @@ pub struct OsdimgConfiguration {
     // The URI of the image which to be displayed.
     #[yaserde(prefix = "tt", rename = "ImgPath")]
     pub img_path: String,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdimgConfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdimgConfigurationExtension>,
 }
 
 impl Validate for OsdimgConfiguration {}
@@ -8945,9 +8843,8 @@ pub struct OsdcolorOptions {
     // Range of the transparent level. Larger means more tranparent.
     #[yaserde(prefix = "tt", rename = "Transparent")]
     pub transparent: Option<IntRange>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdcolorOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdcolorOptionsExtension>,
 }
 
 impl Validate for OsdcolorOptions {}
@@ -8986,9 +8883,8 @@ pub struct OsdtextOptions {
     // List of supported background color.
     #[yaserde(prefix = "tt", rename = "BackgroundColor")]
     pub background_color: Option<OsdcolorOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdtextOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdtextOptionsExtension>,
 }
 
 impl Validate for OsdtextOptions {}
@@ -9006,8 +8902,8 @@ pub struct OsdimgOptions {
     #[yaserde(prefix = "tt", rename = "ImagePath")]
     pub image_path: Vec<String>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdimgOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdimgOptionsExtension>,
 
     // List of supported image MIME types, such as "image/png".
     #[yaserde(attribute, rename = "FormatsSupported")]
@@ -9059,8 +8955,8 @@ pub struct Osdconfiguration {
     #[yaserde(prefix = "tt", rename = "Image")]
     pub image: Option<OsdimgConfiguration>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdconfigurationExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdconfigurationExtension>,
 
     // Unique identifier referencing the physical entity.
     #[yaserde(attribute, rename = "token")]
@@ -9130,9 +9026,8 @@ pub struct OsdconfigurationOptions {
     // the device is signaling the support for Image.
     #[yaserde(prefix = "tt", rename = "ImageOption")]
     pub image_option: Option<OsdimgOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<OsdconfigurationOptionsExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<OsdconfigurationOptionsExtension>,
 }
 
 impl Validate for OsdconfigurationOptions {}
@@ -9163,9 +9058,8 @@ pub struct ArrayOfFileProgress {
     // Exported file name and export progress information
     #[yaserde(prefix = "tt", rename = "FileProgress")]
     pub file_progress: Vec<FileProgress>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ArrayOfFileProgressExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<ArrayOfFileProgressExtension>,
 }
 
 impl Validate for ArrayOfFileProgress {}
@@ -9186,9 +9080,8 @@ pub struct StorageReferencePath {
     // gives the relative directory path on the storage
     #[yaserde(prefix = "tt", rename = "RelativePath")]
     pub relative_path: Option<String>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<StorageReferencePathExtension>,
+    //#[yaserde(prefix = "tt", rename = "Extension")]
+    //pub extension: Option<StorageReferencePathExtension>,
 }
 
 impl Validate for StorageReferencePath {}

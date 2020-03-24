@@ -14,7 +14,7 @@ use std::str::FromStr;
 use yaserde::{YaDeserialize, YaSerialize};
 
 // Type used to reference logical and physical entities.
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ReferenceToken(pub String);
 
 impl Validate for ReferenceToken {
@@ -48,7 +48,7 @@ pub struct DataEntity {
 impl Validate for DataEntity {}
 
 // Type used for names of logical and physical entities.
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Name(pub String);
 
 impl Validate for Name {
@@ -73,7 +73,7 @@ impl Validate for Name {
 // If the length is more than maximum length, it is silently chopped to the
 // maximum length
 // supported by the device/service (which may be 0).
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Description(pub String);
 
 impl Validate for Description {
@@ -95,7 +95,7 @@ impl Validate for Description {
 }
 
 // Type used to represent the numbers from 1 ,2 , 3,...
-#[derive(Default, PartialEq, Debug, UtilsTupleSerDe)]
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct PositiveInteger(pub u32);
 
 impl Validate for PositiveInteger {
