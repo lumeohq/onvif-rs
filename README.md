@@ -35,6 +35,11 @@ To [set camera hostname](examples/camera_set_hostname.rs) using credentials:
 cargo run --example camera_set_hostname -- http://192.168.0.2:8000 admin qwerty cam2
 ```
 
+To [get RTSP stream URL](examples/camera_get_stream_uri.rs):
+```shell script
+cargo run --example get_stream_uri -- http://192.168.0.2:8000
+```
+
 ## Dependencies
 - XSD -> Rust code generation: [xsd-parser-rs](https://github.com/lumeohq/xsd-parser-rs)
 - XML (de)serialization: [yaserde](https://github.com/media-io/yaserde)

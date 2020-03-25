@@ -560,3 +560,38 @@ fn float_list_deserialization() {
 
     assert_eq!(des, tt::FloatAttrList(vec![1.0, 2.3, 3.99]));
 }
+
+#[test]
+fn nested_structs_with_same_named_attributes() {
+    // https://github.com/media-io/yaserde/issues/12#issuecomment-601235031
+    let ser = r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <tt:Profile token="a" xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:PTZConfiguration token="b" />
+        </tt:Profile>
+        "#;
+
+    let des: tt::Profile = yaserde::de::from_str(&ser).unwrap();
+
+    assert_eq!(des.token.0.as_str(), "a");
+    assert_eq!(des.ptz_configuration.unwrap().token.0.as_str(), "b");
+}
+
+#[test]
+fn nested_structs_with_same_named_fields() {
+    // yaserde::de::from_str returns Err when nested struct has same named
+    // field as the current struct (`extension` in this case)
+    // https://github.com/media-io/yaserde/issues/51
+    // So for now we have to disable extensions until the issue is fixed.
+    // This test enforces us to comment out extensions from generated code
+    // otherwise we will fail at runtime.
+    let ser = r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <tt:Profile xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:Extension />
+        </tt:Profile>
+        "#;
+
+    let des: tt::Profile = yaserde::de::from_str(&ser).unwrap();
+    assert_eq!(des, Default::default());
+}
