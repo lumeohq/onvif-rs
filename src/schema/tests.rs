@@ -400,14 +400,17 @@ fn probe_serialization() {
         <s:Envelope
                 xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery"
                 xmlns:s="http://www.w3.org/2003/05/soap-envelope"
-                xmlns:w="http://schemas.xmlsoap.org/ws/2004/08/addressing">
+                xmlns:w="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+                xmlns:dn="http://www.onvif.org/ver10/network/wsdl">
             <s:Header>
                 <w:MessageID>uuid:84ede3de-7dec-11d0-c360-f01234567890</w:MessageID>
                 <w:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</w:To>
                 <w:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</w:Action>
             </s:Header>
             <s:Body>
-                <d:Probe />
+                <d:Probe>
+                    <d:Types>dn:NetworkVideoTransmitter</d:Types>
+                </d:Probe>
             </s:Body>
         </s:Envelope>
         "#;
@@ -420,7 +423,11 @@ fn probe_serialization() {
             action: "http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe".into(),
             to: "urn:schemas-xmlsoap-org:ws:2005:04:discovery".into(),
         },
-        ..Default::default()
+        body: Body {
+            probe: Probe {
+                types: "dn:NetworkVideoTransmitter".to_string(),
+            },
+        },
     };
 
     let actual = yaserde::ser::to_string(&probe).unwrap();

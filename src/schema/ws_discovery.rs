@@ -9,7 +9,10 @@ pub mod probe {
         prefix = "d",
         namespace = "d: http://schemas.xmlsoap.org/ws/2005/04/discovery"
     )]
-    pub struct Probe {}
+    pub struct Probe {
+        #[yaserde(prefix = "d", rename = "Types")]
+        pub types: String,
+    }
 
     #[derive(Default, PartialEq, Debug, YaSerialize)]
     #[yaserde(
@@ -45,6 +48,7 @@ pub mod probe {
         namespace = "s: http://www.w3.org/2003/05/soap-envelope",
         namespace = "d: http://schemas.xmlsoap.org/ws/2005/04/discovery",
         namespace = "w: http://schemas.xmlsoap.org/ws/2004/08/addressing"
+        namespace = "dn: http://www.onvif.org/ver10/network/wsdl"
     )]
     pub struct Envelope {
         #[yaserde(prefix = "s", rename = "Header")]
