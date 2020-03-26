@@ -29,3 +29,5 @@ xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "05cd3be1"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
+dotenv = "0.15.0"
+env_logger = "0.7.1"
