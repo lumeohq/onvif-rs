@@ -10,6 +10,9 @@ struct Opts {
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
+    env_logger::init();
+
     let opts = Opts::parse();
 
     let mut client = soap::client::Client::new(

@@ -3,6 +3,9 @@ use onvif_rs::{schema, soap};
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
+    env_logger::init();
+
     let uri = match std::env::args().skip(1).next() {
         Some(arg) => arg,
         None => {

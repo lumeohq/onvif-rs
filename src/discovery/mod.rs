@@ -69,6 +69,8 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Internal)?;
 
+    debug!("Probe XML: {}", probe_xml);
+
     let socket = (|| async {
         const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
         const LOCAL_PORT: u16 = 0;
@@ -96,9 +98,10 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
         // Make an async stream of XML's
         futures::stream::unfold(socket, |s| async { Some((recv_string(&s).await, s)) })
             .filter_map(|string| async move { string.ok() })
-            .filter_map(
-                |xml| async move { yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok() },
-            )
+            .filter_map(|xml| async move {
+                debug!("Probe match XML: {}", xml);
+                yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok()
+            })
             .filter(move |envelope| {
                 futures::future::ready(envelope.header.relates_to == probe.header.message_id)
             })
@@ -151,7 +154,11 @@ where
     .filter(|addr| check_addr(addr.clone()))
     .take(1);
 
-    Box::pin(stream).next().await
+    let addr = Box::pin(stream).next().await;
+
+    debug!("Responding addr: {:?}", addr);
+
+    addr
 }
 
 fn build_probe() -> probe::Envelope {
