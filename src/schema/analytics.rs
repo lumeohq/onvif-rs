@@ -1,14 +1,9 @@
 use crate::schema::onvif as tt;
 use crate::schema::validate::Validate;
 use crate::transport;
-use crate::utils;
-use macro_utils::*;
 use std::io::{Read, Write};
-use std::str::FromStr;
-use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
 
-//use ../../../ver10/schema/onvif.xsd  http://www.onvif.org/ver10/schema;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tan",

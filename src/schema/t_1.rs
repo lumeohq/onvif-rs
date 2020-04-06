@@ -1,11 +1,8 @@
-use crate::schema::types as pt;
 use crate::schema::validate::Validate;
-use crate::transport;
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
 use std::str::FromStr;
-use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]

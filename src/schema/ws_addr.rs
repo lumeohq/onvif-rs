@@ -1,15 +1,9 @@
-use crate::schema::bf_2 as wsrf_bf;
 pub use crate::schema::common::*;
-use crate::schema::t_1 as wstop;
 use crate::schema::validate::Validate;
-use crate::schema::ws_addr as wsa;
-use crate::schema::xml;
-use crate::transport;
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
 use std::str::FromStr;
-use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
 
 pub type EndpointReference = EndpointReferenceType;

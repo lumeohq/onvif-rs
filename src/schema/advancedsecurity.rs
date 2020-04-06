@@ -1,4 +1,3 @@
-use crate::schema::types as pt;
 use crate::schema::validate::Validate;
 use crate::transport;
 use crate::utils;

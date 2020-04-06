@@ -1,10 +1,3 @@
-// Based on types.xsd
-
-// targetNamespace="http://www.onvif.org/ver10/pacs"
-
-// xmlns:xs="http://www.w3.org/2001/XMLSchema"
-// xmlns:pt="http://www.onvif.org/ver10/pacs"
-
 pub use crate::schema::common::*;
 use crate::schema::validate::Validate;
 use crate::utils;

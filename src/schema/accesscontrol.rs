@@ -1,14 +1,9 @@
 use crate::schema::types as pt;
 use crate::schema::validate::Validate;
 use crate::transport;
-use crate::utils;
-use macro_utils::*;
 use std::io::{Read, Write};
-use std::str::FromStr;
-use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
 
-//use types.xsd  http://www.onvif.org/ver10/pacs;
 // The service capabilities reflect optional functionality of a service.
 // The information is static and does not change during device operation.
 // The following capabilities are available:

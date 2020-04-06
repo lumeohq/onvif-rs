@@ -1,11 +1,7 @@
 use crate::schema::b_2 as wsnt;
 pub use crate::schema::common::*;
 use crate::schema::validate::Validate;
-use crate::transport;
-use crate::utils;
-use macro_utils::*;
 use std::io::{Read, Write};
-use std::str::FromStr;
 use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
 
