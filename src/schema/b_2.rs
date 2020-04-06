@@ -30,3 +30,27 @@ pub struct FilterType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub struct NotificationMessageHolderType {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct QueryExpressionType {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct TopicExpressionType {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct NotificationMessage {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct TerminationTime {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct CurrentTime {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct AbsoluteOrRelativeTimeType {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct TopicExpressionDialect {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct FixedTopicSet {}

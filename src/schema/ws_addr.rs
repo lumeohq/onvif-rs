@@ -7,3 +7,6 @@
 
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub struct EndpointReferenceType {}
