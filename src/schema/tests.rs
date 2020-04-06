@@ -579,12 +579,8 @@ fn nested_structs_with_same_named_attributes() {
 
 #[test]
 fn nested_structs_with_same_named_fields() {
-    // yaserde::de::from_str returns Err when nested struct has same named
-    // field as the current struct (`extension` in this case)
+    // There was an issue in yaserde which is now fixed
     // https://github.com/media-io/yaserde/issues/51
-    // So for now we have to disable extensions until the issue is fixed.
-    // This test enforces us to comment out extensions from generated code
-    // otherwise we will fail at runtime.
     let ser = r#"
         <?xml version="1.0" encoding="utf-8"?>
         <tt:Profile xmlns:tt="http://www.onvif.org/ver10/schema">
@@ -593,5 +589,11 @@ fn nested_structs_with_same_named_fields() {
         "#;
 
     let des: tt::Profile = yaserde::de::from_str(&ser).unwrap();
-    assert_eq!(des, Default::default());
+    assert_eq!(
+        des,
+        tt::Profile {
+            extension: Some(tt::ProfileExtension::default()),
+            ..Default::default()
+        }
+    );
 }
