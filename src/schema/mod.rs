@@ -1,6 +1,6 @@
 // xsd:
 pub mod common;
-#[allow(unused_imports)]
+#[allow(unused_imports, clippy::large_enum_variant)]
 pub mod metadatastream;
 pub mod onvif;
 pub mod radiometry;
@@ -69,6 +69,7 @@ pub mod uplink;
 #[allow(unused_imports)]
 pub mod ws_addr;
 pub mod ws_discovery;
+pub mod xml;
 
 #[cfg(test)]
 mod tests;

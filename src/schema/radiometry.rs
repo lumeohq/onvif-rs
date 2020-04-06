@@ -13,9 +13,7 @@ use crate::schema::{onvif as tt, validate::Validate};
 use std::io::{Read, Write};
 use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
-
 //use ../../ver10/schema/onvif.xsd  http://www.onvif.org/ver10/schema;
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "ttr",

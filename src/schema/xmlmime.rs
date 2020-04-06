@@ -1,3 +1,4 @@
+use crate::schema::validate::Validate;
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
@@ -7,7 +8,19 @@ use yaserde::{YaDeserialize, YaSerialize};
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ContentType(pub String);
 
-//generated file
+impl Validate for ContentType {
+    fn validate(&self) -> Result<(), String> {
+        if self.0.len() < "3".parse().unwrap() {
+            return Err(format!(
+                "MinLength validation error. \nExpected: 0 length >= 3 \nActual: 0 length == {}",
+                self.0.len()
+            ));
+        }
+        Ok(())
+    }
+}
+
+// pub type ExpectedContentTypes = String;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "xmime",
@@ -15,8 +28,10 @@ pub struct ContentType(pub String);
 )]
 pub struct Base64Binary {
     #[yaserde(attribute, prefix = "xmime" rename = "contentType")]
-    pub xmime_content_type: Option<ContentType>,
+    pub content_type: Option<ContentType>,
 }
+
+impl Validate for Base64Binary {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -25,5 +40,7 @@ pub struct Base64Binary {
 )]
 pub struct HexBinary {
     #[yaserde(attribute, prefix = "xmime" rename = "contentType")]
-    pub xmime_content_type: Option<ContentType>,
+    pub content_type: Option<ContentType>,
 }
+
+impl Validate for HexBinary {}
