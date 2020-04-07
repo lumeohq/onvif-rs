@@ -1,5 +1,5 @@
 use super::*;
-use crate::schema::soap_envelope::{Faultcode, FaultcodeEnum, Subcode};
+use crate::schema::soap_envelope::{FaultcodeEnum, Subcode};
 use crate::utils::xml_eq::assert_xml_eq;
 
 #[test]
