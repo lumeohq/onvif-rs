@@ -1,4 +1,5 @@
 use super::*;
+use crate::schema::soap_envelope::{FaultcodeEnum, Subcode};
 use crate::utils::xml_eq::assert_xml_eq;
 
 #[test]
@@ -78,7 +79,7 @@ fn test_get_fault() {
             xmlns:ter="http://www.onvif.org/ver10/error"
             xmlns:xs="http://www.w3.org/2000/10/XMLSchema">
             <soapenv:Code>
-                <soapenv:Value>fault code</soapenv:Value>
+                <soapenv:Value>tns:DataEncodingUnknown</soapenv:Value>
                 <soapenv:Subcode>
                     <soapenv:Value>ter:fault subcode</soapenv:Value>
                     <soapenv:Subcode>
@@ -102,7 +103,12 @@ fn test_get_fault() {
 
     let fault = deserialize_fault(&envelope).unwrap();
 
-    assert_eq!(fault.code.value, "fault code");
-    assert_eq!(fault.code.subcode.unwrap().value, "ter:fault subcode");
+    assert_eq!(fault.code.value, FaultcodeEnum::DataEncodingUnknown);
+    assert_eq!(
+        fault.code.subcode[0],
+        Subcode {
+            value: "ter:fault subcode".to_string()
+        }
+    );
     assert_eq!(fault.reason.text, vec!["fault reason 1", "fault reason 2"]);
 }

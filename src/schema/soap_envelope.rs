@@ -1,3 +1,5 @@
+pub use crate::schema::common::*;
+use crate::schema::validate::Validate;
 use std::io::{Read, Write};
 use yaserde::{YaDeserialize, YaSerialize};
 
@@ -12,11 +14,11 @@ pub struct Envelope {
 
     #[yaserde(prefix = "tns", rename = "Body")]
     pub body: Body,
-
-    #[yaserde(attribute, rename = "any_attribute")]
-    pub any_attribute: Option<String>,
 }
 
+impl Validate for Envelope {}
+
+// pub type Header = Header;
 // Elements replacing the wildcard MUST be namespace qualified, but can be in
 // the targetNamespace
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -24,27 +26,25 @@ pub struct Envelope {
     prefix = "tns",
     namespace = "tns: http://www.w3.org/2003/05/soap-envelope"
 )]
-pub struct Header {
-    #[yaserde(prefix = "tns", rename = "any")]
-    pub any: Option<String>,
+pub struct Header {}
 
-    #[yaserde(attribute, rename = "any_attribute")]
-    pub any_attribute: Option<String>,
-}
+impl Validate for Header {}
 
+// pub type Body = Body;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tns",
     namespace = "tns: http://www.w3.org/2003/05/soap-envelope"
 )]
-pub struct Body {
-    #[yaserde(prefix = "tns", rename = "any")]
-    pub any: Option<String>,
+pub struct Body {}
 
-    #[yaserde(attribute, rename = "any_attribute")]
-    pub any_attribute: Option<String>,
-}
+impl Validate for Body {}
 
+// pub type MustUnderstand = bool;
+// pub type Relay = bool;
+// pub type Role = String;
+// pub type EncodingStyle = String;
+// pub type Fault = Fault;
 // Fault reporting structure
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -68,6 +68,8 @@ pub struct Fault {
     pub detail: Option<Detail>,
 }
 
+impl Validate for Fault {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tns",
@@ -78,6 +80,8 @@ pub struct Faultreason {
     pub text: Vec<String>,
 }
 
+impl Validate for Faultreason {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tns",
@@ -85,11 +89,13 @@ pub struct Faultreason {
 )]
 pub struct Faultcode {
     #[yaserde(prefix = "tns", rename = "Value")]
-    pub value: String,
+    pub value: FaultcodeEnum,
 
     #[yaserde(prefix = "tns", rename = "Subcode")]
-    pub subcode: Option<Subcode>,
+    pub subcode: Vec<Subcode>,
 }
+
+impl Validate for Faultcode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum FaultcodeEnum {
@@ -112,6 +118,7 @@ impl Default for FaultcodeEnum {
     }
 }
 
+impl Validate for FaultcodeEnum {}
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tns",
@@ -125,21 +132,18 @@ pub struct Subcode {
     // pub subcode: Vec<Subcode>,
 }
 
+impl Validate for Subcode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tns",
     namespace = "tns: http://www.w3.org/2003/05/soap-envelope"
 )]
-pub struct Detail {
-    #[yaserde(prefix = "tns", rename = "any")]
-    pub any: Option<String>,
+pub struct Detail {}
 
-    #[yaserde(attribute, rename = "any_attribute")]
-    pub any_attribute: Option<String>,
-}
+impl Validate for Detail {}
 
-pub type NotUnderstood = NotUnderstoodType;
-
+// pub type NotUnderstood = NotUnderstoodType;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
     prefix = "tns",
@@ -149,6 +153,8 @@ pub struct NotUnderstoodType {
     #[yaserde(attribute, rename = "qname")]
     pub qname: String,
 }
+
+impl Validate for NotUnderstoodType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -160,6 +166,8 @@ pub struct SupportedEnvType {
     pub qname: String,
 }
 
+impl Validate for SupportedEnvType {}
+
 // pub type Upgrade = UpgradeType;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -170,3 +178,5 @@ pub struct UpgradeType {
     #[yaserde(prefix = "tns", rename = "SupportedEnvelope")]
     pub supported_envelope: Vec<SupportedEnvType>,
 }
+
+impl Validate for UpgradeType {}

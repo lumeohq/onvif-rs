@@ -119,22 +119,18 @@ impl Validate for IntList {}
 pub struct IntAttrList(pub Vec<i32>);
 
 impl Validate for IntAttrList {}
-
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct FloatAttrList(pub Vec<f64>);
 
 impl Validate for FloatAttrList {}
-
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct StringAttrList(pub Vec<String>);
 
 impl Validate for StringAttrList {}
-
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ReferenceTokenList(pub Vec<ReferenceToken>);
 
 impl Validate for ReferenceTokenList {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FloatList {
@@ -642,7 +638,6 @@ impl Validate for SceneOrientation {}
 pub struct ViewModes(pub String);
 
 impl Validate for ViewModes {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoEncoderConfiguration {
@@ -1053,8 +1048,22 @@ impl Validate for H264Options2 {}
 
 // Video Media Subtypes as referenced by IANA (without the leading "video/"
 // Video Media Type). See also
-#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
-pub struct VideoEncodingMimeNames(pub String);
+#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub enum VideoEncodingMimeNames {
+    #[yaserde(rename = "JPEG")]
+    Jpeg,
+    #[yaserde(rename = "MPV4-ES")]
+    Mpv4Es,
+    H264,
+    H265,
+    __Unknown__(String),
+}
+
+impl Default for VideoEncodingMimeNames {
+    fn default() -> VideoEncodingMimeNames {
+        Self::__Unknown__("No valid variants".into())
+    }
+}
 
 impl Validate for VideoEncodingMimeNames {}
 
@@ -1349,10 +1358,26 @@ impl Validate for AudioEncoderConfigurationOption {}
 
 // Audio Media Subtypes as referenced by IANA (without the leading "audio/"
 // Audio Media Type). See also
-#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
-pub struct AudioEncodingMimeNames(pub String);
+#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub enum AudioEncodingMimeNames {
+    #[yaserde(rename = "PCMU")]
+    Pcmu,
+    G726,
+    #[yaserde(rename = "MP4A-LATM")]
+    Mp4ALatm,
+    #[yaserde(rename = "mpeg4-generic")]
+    Mpeg4Generic,
+    __Unknown__(String),
+}
+
+impl Default for AudioEncodingMimeNames {
+    fn default() -> AudioEncodingMimeNames {
+        Self::__Unknown__("No valid variants".into())
+    }
+}
 
 impl Validate for AudioEncodingMimeNames {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioEncoder2Configuration {
@@ -1999,6 +2024,7 @@ impl Default for StreamType {
 }
 
 impl Validate for StreamType {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Transport {
@@ -2888,10 +2914,23 @@ impl Validate for Dot11SSIDType {
     }
 }
 
-#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
-pub struct Dot11StationMode(pub String);
+#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+pub enum Dot11StationMode {
+    #[yaserde(rename = "Ad-hoc")]
+    AdHoc,
+    Infrastructure,
+    Extended,
+    __Unknown__(String),
+}
+
+impl Default for Dot11StationMode {
+    fn default() -> Dot11StationMode {
+        Self::__Unknown__("No valid variants".into())
+    }
+}
 
 impl Validate for Dot11StationMode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Dot11SecurityConfiguration {
