@@ -1,15 +1,9 @@
-// Based on common.xsd
-
-// targetNamespace="http://www.onvif.org/ver10/schema"
-
-// xmlns:xs="http://www.w3.org/2001/XMLSchema"
-// xmlns:tt="http://www.onvif.org/ver10/schema"
-
 use crate::schema::validate::Validate;
 use crate::utils;
 use macro_utils::*;
 use std::io::{Read, Write};
 use std::str::FromStr;
+use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
 
 // Unique identifier for a physical or logical resource.
@@ -108,7 +102,7 @@ pub struct Ptzstatus {
 
     // Specifies the UTC time when this status was generated.
     #[yaserde(prefix = "tt", rename = "UtcTime")]
-    pub utc_time: String,
+    pub utc_time: xs::DateTime,
 }
 
 impl Validate for Ptzstatus {}

@@ -1,20 +1,3 @@
-// Based on onvif.xsd
-
-// targetNamespace="http://www.onvif.org/ver10/schema"
-
-// xmlns:tt="http://www.onvif.org/ver10/schema"
-// xmlns:xs="http://www.w3.org/2001/XMLSchema"
-// xmlns:xmime="http://www.w3.org/2005/05/xmlmime"
-// xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
-// xmlns:xop="http://www.w3.org/2004/08/xop/include"
-// xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
-
-// <xs:include schemaLocation="common.xsd"/>
-// <xs:import namespace="http://www.w3.org/2005/05/xmlmime" schemaLocation="http://www.w3.org/2005/05/xmlmime"/>
-// <xs:import namespace="http://www.w3.org/2003/05/soap-envelope" schemaLocation="http://www.w3.org/2003/05/soap-envelope"/>
-// <xs:import namespace="http://docs.oasis-open.org/wsn/b-2" schemaLocation="http://docs.oasis-open.org/wsn/b-2.xsd"/>
-// <xs:import namespace="http://www.w3.org/2004/08/xop/include" schemaLocation="http://www.w3.org/2004/08/xop/include"/>
-
 pub use crate::schema::common::*;
 use crate::schema::{
     b_2 as wsnt, soap_envelope as soapenv, validate::Validate, xmlmime as xmime, xop,
@@ -25,16 +8,6 @@ use std::io::{Read, Write};
 use std::str::FromStr;
 use xsd_types::types as xs;
 use yaserde::{YaDeserialize, YaSerialize};
-
-//use common.xsd  ;
-
-//use http://www.w3.org/2005/05/xmlmime  http://www.w3.org/2005/05/xmlmime;
-
-//use http://www.w3.org/2003/05/soap-envelope  http://www.w3.org/2003/05/soap-envelope;
-
-//use http://docs.oasis-open.org/wsn/b-2.xsd  http://docs.oasis-open.org/wsn/b-2;
-
-//use http://www.w3.org/2004/08/xop/include  http://www.w3.org/2004/08/xop/include;
 
 // Base class for physical entities like inputs and outputs.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -665,43 +638,8 @@ pub struct SceneOrientation {
 impl Validate for SceneOrientation {}
 
 // Source view modes supported by device.
-#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-pub enum ViewModes {
-    // Undewarped viewmode from device supporting fisheye lens.
-    #[yaserde(rename = "tt:Fisheye")]
-    Fisheye,
-    // 360 degree panoramic view.
-    #[yaserde(rename = "tt:360Panorama")]
-    _360Panorama,
-    // 180 degree panoramic view.
-    #[yaserde(rename = "tt:180Panorama")]
-    _180Panorama,
-    // View mode combining four streams in single Quad, eg., applicable for
-    // devices supporting four heads.
-    #[yaserde(rename = "tt:Quad")]
-    Quad,
-    // Unaltered view from the sensor.
-    #[yaserde(rename = "tt:Original")]
-    Original,
-    // Viewmode combining the left side sensors, applicable for devices supporting
-    // multiple sensors.
-    #[yaserde(rename = "tt:LeftHalf")]
-    LeftHalf,
-    // Viewmode combining the right side sensors, applicable for devices
-    // supporting multiple sensors.
-    #[yaserde(rename = "tt:RightHalf")]
-    RightHalf,
-    // Dewarped view mode for device supporting fisheye lens.
-    #[yaserde(rename = "tt:Dewarp")]
-    Dewarp,
-    __Unknown__(String),
-}
-
-impl Default for ViewModes {
-    fn default() -> ViewModes {
-        Self::__Unknown__("No valid variants".into())
-    }
-}
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct ViewModes(pub String);
 
 impl Validate for ViewModes {}
 
@@ -1115,22 +1053,8 @@ impl Validate for H264Options2 {}
 
 // Video Media Subtypes as referenced by IANA (without the leading "video/"
 // Video Media Type). See also
-#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-pub enum VideoEncodingMimeNames {
-    #[yaserde(rename = "JPEG")]
-    Jpeg,
-    #[yaserde(rename = "MPV4-ES")]
-    Mpv4Es,
-    H264,
-    H265,
-    __Unknown__(String),
-}
-
-impl Default for VideoEncodingMimeNames {
-    fn default() -> VideoEncodingMimeNames {
-        Self::__Unknown__("No valid variants".into())
-    }
-}
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct VideoEncodingMimeNames(pub String);
 
 impl Validate for VideoEncodingMimeNames {}
 
@@ -1425,26 +1349,10 @@ impl Validate for AudioEncoderConfigurationOption {}
 
 // Audio Media Subtypes as referenced by IANA (without the leading "audio/"
 // Audio Media Type). See also
-#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-pub enum AudioEncodingMimeNames {
-    #[yaserde(rename = "PCMU")]
-    Pcmu,
-    G726,
-    #[yaserde(rename = "MP4A-LATM")]
-    Mp4ALatm,
-    #[yaserde(rename = "mpeg4-generic")]
-    Mpeg4Generic,
-    __Unknown__(String),
-}
-
-impl Default for AudioEncodingMimeNames {
-    fn default() -> AudioEncodingMimeNames {
-        Self::__Unknown__("No valid variants".into())
-    }
-}
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct AudioEncodingMimeNames(pub String);
 
 impl Validate for AudioEncodingMimeNames {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioEncoder2Configuration {
@@ -1614,16 +1522,20 @@ pub struct EventSubscription {
     pub filter: Option<wsnt::FilterType>,
 
     #[yaserde(prefix = "tt", rename = "SubscriptionPolicy")]
-    pub subscription_policy: Option<SubscriptionPolicyType>,
+    pub subscription_policy: Option<event_subscription::SubscriptionPolicyType>,
 }
 
 impl Validate for EventSubscription {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SubscriptionPolicyType {}
+pub mod event_subscription {
+    use super::*;
 
-impl Validate for SubscriptionPolicyType {}
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct SubscriptionPolicyType {}
+
+    impl Validate for SubscriptionPolicyType {}
+}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2087,7 +1999,6 @@ impl Default for StreamType {
 }
 
 impl Validate for StreamType {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Transport {
@@ -2330,7 +2241,6 @@ impl Validate for Duplex {}
 pub struct IanaIfTypes(pub i32);
 
 impl Validate for IanaIfTypes {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkInterfaceInfo {
@@ -2587,7 +2497,6 @@ impl Validate for PrefixedIPv4Address {}
 pub struct Ipv4Address(pub String);
 
 impl Validate for Ipv4Address {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PrefixedIPv6Address {
@@ -2606,12 +2515,10 @@ impl Validate for PrefixedIPv6Address {}
 pub struct Ipv6Address(pub String);
 
 impl Validate for Ipv6Address {}
-
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct HwAddress(pub String);
 
 impl Validate for HwAddress {}
-
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Iptype {
     #[yaserde(rename = "IPv4")]
@@ -2633,7 +2540,6 @@ impl Validate for Iptype {}
 pub struct Dnsname(pub String);
 
 impl Validate for Dnsname {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct HostnameInformation {
@@ -2719,7 +2625,6 @@ impl Validate for NtpinformationExtension {}
 pub struct Domain(pub String);
 
 impl Validate for Domain {}
-
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum IpaddressFilterType {
     Allow,
@@ -2983,23 +2888,10 @@ impl Validate for Dot11SSIDType {
     }
 }
 
-#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-pub enum Dot11StationMode {
-    #[yaserde(rename = "Ad-hoc")]
-    AdHoc,
-    Infrastructure,
-    Extended,
-    __Unknown__(String),
-}
-
-impl Default for Dot11StationMode {
-    fn default() -> Dot11StationMode {
-        Self::__Unknown__("No valid variants".into())
-    }
-}
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct Dot11StationMode(pub String);
 
 impl Validate for Dot11StationMode {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Dot11SecurityConfiguration {
@@ -3085,7 +2977,6 @@ impl Validate for Dot11PSK {
 pub struct Dot11PSKPassphrase(pub String);
 
 impl Validate for Dot11PSKPassphrase {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Dot11PSKSet {
@@ -3140,27 +3031,10 @@ pub struct Dot11Capabilities {
 
 impl Validate for Dot11Capabilities {}
 
-#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-pub enum Dot11SignalStrength {
-    None,
-    #[yaserde(rename = "Very Bad")]
-    VeryBad,
-    Bad,
-    Good,
-    #[yaserde(rename = "Very Good")]
-    VeryGood,
-    Extended,
-    __Unknown__(String),
-}
-
-impl Default for Dot11SignalStrength {
-    fn default() -> Dot11SignalStrength {
-        Self::__Unknown__("No valid variants".into())
-    }
-}
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct Dot11SignalStrength(pub String);
 
 impl Validate for Dot11SignalStrength {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Dot11Status {
@@ -5161,32 +5035,38 @@ impl Validate for PtzpresetTourSpotExtension {}
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PtzpresetTourPresetDetail {
     #[yaserde(prefix = "tt", rename = "PTZPresetTourPresetDetailChoice")]
-    pub ptz_preset_tour_preset_detail_choice: PtzpresetTourPresetDetailChoice,
+    pub ptz_preset_tour_preset_detail_choice:
+        ptz_preset_tour_preset_detail::PtzpresetTourPresetDetailChoice,
 }
 
 impl Validate for PtzpresetTourPresetDetail {}
 
-#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-pub enum PtzpresetTourPresetDetailChoice {
-    // Option to specify the preset position with Preset Token defined in advance.
-    PresetToken(ReferenceToken),
-    // Option to specify the preset position with the home position of this PTZ
-    // Node. "False" to this parameter shall be treated as an invalid argument.
-    Home(bool),
-    // Option to specify the preset position with vector of PTZ node directly.
-    #[yaserde(rename = "PTZPosition")]
-    Ptzposition(Ptzvector),
-    TypeExtension(PtzpresetTourTypeExtension),
-    __Unknown__(String),
-}
+pub mod ptz_preset_tour_preset_detail {
+    use super::*;
 
-impl Default for PtzpresetTourPresetDetailChoice {
-    fn default() -> PtzpresetTourPresetDetailChoice {
-        Self::__Unknown__("No valid variants".into())
+    #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+    pub enum PtzpresetTourPresetDetailChoice {
+        // Option to specify the preset position with Preset Token defined in
+        // advance.
+        PresetToken(ReferenceToken),
+        // Option to specify the preset position with the home position of this PTZ
+        // Node. "False" to this parameter shall be treated as an invalid argument.
+        Home(bool),
+        // Option to specify the preset position with vector of PTZ node directly.
+        #[yaserde(rename = "PTZPosition")]
+        Ptzposition(Ptzvector),
+        TypeExtension(PtzpresetTourTypeExtension),
+        __Unknown__(String),
     }
-}
 
-impl Validate for PtzpresetTourPresetDetailChoice {}
+    impl Default for PtzpresetTourPresetDetailChoice {
+        fn default() -> PtzpresetTourPresetDetailChoice {
+            Self::__Unknown__("No valid variants".into())
+        }
+    }
+
+    impl Validate for PtzpresetTourPresetDetailChoice {}
+}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -5410,8 +5290,8 @@ impl Validate for AutoFocusMode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Afmodes {
-    // Focus of a moving camera is updated only once after stopping a pan, tilt or
-    // zoom movement.
+    // Focus of a moving camera is updated only once after stopping a pan, tilt
+    // or zoom movement.
     OnceAfterMove,
     __Unknown__(String),
 }
@@ -6807,7 +6687,6 @@ impl Validate for NoiseReductionOptions {}
 pub struct TopicNamespaceLocation(pub String);
 
 impl Validate for TopicNamespaceLocation {}
-
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum PropertyOperation {
     Initialized,
@@ -6840,8 +6719,9 @@ pub struct Message {
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<MessageExtension>,
+
     #[yaserde(attribute, rename = "UtcTime")]
-    pub utc_time: String,
+    pub utc_time: xs::DateTime,
 
     #[yaserde(attribute, rename = "PropertyOperation")]
     pub property_operation: Option<PropertyOperation>,
@@ -6862,11 +6742,11 @@ impl Validate for MessageExtension {}
 pub struct ItemList {
     // Value name pair as defined by the corresponding description.
     #[yaserde(prefix = "tt", rename = "SimpleItem")]
-    pub simple_item: Vec<SimpleItemType>,
+    pub simple_item: Vec<item_list::SimpleItemType>,
 
     // Complex value structure.
     #[yaserde(prefix = "tt", rename = "ElementItem")]
-    pub element_item: Vec<ElementItemType>,
+    pub element_item: Vec<item_list::ElementItemType>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ItemListExtension>,
@@ -6874,29 +6754,32 @@ pub struct ItemList {
 
 impl Validate for ItemList {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SimpleItemType {
-    // Item name.
-    #[yaserde(attribute, rename = "Name")]
-    pub name: String,
+pub mod item_list {
+    use super::*;
 
-    // Item value. The type is defined in the corresponding description.
-    #[yaserde(attribute, rename = "Value")]
-    pub value: String,
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct SimpleItemType {
+        // Item name.
+        #[yaserde(attribute, rename = "Name")]
+        pub name: String,
+
+        // Item value. The type is defined in the corresponding description.
+        #[yaserde(attribute, rename = "Value")]
+        pub value: String,
+    }
+
+    impl Validate for SimpleItemType {}
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct ElementItemType {
+        // Item name.
+        #[yaserde(attribute, rename = "Name")]
+        pub name: String,
+    }
+
+    impl Validate for ElementItemType {}
 }
-
-impl Validate for SimpleItemType {}
-
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ElementItemType {
-    // Item name.
-    #[yaserde(attribute, rename = "Name")]
-    pub name: String,
-}
-
-impl Validate for ElementItemType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6951,11 +6834,11 @@ pub struct ItemListDescription {
     // Description of a simple item. The type must be of cathegory simpleType
     // (xs:string, xs:integer, xs:float, ...).
     #[yaserde(prefix = "tt", rename = "SimpleItemDescription")]
-    pub simple_item_description: Vec<SimpleItemDescriptionType>,
+    pub simple_item_description: Vec<item_list_description::SimpleItemDescriptionType>,
 
     // Description of a complex type. The Type must reference a defined type.
     #[yaserde(prefix = "tt", rename = "ElementItemDescription")]
-    pub element_item_description: Vec<ElementItemDescriptionType>,
+    pub element_item_description: Vec<item_list_description::ElementItemDescriptionType>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ItemListDescriptionExtension>,
@@ -6963,32 +6846,35 @@ pub struct ItemListDescription {
 
 impl Validate for ItemListDescription {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SimpleItemDescriptionType {
-    // Item name. Must be unique within a list.
-    #[yaserde(attribute, rename = "Name")]
-    pub name: String,
+pub mod item_list_description {
+    use super::*;
 
-    #[yaserde(attribute, rename = "Type")]
-    pub _type: String,
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct SimpleItemDescriptionType {
+        // Item name. Must be unique within a list.
+        #[yaserde(attribute, rename = "Name")]
+        pub name: String,
+
+        #[yaserde(attribute, rename = "Type")]
+        pub _type: String,
+    }
+
+    impl Validate for SimpleItemDescriptionType {}
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct ElementItemDescriptionType {
+        // Item name. Must be unique within a list.
+        #[yaserde(attribute, rename = "Name")]
+        pub name: String,
+
+        // The type of the item. The Type must reference a defined type.
+        #[yaserde(attribute, rename = "Type")]
+        pub _type: String,
+    }
+
+    impl Validate for ElementItemDescriptionType {}
 }
-
-impl Validate for SimpleItemDescriptionType {}
-
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ElementItemDescriptionType {
-    // Item name. Must be unique within a list.
-    #[yaserde(attribute, rename = "Name")]
-    pub name: String,
-
-    // The type of the item. The Type must reference a defined type.
-    #[yaserde(attribute, rename = "Type")]
-    pub _type: String,
-}
-
-impl Validate for ElementItemDescriptionType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7100,7 +6986,7 @@ pub struct ConfigDescription {
     // Depending on the component multiple parameters or none may be needed to
     // identify the component uniquely.
     #[yaserde(prefix = "tt", rename = "Messages")]
-    pub messages: Vec<MessagesType>,
+    pub messages: Vec<config_description::MessagesType>,
 
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<ConfigDescriptionExtension>,
@@ -7123,49 +7009,53 @@ pub struct ConfigDescription {
 
 impl Validate for ConfigDescription {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct MessagesType {
-    // The ParentTopic labels the message (e.g. "nn:RuleEngine/LineCrossing").
-    // The real message can extend the ParentTopic
-    // by for example the name of the instaniated rule (e.g.
-    // "nn:RuleEngine/LineCrossing/corssMyFirstLine").
-    // Even without knowing the complete topic name, the subscriber will be able
-    // to distiguish the
-    // messages produced by different rule instances of the same type via the
-    // Source fields of the message.
-    // There the name of the rule instance, which produced the message, must be
-    // listed.
-    #[yaserde(prefix = "tt", rename = "ParentTopic")]
-    pub parent_topic: String,
+pub mod config_description {
+    use super::*;
 
-    // Set of tokens producing this message. The list may only contain
-    // SimpleItemDescription items.
-    // The set of tokens identify the component within the WS-Endpoint, which is
-    // responsible for the producing the message.
-    #[yaserde(prefix = "tt", rename = "Source")]
-    pub source: Option<ItemListDescription>,
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct MessagesType {
+        // The ParentTopic labels the message (e.g. "nn:RuleEngine/LineCrossing").
+        // The real message can extend the ParentTopic
+        // by for example the name of the instaniated rule (e.g.
+        // "nn:RuleEngine/LineCrossing/corssMyFirstLine").
+        // Even without knowing the complete topic name, the subscriber will be able
+        // to distiguish the
+        // messages produced by different rule instances of the same type via the
+        // Source fields of the message.
+        // There the name of the rule instance, which produced the message, must be
+        // listed.
+        #[yaserde(prefix = "tt", rename = "ParentTopic")]
+        pub parent_topic: String,
 
-    // Describes optional message payload parameters that may be used as key.
-    // E.g. object IDs of tracked objects are conveyed as key.
-    #[yaserde(prefix = "tt", rename = "Key")]
-    pub key: Option<ItemListDescription>,
+        // Set of tokens producing this message. The list may only contain
+        // SimpleItemDescription items.
+        // The set of tokens identify the component within the WS-Endpoint, which is
+        // responsible for the producing the message.
+        #[yaserde(prefix = "tt", rename = "Source")]
+        pub source: Option<ItemListDescription>,
 
-    // Describes the payload of the message.
-    #[yaserde(prefix = "tt", rename = "Data")]
-    pub data: Option<ItemListDescription>,
+        // Describes optional message payload parameters that may be used as key.
+        // E.g. object IDs of tracked objects are conveyed as key.
+        #[yaserde(prefix = "tt", rename = "Key")]
+        pub key: Option<ItemListDescription>,
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MessageDescriptionExtension>,
+        // Describes the payload of the message.
+        #[yaserde(prefix = "tt", rename = "Data")]
+        pub data: Option<ItemListDescription>,
 
-    // Must be set to true when the described Message relates to a property. An
-    // alternative term of "property" is a "state" in contrast to a pure event,
-    // which contains relevant information for only a single point in time.
-    #[yaserde(attribute, rename = "IsProperty")]
-    pub is_property: Option<bool>,
+        #[yaserde(prefix = "tt", rename = "Extension")]
+        pub extension: Option<MessageDescriptionExtension>,
+
+        // Must be set to true when the described Message relates to a property. An
+        // alternative term of "property" is a "state" in contrast to a pure event,
+        // which contains relevant information for only a single point in time.
+        #[yaserde(attribute, rename = "IsProperty")]
+        pub is_property: Option<bool>,
+    }
+
+    impl Validate for MessagesType {}
 }
-
-impl Validate for MessagesType {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -7494,8 +7384,8 @@ pub enum ReceiverMode {
     // The receiver connects on demand, as required by consumers of the media
     // streams.
     AutoConnect,
-    // The receiver attempts to maintain a persistent connection to the configured
-    // endpoint.
+    // The receiver attempts to maintain a persistent connection to the
+    // configured endpoint.
     AlwaysConnect,
     // The receiver does not attempt to connect.
     NeverConnect,
@@ -7554,12 +7444,10 @@ impl Validate for ReceiverStateInformation {}
 pub struct ReceiverReference(pub ReferenceToken);
 
 impl Validate for ReceiverReference {}
-
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct RecordingReference(pub ReferenceToken);
 
 impl Validate for RecordingReference {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct SourceReference {
@@ -7576,20 +7464,18 @@ impl Validate for SourceReference {}
 pub struct TrackReference(pub ReferenceToken);
 
 impl Validate for TrackReference {}
-
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Description(pub String);
 
 impl Validate for Description {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct DateTimeRange {
     #[yaserde(prefix = "tt", rename = "From")]
-    pub from: String,
+    pub from: xs::DateTime,
 
     #[yaserde(prefix = "tt", rename = "Until")]
-    pub until: String,
+    pub until: xs::DateTime,
 }
 
 impl Validate for DateTimeRange {}
@@ -7599,11 +7485,11 @@ impl Validate for DateTimeRange {}
 pub struct RecordingSummary {
     // The earliest point in time where there is recorded data on the device.
     #[yaserde(prefix = "tt", rename = "DataFrom")]
-    pub data_from: String,
+    pub data_from: xs::DateTime,
 
     // The most recent point in time where there is recorded data on the device.
     #[yaserde(prefix = "tt", rename = "DataUntil")]
-    pub data_until: String,
+    pub data_until: xs::DateTime,
 
     // The device contains this many recordings.
     #[yaserde(prefix = "tt", rename = "NumberRecordings")]
@@ -7631,6 +7517,7 @@ pub struct SearchScope {
     // shall be searched.
     #[yaserde(prefix = "tt", rename = "RecordingInformationFilter")]
     pub recording_information_filter: Option<XpathExpression>,
+
     // Extension point
     #[yaserde(prefix = "tt", rename = "Extension")]
     pub extension: Option<SearchScopeExtension>,
@@ -7681,7 +7568,6 @@ impl Validate for MetadataFilter {}
 pub struct XpathExpression(pub String);
 
 impl Validate for XpathExpression {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FindRecordingResultList {
@@ -7728,7 +7614,7 @@ pub struct FindEventResult {
 
     // The time when the event occured.
     #[yaserde(prefix = "tt", rename = "Time")]
-    pub time: String,
+    pub time: xs::DateTime,
 
     // The description of the event.
     #[yaserde(prefix = "tt", rename = "Event")]
@@ -7772,7 +7658,7 @@ pub struct FindPTZPositionResult {
 
     // The time when the PTZ position was valid.
     #[yaserde(prefix = "tt", rename = "Time")]
-    pub time: String,
+    pub time: xs::DateTime,
 
     // The PTZ position.
     #[yaserde(prefix = "tt", rename = "Position")]
@@ -7811,7 +7697,7 @@ pub struct FindMetadataResult {
     // The point in time when the matching metadata occurs in the metadata
     // track.
     #[yaserde(prefix = "tt", rename = "Time")]
-    pub time: String,
+    pub time: xs::DateTime,
 }
 
 impl Validate for FindMetadataResult {}
@@ -7842,7 +7728,6 @@ impl Validate for SearchState {}
 pub struct JobToken(pub ReferenceToken);
 
 impl Validate for JobToken {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingInformation {
@@ -7859,10 +7744,10 @@ pub struct RecordingInformation {
     pub source: RecordingSourceInformation,
 
     #[yaserde(prefix = "tt", rename = "EarliestRecording")]
-    pub earliest_recording: Option<String>,
+    pub earliest_recording: Option<xs::DateTime>,
 
     #[yaserde(prefix = "tt", rename = "LatestRecording")]
-    pub latest_recording: Option<String>,
+    pub latest_recording: Option<xs::DateTime>,
 
     #[yaserde(prefix = "tt", rename = "Content")]
     pub content: Description,
@@ -7949,11 +7834,11 @@ pub struct TrackInformation {
 
     // The start date and time of the oldest recorded data in the track.
     #[yaserde(prefix = "tt", rename = "DataFrom")]
-    pub data_from: String,
+    pub data_from: xs::DateTime,
 
     // The stop date and time of the newest recorded data in the track.
     #[yaserde(prefix = "tt", rename = "DataTo")]
-    pub data_to: String,
+    pub data_to: xs::DateTime,
 }
 
 impl Validate for TrackInformation {}
@@ -7991,13 +7876,13 @@ pub struct MediaAttributes {
 
     // The attributes are valid from this point in time in the recording.
     #[yaserde(prefix = "tt", rename = "From")]
-    pub from: String,
+    pub from: xs::DateTime,
 
     // The attributes are valid until this point in time in the recording. Can
     // be equal to 'From' to indicate that the attributes are only known to be
     // valid for this particular point in time.
     #[yaserde(prefix = "tt", rename = "Until")]
-    pub until: String,
+    pub until: xs::DateTime,
 }
 
 impl Validate for MediaAttributes {}
@@ -8114,7 +7999,6 @@ impl Validate for MetadataAttributes {}
 pub struct RecordingJobReference(pub ReferenceToken);
 
 impl Validate for RecordingJobReference {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingConfiguration {
@@ -8249,7 +8133,6 @@ impl Validate for RecordingJobConfiguration {}
 pub struct RecordingJobMode(pub String);
 
 impl Validate for RecordingJobMode {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingJobConfigurationExtension {}
@@ -8348,7 +8231,6 @@ impl Validate for RecordingJobStateInformationExtension {}
 pub struct RecordingJobState(pub String);
 
 impl Validate for RecordingJobState {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingJobStateSource {
@@ -8690,7 +8572,6 @@ impl Validate for ActionEngineEventPayloadExtension {}
 pub struct AudioClassType(pub String);
 
 impl Validate for AudioClassType {}
-
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioClassCandidate {
