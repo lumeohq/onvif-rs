@@ -103,7 +103,10 @@ fn test_get_fault() {
 
     let fault = deserialize_fault(&envelope).unwrap();
 
-    assert_eq!(fault.code.value, FaultcodeEnum{0: "tns:DataEncodingUnknown".to_string()});
+    assert_eq!(
+        fault.code.value,
+        FaultcodeEnum("tns:DataEncodingUnknown".to_string())
+    );
     assert_eq!(
         fault.code.subcode,
         Some(Subcode {
@@ -111,5 +114,15 @@ fn test_get_fault() {
             // subcode: Vec::new()
         })
     );
-    assert_eq!(fault.reason.text, vec![Reasontext{lang: "en".to_string()}, Reasontext{lang: "en".to_string()}]);
+    assert_eq!(
+        fault.reason.text,
+        vec![
+            Reasontext {
+                lang: "en".to_string()
+            },
+            Reasontext {
+                lang: "en".to_string()
+            }
+        ]
+    );
 }

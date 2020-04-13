@@ -93,7 +93,6 @@ impl Validate for Faultreason {}
 pub struct Reasontext {
     #[yaserde(attribute, prefix = "xml" rename = "lang")]
     pub lang: String,
-
     // TODO: process the value of Reasontext too
 }
 
@@ -126,7 +125,6 @@ impl Validate for FaultcodeEnum {}
 pub struct Subcode {
     #[yaserde(prefix = "tns", rename = "Value")]
     pub value: String,
-
     // TODO: handle recursion
     // #[yaserde(prefix = "tns", rename = "Subcode")]
     // pub subcode: Vec<Subcode>,
