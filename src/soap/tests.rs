@@ -1,5 +1,5 @@
 use super::*;
-use crate::schema::soap_envelope::{FaultcodeEnum, Subcode};
+use crate::schema::soap_envelope::{FaultcodeEnum, Reasontext, Subcode};
 use crate::utils::xml_eq::assert_xml_eq;
 
 #[test]
@@ -103,12 +103,13 @@ fn test_get_fault() {
 
     let fault = deserialize_fault(&envelope).unwrap();
 
-    assert_eq!(fault.code.value, FaultcodeEnum::DataEncodingUnknown);
+    assert_eq!(fault.code.value, FaultcodeEnum{0: "tns:DataEncodingUnknown".to_string()});
     assert_eq!(
-        fault.code.subcode[0],
-        Subcode {
-            value: "ter:fault subcode".to_string()
-        }
+        fault.code.subcode,
+        Some(Subcode {
+            value: "ter:fault subcode".to_string(),
+            // subcode: Vec::new()
+        })
     );
-    assert_eq!(fault.reason.text, vec!["fault reason 1", "fault reason 2"]);
+    assert_eq!(fault.reason.text, vec![Reasontext{lang: "en".to_string()}, Reasontext{lang: "en".to_string()}]);
 }

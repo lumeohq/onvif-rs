@@ -1,6 +1,9 @@
 pub use crate::schema::common::*;
 use crate::schema::validate::Validate;
+use crate::utils;
+use macro_utils::*;
 use std::io::{Read, Write};
+use std::str::FromStr;
 use yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -77,10 +80,24 @@ impl Validate for Fault {}
 )]
 pub struct Faultreason {
     #[yaserde(prefix = "tns", rename = "Text")]
-    pub text: Vec<String>,
+    pub text: Vec<Reasontext>,
 }
 
 impl Validate for Faultreason {}
+
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(
+    prefix = "tns",
+    namespace = "tns: http://www.w3.org/2003/05/soap-envelope"
+)]
+pub struct Reasontext {
+    #[yaserde(attribute, prefix = "xml" rename = "lang")]
+    pub lang: String,
+
+    // TODO: process the value of Reasontext too
+}
+
+impl Validate for Reasontext {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -92,31 +109,13 @@ pub struct Faultcode {
     pub value: FaultcodeEnum,
 
     #[yaserde(prefix = "tns", rename = "Subcode")]
-    pub subcode: Vec<Subcode>,
+    pub subcode: Option<Subcode>,
 }
 
 impl Validate for Faultcode {}
 
-#[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
-pub enum FaultcodeEnum {
-    #[yaserde(rename = "tns:DataEncodingUnknown")]
-    DataEncodingUnknown,
-    #[yaserde(rename = "tns:MustUnderstand")]
-    MustUnderstand,
-    #[yaserde(rename = "tns:Receiver")]
-    Receiver,
-    #[yaserde(rename = "tns:Sender")]
-    Sender,
-    #[yaserde(rename = "tns:VersionMismatch")]
-    VersionMismatch,
-    __Unknown__(String),
-}
-
-impl Default for FaultcodeEnum {
-    fn default() -> FaultcodeEnum {
-        Self::__Unknown__("No valid variants".into())
-    }
-}
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct FaultcodeEnum(pub String);
 
 impl Validate for FaultcodeEnum {}
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -127,6 +126,7 @@ impl Validate for FaultcodeEnum {}
 pub struct Subcode {
     #[yaserde(prefix = "tns", rename = "Value")]
     pub value: String,
+
     // TODO: handle recursion
     // #[yaserde(prefix = "tns", rename = "Subcode")]
     // pub subcode: Vec<Subcode>,
