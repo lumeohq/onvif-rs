@@ -7,20 +7,18 @@ use std::str::FromStr;
 use yaserde::{YaDeserialize, YaSerialize};
 
 // Type used to reference logical and physical entities.
+// Token may be extended by intermediate terminal with adding prefix to make it
+// global unique.
+// The length should be within 36 characters for generating as a local token.
+// See "Remote Token" section in Resource Query specification.
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ReferenceToken(pub String);
 
 impl Validate for ReferenceToken {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() > "64".parse().unwrap() {
+        if self.0.len() > 64 {
             return Err(format!(
                 "MaxLength validation error. \nExpected: 0 length <= 64 \nActual: 0 length == {}",
-                self.0.len()
-            ));
-        }
-        if self.0.len() < "0".parse().unwrap() {
-            return Err(format!(
-                "MinLength validation error. \nExpected: 0 length >= 0 \nActual: 0 length == {}",
                 self.0.len()
             ));
         }
@@ -46,15 +44,9 @@ pub struct Name(pub String);
 
 impl Validate for Name {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() > "64".parse().unwrap() {
+        if self.0.len() > 64 {
             return Err(format!(
                 "MaxLength validation error. \nExpected: 0 length <= 64 \nActual: 0 length == {}",
-                self.0.len()
-            ));
-        }
-        if self.0.len() < "0".parse().unwrap() {
-            return Err(format!(
-                "MinLength validation error. \nExpected: 0 length >= 0 \nActual: 0 length == {}",
                 self.0.len()
             ));
         }
@@ -71,15 +63,9 @@ pub struct Description(pub String);
 
 impl Validate for Description {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() > "1024".parse().unwrap() {
+        if self.0.len() > 1024 {
             return Err(format!(
                 "MaxLength validation error. \nExpected: 0 length <= 1024 \nActual: 0 length == {}",
-                self.0.len()
-            ));
-        }
-        if self.0.len() < "0".parse().unwrap() {
-            return Err(format!(
-                "MinLength validation error. \nExpected: 0 length >= 0 \nActual: 0 length == {}",
                 self.0.len()
             ));
         }
@@ -93,7 +79,7 @@ pub struct PositiveInteger(pub u32);
 
 impl Validate for PositiveInteger {
     fn validate(&self) -> Result<(), String> {
-        if self.0 < 1 {
+        if self.0 < "1".parse::<u32>().unwrap() {
             return Err(format!("MinInclusive validation error: invalid value of 0! \nExpected: 0 >= 1.\nActual: 0 == {}", self.0));
         }
         Ok(())
@@ -116,3 +102,13 @@ pub struct Attribute {
 }
 
 impl Validate for Attribute {}
+
+// Recognition/identification types supported by ONVIF.
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct RecognitionType(pub String);
+
+impl Validate for RecognitionType {}
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct StringList(pub Vec<String>);
+
+impl Validate for StringList {}
