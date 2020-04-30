@@ -24,8 +24,8 @@ async-trait ="0.1.24"
 tokio = { version = "0.2.11", features = ["full"] }
 num-bigint = "0.2.6"
 bigdecimal = "0.1.0"
-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "4e602e8e" }
-xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "4e602e8e" }
+macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
