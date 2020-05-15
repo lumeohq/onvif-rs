@@ -20,22 +20,22 @@ onvif-rs = "0.1"
 ```
 
 ## Examples
-To [discover](examples/discovery.rs) devices on the local network:
+To [discover](onvif-rs/examples/discovery.rs) devices on the local network:
 ```shell script
 cargo run --example discovery
 ```
 
-To [get date and time](examples/camera_datetime.rs) from a known device:
+To [get date and time](onvif-rs/examples/camera_datetime.rs) from a known device:
 ```shell script
 cargo run --example camera_datetime -- http://192.168.0.2:8000
 ```
 
-To [set camera hostname](examples/camera_set_hostname.rs) using credentials:
+To [set camera hostname](onvif-rs/examples/camera_set_hostname.rs) using credentials:
 ```shell script
 cargo run --example camera_set_hostname -- http://192.168.0.2:8000 admin qwerty cam2
 ```
 
-To [get RTSP stream URL](examples/camera_get_stream_uri.rs):
+To [get RTSP stream URL](onvif-rs/examples/camera_get_stream_uri.rs):
 ```shell script
 cargo run --example get_stream_uri -- http://192.168.0.2:8000
 ```

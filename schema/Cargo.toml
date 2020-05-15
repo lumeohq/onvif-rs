@@ -1,0 +1,22 @@
+[package]
+name = "schema"
+version = "0.1.0"
+authors = ["Chris Bruce <chris@lumeo.com>"]
+edition = "2018"
+
+[dependencies]
+log = "0.4.8"
+xml-rs = "0.8.0"
+yaserde = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
+yaserde_derive = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
+itertools = "0.8.1"
+chrono = "0.4.10"
+async-trait ="0.1.24"
+tokio = { version = "0.2.11", features = ["full"] }
+num-bigint = "0.2.6"
+bigdecimal = "0.1.0"
+macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
+
+[dev-dependencies]
+assert_approx_eq = "1.1.0"
