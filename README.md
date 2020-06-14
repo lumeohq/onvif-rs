@@ -19,6 +19,18 @@ Cargo.toml:
 onvif-rs = "0.1"
 ```
 
+## Troubleshooting 
+
+If you have an issue with OpenSSL build under Ubuntu, perform the following actions:
+
+```
+sudo apt install openssl1.0 libssl1.0.0 libssl1.0-dev
+cargo clean
+export OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu
+export OPENSSL_INCLUDE_DIR=/usr/include/openssl
+cargo build
+```
+
 ## Examples
 To [discover](onvif-rs/examples/discovery.rs) devices on the local network:
 ```shell script
