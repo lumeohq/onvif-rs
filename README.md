@@ -37,19 +37,17 @@ To [discover](onvif-rs/examples/discovery.rs) devices on the local network:
 cargo run --example discovery
 ```
 
-To [get date and time](onvif-rs/examples/camera_datetime.rs) from a known device:
+To [inspect and control a camera](onvif-rs/examples/camera.rs):
 ```shell script
-cargo run --example camera_datetime -- http://192.168.0.2:8000
-```
+cargo run --example camera -- help
 
-To [set camera hostname](onvif-rs/examples/camera_set_hostname.rs) using credentials:
-```shell script
-cargo run --example camera_set_hostname -- http://192.168.0.2:8000 admin qwerty cam2
-```
+cargo run --example camera -- get-system-date-and-time \
+    --uri=http://192.168.0.2:8000
 
-To [get RTSP stream URL](onvif-rs/examples/camera_get_stream_uri.rs):
-```shell script
-cargo run --example get_stream_uri -- http://192.168.0.2:8000
+cargo run --example camera -- set-hostname \
+    --uri=http://192.168.0.2:8000 --username=admin --password=qwerty cam2
+
+cargo run --example camera -- get-stream-uris --uri=http://192.168.0.2:8000
 ```
 
 ## Dependencies
