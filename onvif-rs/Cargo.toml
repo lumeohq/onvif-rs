@@ -30,6 +30,7 @@ num-bigint = "0.2.6"
 bigdecimal = "0.1.0"
 macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
 xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
+thiserror = "1.0"
 
 [dev-dependencies]
 dotenv = "0.15.0"

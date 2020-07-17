@@ -2,11 +2,15 @@ use crate::soap;
 use async_std::{pin::Pin, stream::Stream};
 use schema::ws_discovery::{probe, probe_matches};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    Network(std::io::Error),
-    Internal(String),
+    #[error("Network error: {0}")]
+    Network(#[from] std::io::Error),
+
+    #[error("(De)serialization error: {0}")]
+    Serde(String),
 }
 
 type StringStream = Pin<Box<dyn Stream<Item = String>>>;
@@ -62,7 +66,7 @@ type StringStream = Pin<Box<dyn Stream<Item = String>>>;
 /// ```
 pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Error> {
     let probe = build_probe();
-    let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Internal)?;
+    let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Serde)?;
 
     debug!("Probe XML: {}", probe_xml);
 
@@ -82,10 +86,9 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
             .send_to(&probe_xml.as_bytes(), multi_socket_addr)
             .await?;
 
-        Ok(socket)
+        Ok::<async_std::net::UdpSocket, std::io::Error>(socket)
     })()
-    .await
-    .map_err(Error::Network)?;
+    .await?;
 
     let stream = {
         use futures::stream::StreamExt;
