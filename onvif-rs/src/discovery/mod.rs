@@ -1,5 +1,4 @@
 use crate::soap;
-use async_std::{pin::Pin, stream::Stream};
 use schema::ws_discovery::{probe, probe_matches};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
@@ -8,8 +7,6 @@ pub enum Error {
     Network(std::io::Error),
     Internal(String),
 }
-
-type StringStream = Pin<Box<dyn Stream<Item = String>>>;
 
 /// Discovers devices on a local network asynchronously using WS-discovery.
 ///
@@ -60,7 +57,9 @@ type StringStream = Pin<Box<dyn Stream<Item = String>>>;
 ///     println!("Devices found: {:?}", addrs);
 /// };
 /// ```
-pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Error> {
+pub async fn discover(
+    duration: std::time::Duration,
+) -> Result<impl futures::Stream<Item = String>, Error> {
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Internal)?;
 
@@ -116,7 +115,7 @@ pub async fn discover(duration: std::time::Duration) -> Result<StringStream, Err
             .filter_map(|event| event)
     };
 
-    Ok(Box::pin(timed_stream))
+    Ok(timed_stream)
 }
 
 async fn recv_string(s: &async_std::net::UdpSocket) -> std::io::Result<String> {
@@ -137,7 +136,7 @@ where
 {
     use futures::stream::StreamExt;
 
-    let stream = futures::stream::iter(
+    let mut stream = futures::stream::iter(
         envelope
             .body
             .probe_matches
@@ -145,15 +144,16 @@ where
             .iter()
             .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
             .map(|x| x.to_string()),
-    )
-    .filter(|addr| check_addr(addr.clone()))
-    .take(1);
+    );
 
-    let addr = Box::pin(stream).next().await;
+    while let Some(addr) = stream.next().await {
+        if check_addr(addr.clone()).await {
+            debug!("Responding addr: {:?}", addr);
+            return Some(addr);
+        }
+    }
 
-    debug!("Responding addr: {:?}", addr);
-
-    addr
+    None
 }
 
 fn build_probe() -> probe::Envelope {
