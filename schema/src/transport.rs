@@ -1,10 +1,14 @@
 use async_trait::async_trait;
+use thiserror::Error;
 use yaserde::{YaDeserialize, YaSerialize};
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("Serialization failed: {0}")]
     Serialization(String),
+    #[error("Deserialization failed: {0}")]
     Deserialization(String),
+    #[error("Transport error: {0}")]
     Transport(String),
 }
 
