@@ -380,15 +380,14 @@ async fn get_status(clients: &Clients) {
         let media_client = clients.media.as_ref().unwrap();
         let profile = &schema::media::get_profiles(media_client, &Default::default())
             .await
-            .unwrap().profiles[0];
+            .unwrap()
+            .profiles[0];
         let profile_token = schema::onvif::ReferenceToken(profile.token.0.clone());
         println!(
             "ptz status: {:#?}",
-            &schema::ptz::get_status(ptz, &schema::ptz::GetStatus {
-                profile_token
-            })
-            .await
-            .unwrap()
+            &schema::ptz::get_status(ptz, &schema::ptz::GetStatus { profile_token })
+                .await
+                .unwrap()
         );
     }
 }
@@ -409,6 +408,6 @@ async fn main() {
         Cmd::SetHostname { hostname } => set_hostname(&clients, hostname).await,
         Cmd::EnableAnalytics => enable_analytics(&clients).await,
         Cmd::GetAnalytics => get_analytics(&clients).await,
-	Cmd::GetStatus => get_status(&clients).await,
+        Cmd::GetStatus => get_status(&clients).await,
     }
 }
