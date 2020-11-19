@@ -6,6 +6,10 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["reqwest/default-tls"]
+rustls = ["reqwest/rustls-tls"]
+
 [dependencies]
 schema = { path = "../schema" }
 log = "0.4.8"
@@ -14,7 +18,7 @@ xmltree = "0.8.0"
 yaserde = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
 yaserde_derive = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
 itertools = "0.8.1"
-reqwest = "0.10.1"
+reqwest = { version = "0.10.1", default-features = false }
 digest_auth = "0.2.3"
 chrono = "0.4.10"
 base64 = "0.11.0"
