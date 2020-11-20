@@ -1,6 +1,6 @@
 [workspace]
 
 members = [
-    "onvif-rs",
+    "onvif",
     "schema",
 ]

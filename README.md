@@ -16,7 +16,7 @@ ONVIF-rs is a Rust client library implementation of the ONVIF specification.
 Cargo.toml:
 ```toml
 [dependencies]
-onvif-rs = "0.1"
+onvif = "0.1"
 ```
 
 ## Troubleshooting 
@@ -32,12 +32,12 @@ cargo build
 ```
 
 ## Examples
-To [discover](onvif-rs/examples/discovery.rs) devices on the local network:
+To [discover](onvif/examples/discovery.rs) devices on the local network:
 ```shell script
 cargo run --example discovery
 ```
 
-To [inspect and control a camera](onvif-rs/examples/camera.rs):
+To [inspect and control a camera](onvif/examples/camera.rs):
 ```shell script
 cargo run --example camera -- help
 
