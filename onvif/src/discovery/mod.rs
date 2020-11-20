@@ -26,7 +26,7 @@ pub enum Error {
 /// You can access each element on the stream concurrently as soon as devices respond:
 ///
 /// ```
-/// use onvif_rs::discovery;
+/// use onvif::discovery;
 /// use futures::stream::StreamExt; // to use for_each_concurrent
 ///
 /// const MAX_CONCURRENT_JUMPERS: usize = 100;
@@ -47,7 +47,7 @@ pub enum Error {
 /// Or you can await on a collection of unique devices found in one second:
 ///
 /// ```
-/// use onvif_rs::discovery;
+/// use onvif::discovery;
 /// use futures::stream::StreamExt; // to use collect
 /// use std::collections::HashSet;
 ///
