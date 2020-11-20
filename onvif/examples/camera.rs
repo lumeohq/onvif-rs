@@ -1,5 +1,5 @@
 use log::debug;
-use onvif_rs::{schema, soap};
+use onvif::{schema, soap};
 use reqwest::Url;
 use structopt::StructOpt;
 

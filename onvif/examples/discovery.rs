@@ -1,5 +1,5 @@
-extern crate onvif_rs;
-use onvif_rs::discovery;
+extern crate onvif;
+use onvif::discovery;
 
 #[tokio::main]
 async fn main() {
