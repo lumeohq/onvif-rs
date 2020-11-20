@@ -11,8 +11,5 @@ fn without_whitespaces<'a>(
 ) -> impl Iterator<Item = Result<xml::reader::XmlEvent, xml::reader::Error>> + 'a {
     xml::EventReader::new(expected.as_bytes())
         .into_iter()
-        .filter(|e| match e {
-            Ok(xml::reader::XmlEvent::Whitespace(_)) => false,
-            _ => true,
-        })
+        .filter(|e| !matches!(e, Ok(xml::reader::XmlEvent::Whitespace(_))))
 }
