@@ -88,7 +88,7 @@ impl Clients {
             media2: None,
             analytics: None,
         };
-        let services = schema::devicemgmt::get_services(&mut out.devicemgmt, &Default::default())
+        let services = schema::devicemgmt::get_services(&out.devicemgmt, &Default::default())
             .await
             .unwrap();
         for s in &services.service {
@@ -329,7 +329,7 @@ async fn enable_analytics(clients: &Clients) {
             },
         )
         .collect();
-    if requests.len() > 0 {
+    if !requests.is_empty() {
         println!(
             "Enabling metadata on {}/{} configs",
             requests.len(),
