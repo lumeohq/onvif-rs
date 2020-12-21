@@ -1,6 +1,6 @@
 name: Git Checks
 
-on: [push]
+on: [pull_request]
 
 jobs:
   block-fixup:
@@ -9,4 +9,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2.0.0
     - name: Check fixup commits. Rebase w/ autosquash required if this fails.
-      uses: 13rac1/block-fixup-merge-action@v1.1.1
+      uses: lumeohq/block-fixup-merge-action@v2.0.0
