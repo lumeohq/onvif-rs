@@ -54,20 +54,16 @@ pub fn soap(xml: &str, username_token: &Option<auth::UsernameToken>) -> Result<S
 pub fn unsoap(xml: &str) -> Result<String, Error> {
     let root = parse(xml)?;
 
-    let envelope = match root.name.as_ref() {
-        "Envelope" => Ok(root),
-        _ => Err(Error::EnvelopeNotFound),
-    }?;
+    if root.name != "Envelope" {
+        return Err(Error::EnvelopeNotFound);
+    }
 
-    let body = match envelope.get_child("Body") {
-        Some(body) => Ok(body),
-        None => Err(Error::BodyNotFound),
-    }?;
+    let body = root.get_child("Body").ok_or(Error::BodyNotFound)?;
 
-    match body.get_child("Fault") {
-        Some(fault) => deserialize_fault(fault).and_then(|fault| Err(Error::Fault(fault))),
-        None => Ok(()),
-    }?;
+    if let Some(fault) = body.get_child("Fault") {
+        let fault = deserialize_fault(fault)?;
+        return Err(Error::Fault(fault));
+    }
 
     body.children
         .iter()
