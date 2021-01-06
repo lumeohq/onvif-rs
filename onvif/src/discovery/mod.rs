@@ -1,6 +1,10 @@
 use crate::soap;
+use futures_core::stream::Stream;
 use schema::ws_discovery::{probe, probe_matches};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::{
+    future::Future,
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -27,7 +31,7 @@ pub enum Error {
 ///
 /// ```
 /// use onvif::discovery;
-/// use futures::stream::StreamExt; // to use for_each_concurrent
+/// use futures_util::stream::StreamExt; // to use for_each_concurrent
 ///
 /// const MAX_CONCURRENT_JUMPERS: usize = 100;
 ///
@@ -48,7 +52,7 @@ pub enum Error {
 ///
 /// ```
 /// use onvif::discovery;
-/// use futures::stream::StreamExt; // to use collect
+/// use futures_util::stream::StreamExt; // to use collect
 /// use std::collections::HashSet;
 ///
 /// async {
@@ -61,9 +65,7 @@ pub enum Error {
 ///     println!("Devices found: {:?}", addrs);
 /// };
 /// ```
-pub async fn discover(
-    duration: std::time::Duration,
-) -> Result<impl futures::Stream<Item = String>, Error> {
+pub async fn discover(duration: std::time::Duration) -> Result<impl Stream<Item = String>, Error> {
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Serde)?;
 
@@ -90,17 +92,17 @@ pub async fn discover(
     .await?;
 
     let stream = {
-        use futures::stream::StreamExt;
+        use futures_util::stream::StreamExt;
 
         // Make an async stream of XML's
-        futures::stream::unfold(socket, |s| async { Some((recv_string(&s).await, s)) })
+        futures_util::stream::unfold(socket, |s| async { Some((recv_string(&s).await, s)) })
             .filter_map(|string| async move { string.ok() })
             .filter_map(|xml| async move {
                 debug!("Probe match XML: {}", xml);
                 yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok()
             })
             .filter(move |envelope| {
-                futures::future::ready(envelope.header.relates_to == probe.header.message_id)
+                futures_util::future::ready(envelope.header.relates_to == probe.header.message_id)
             })
             .filter_map(|envelope| get_responding_addr(envelope, is_addr_responding))
     };
@@ -135,11 +137,11 @@ async fn get_responding_addr<F, Fut>(
 ) -> Option<String>
 where
     F: FnMut(String) -> Fut,
-    Fut: futures::Future<Output = bool>,
+    Fut: Future<Output = bool>,
 {
-    use futures::stream::StreamExt;
+    use futures_util::stream::StreamExt;
 
-    let mut stream = futures::stream::iter(
+    let mut stream = futures_util::stream::iter(
         envelope
             .body
             .probe_matches

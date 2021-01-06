@@ -6,7 +6,7 @@ async fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    use futures::stream::StreamExt;
+    use futures_util::stream::StreamExt;
     const MAX_CONCURRENT_JUMPERS: usize = 100;
 
     discovery::discover(std::time::Duration::from_secs(1))
