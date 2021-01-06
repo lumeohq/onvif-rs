@@ -10,6 +10,7 @@ log = "0.4.11"
 xml-rs = "0.8.3"
 yaserde = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
 yaserde_derive = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
+# FIXME: the UtilsTupleIo from macro-utils currently requires itertools to be available
 itertools = "0.10.0"
 chrono = "0.4.19"
 async-trait = "0.1.42"
