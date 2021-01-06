@@ -28,7 +28,6 @@ futures = "0.3.8"
 async-std = { version = "1.8.0", features = ["unstable"] }
 async-trait = "0.1.41"
 async-recursion = "0.3.1"
-tokio = { version = "1.0.1", features = ["full"] }
 num-bigint = "0.3.1"
 bigdecimal = "0.2.0"
 macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "ff5b894" }
@@ -39,3 +38,4 @@ thiserror = "1.0"
 dotenv = "0.15.0"
 env_logger = "0.8.2"
 structopt = "0.3.21"
+tokio = { version = "1.0.1", features = ["full"] }
