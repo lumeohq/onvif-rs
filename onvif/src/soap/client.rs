@@ -1,8 +1,7 @@
-extern crate reqwest;
-use self::reqwest::Url;
 use crate::soap;
 use async_recursion::async_recursion;
 use async_trait::async_trait;
+use reqwest::Url;
 use schema::transport::{Error, Transport};
 
 #[derive(Default, Debug, Clone)]
