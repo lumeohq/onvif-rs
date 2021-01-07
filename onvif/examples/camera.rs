@@ -224,7 +224,7 @@ async fn get_stream_uris(clients: &Clients) {
         })
         .collect();
 
-    let responses = futures::future::try_join_all(
+    let responses = futures_util::future::try_join_all(
         requests
             .iter()
             .map(|r| schema::media::get_stream_uri(media_client, r)),
@@ -335,7 +335,7 @@ async fn enable_analytics(clients: &Clients) {
             requests.len(),
             profiles.profiles.len()
         );
-        futures::future::try_join_all(
+        futures_util::future::try_join_all(
             requests
                 .iter()
                 .map(|r| schema::media::add_metadata_configuration(media_client, r)),

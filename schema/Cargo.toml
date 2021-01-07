@@ -6,19 +6,20 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-log = "0.4.8"
-xml-rs = "0.8.0"
+log = "0.4.11"
+xml-rs = "0.8.3"
 yaserde = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
 yaserde_derive = { git = "https://github.com/media-io/yaserde", rev = "137af01" }
-itertools = "0.8.1"
-chrono = "0.4.10"
-async-trait ="0.1.24"
-num-bigint = "0.2.6"
-bigdecimal = "0.1.0"
-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
-xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "f3be2b95" }
-thiserror = "1.0.20"
+# FIXME: the UtilsTupleIo from macro-utils currently requires itertools to be available
+itertools = "0.10.0"
+chrono = "0.4.19"
+async-trait = "0.1.42"
+num-bigint = "0.3.1"
+bigdecimal = "0.2.0"
+macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "ff5b894" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "ff5b894" }
+thiserror = "1.0.23"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
-tokio = { version = "0.2.11", features = ["full"] }
+tokio = { version = "1.0.1", features = ["full"] }
