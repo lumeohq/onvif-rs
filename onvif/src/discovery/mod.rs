@@ -139,19 +139,15 @@ where
     F: FnMut(String) -> Fut,
     Fut: Future<Output = bool>,
 {
-    use futures_util::stream::StreamExt;
+    let iter = envelope
+        .body
+        .probe_matches
+        .probe_match
+        .iter()
+        .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
+        .map(|x| x.to_string());
 
-    let mut stream = futures_util::stream::iter(
-        envelope
-            .body
-            .probe_matches
-            .probe_match
-            .iter()
-            .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
-            .map(|x| x.to_string()),
-    );
-
-    while let Some(addr) = stream.next().await {
+    for addr in iter {
         if check_addr(addr.clone()).await {
             debug!("Responding addr: {:?}", addr);
             return Some(addr);
