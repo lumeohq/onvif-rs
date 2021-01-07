@@ -4,11 +4,14 @@ use futures_core::stream::Stream;
 use schema::ws_discovery::{probe, probe_matches};
 use std::{
     future::Future,
-    io,
     net::{IpAddr, Ipv4Addr, SocketAddr},
-    time::{Duration, Instant},
 };
 use thiserror::Error;
+use tokio::{
+    io,
+    net::UdpSocket,
+    time::{self, Duration, Instant},
+};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -84,7 +87,7 @@ pub async fn discover(duration: Duration) -> Result<impl Stream<Item = String>, 
         let local_socket_addr = SocketAddr::new(IpAddr::V4(LOCAL_IPV4_ADDR), LOCAL_PORT);
         let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
 
-        let socket = async_std::net::UdpSocket::bind(local_socket_addr).await?;
+        let socket = UdpSocket::bind(local_socket_addr).await?;
         socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
         socket
             .send_to(&probe_xml.as_bytes(), multi_socket_addr)
@@ -124,9 +127,9 @@ pub async fn discover(duration: Duration) -> Result<impl Stream<Item = String>, 
     })
 }
 
-async fn recv_string(s: &async_std::net::UdpSocket, timeout: Duration) -> io::Result<String> {
+async fn recv_string(s: &UdpSocket, timeout: Duration) -> io::Result<String> {
     let mut buf = vec![0; 16 * 1024];
-    let (len, _src) = async_std::io::timeout(timeout, s.recv_from(&mut buf)).await?;
+    let (len, _src) = time::timeout(timeout, s.recv_from(&mut buf)).await??;
 
     Ok(String::from_utf8_lossy(&buf[..len]).to_string())
 }
