@@ -71,7 +71,7 @@ pub async fn discover(duration: std::time::Duration) -> Result<impl Stream<Item 
 
     debug!("Probe XML: {}", probe_xml);
 
-    let socket = (|| async {
+    let socket = {
         const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
         const LOCAL_PORT: u16 = 0;
 
@@ -87,9 +87,8 @@ pub async fn discover(duration: std::time::Duration) -> Result<impl Stream<Item 
             .send_to(&probe_xml.as_bytes(), multi_socket_addr)
             .await?;
 
-        Ok::<async_std::net::UdpSocket, std::io::Error>(socket)
-    })()
-    .await?;
+        socket
+    };
 
     let stream = {
         use futures_util::stream::StreamExt;
