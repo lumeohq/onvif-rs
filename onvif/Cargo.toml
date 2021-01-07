@@ -24,8 +24,8 @@ sha1 = "0.6.0"
 url = "2.2.0"
 uuid = { version = "0.8.1", features = ["v4"] }
 futures-core = "0.3.8"
-futures-util = "0.3.8"
 async-std = { version = "1.8.0", features = ["unstable"] }
+async-stream = "0.3.0"
 async-trait = "0.1.41"
 async-recursion = "0.3.1"
 num-bigint = "0.3.1"
@@ -37,5 +37,6 @@ thiserror = "1.0"
 [dev-dependencies]
 dotenv = "0.15.0"
 env_logger = "0.8.2"
+futures-util = "0.3.8"
 structopt = "0.3.21"
 tokio = { version = "1.0.1", features = ["full"] }
