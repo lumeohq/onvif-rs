@@ -1,4 +1,5 @@
 use crate::soap;
+use async_stream::stream;
 use futures_core::stream::Stream;
 use schema::ws_discovery::{probe, probe_matches};
 use std::{
@@ -6,11 +7,16 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 use thiserror::Error;
+use tokio::{
+    io,
+    net::UdpSocket,
+    time::{self, Duration, Instant},
+};
 
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Network error: {0}")]
-    Network(#[from] std::io::Error),
+    Network(#[from] io::Error),
 
     #[error("(De)serialization error: {0}")]
     Serde(String),
@@ -65,13 +71,13 @@ pub enum Error {
 ///     println!("Devices found: {:?}", addrs);
 /// };
 /// ```
-pub async fn discover(duration: std::time::Duration) -> Result<impl Stream<Item = String>, Error> {
+pub async fn discover(duration: Duration) -> Result<impl Stream<Item = String>, Error> {
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Serde)?;
 
     debug!("Probe XML: {}", probe_xml);
 
-    let socket = (|| async {
+    let socket = {
         const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
         const LOCAL_PORT: u16 = 0;
 
@@ -81,52 +87,49 @@ pub async fn discover(duration: std::time::Duration) -> Result<impl Stream<Item 
         let local_socket_addr = SocketAddr::new(IpAddr::V4(LOCAL_IPV4_ADDR), LOCAL_PORT);
         let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
 
-        let socket = async_std::net::UdpSocket::bind(local_socket_addr).await?;
+        let socket = UdpSocket::bind(local_socket_addr).await?;
         socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
         socket
             .send_to(&probe_xml.as_bytes(), multi_socket_addr)
             .await?;
 
-        Ok::<async_std::net::UdpSocket, std::io::Error>(socket)
-    })()
-    .await?;
+        socket
+    };
 
-    let stream = {
-        use futures_util::stream::StreamExt;
+    Ok(stream! {
+        let probe = &probe;
+        let socket = &socket;
 
-        // Make an async stream of XML's
-        futures_util::stream::unfold(socket, |s| async { Some((recv_string(&s).await, s)) })
-            .filter_map(|string| async move { string.ok() })
-            .filter_map(|xml| async move {
+        let start = Instant::now();
+        loop {
+            let elapsed = start.elapsed();
+            if elapsed >= duration {
+                break;
+            }
+
+            let timeout = duration - elapsed;
+
+            // Separate async block to be able to short-circuit on `None`.
+            let try_produce_item = async move {
+                let xml = recv_string(socket, timeout).await.ok()?;
                 debug!("Probe match XML: {}", xml);
-                yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok()
-            })
-            .filter(move |envelope| {
-                futures_util::future::ready(envelope.header.relates_to == probe.header.message_id)
-            })
-            .filter_map(|envelope| get_responding_addr(envelope, is_addr_responding))
-    };
+                let envelope = yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok()?;
+                if envelope.header.relates_to != probe.header.message_id {
+                    return None;
+                }
+                get_responding_addr(envelope, is_addr_responding).await
+            };
 
-    let timed_stream = {
-        use async_std::stream::StreamExt;
-
-        stream
-            // Blend in an interval stream to implement timeout
-            // Let our payload stream contain Some's and timeout stream contain None's
-            .map(Some)
-            .merge(async_std::stream::interval(duration).map(|_| None))
-            // Terminate stream when the first None is received
-            .take_while(|event| event.is_some())
-            .filter_map(|event| event)
-    };
-
-    Ok(timed_stream)
+            if let Some(item) = try_produce_item.await {
+                yield item;
+            }
+        }
+    })
 }
 
-async fn recv_string(s: &async_std::net::UdpSocket) -> std::io::Result<String> {
+async fn recv_string(s: &UdpSocket, timeout: Duration) -> io::Result<String> {
     let mut buf = vec![0; 16 * 1024];
-
-    let (len, _src) = s.recv_from(&mut buf).await?;
+    let (len, _src) = time::timeout(timeout, s.recv_from(&mut buf)).await??;
 
     Ok(String::from_utf8_lossy(&buf[..len]).to_string())
 }
@@ -139,19 +142,15 @@ where
     F: FnMut(String) -> Fut,
     Fut: Future<Output = bool>,
 {
-    use futures_util::stream::StreamExt;
+    let iter = envelope
+        .body
+        .probe_matches
+        .probe_match
+        .iter()
+        .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
+        .map(|x| x.to_string());
 
-    let mut stream = futures_util::stream::iter(
-        envelope
-            .body
-            .probe_matches
-            .probe_match
-            .iter()
-            .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
-            .map(|x| x.to_string()),
-    );
-
-    while let Some(addr) = stream.next().await {
+    for addr in iter {
         if check_addr(addr.clone()).await {
             debug!("Responding addr: {:?}", addr);
             return Some(addr);
