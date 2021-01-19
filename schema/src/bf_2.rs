@@ -1,8 +1,6 @@
 pub use crate::common::*;
 use crate::{validate::Validate, ws_addr as wsa, xml_xsd as xml};
-use std::io::{Read, Write};
 use xsd_types::types as xsd;
-use yaserde::{YaDeserialize, YaSerialize};
 
 // pub type BaseFault = BaseFaultType;
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]

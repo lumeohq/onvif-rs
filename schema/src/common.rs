@@ -1,10 +1,7 @@
-use crate::utils;
 use crate::validate::Validate;
 use macro_utils::*;
-use std::io::{Read, Write};
 use std::str::FromStr;
 use xsd_types::types as xs;
-use yaserde::{YaDeserialize, YaSerialize};
 
 // Unique identifier for a physical or logical resource.
 // Tokens should be assigned such that they are unique within a device. Tokens

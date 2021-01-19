@@ -1,9 +1,7 @@
 use crate::onvif as tt;
 use crate::transport;
 use crate::validate::Validate;
-use std::io::{Read, Write};
 use xsd_types::types as xs;
-use yaserde::{YaDeserialize, YaSerialize};
 
 // The direction for PanMove to move the device.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]

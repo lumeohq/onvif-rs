@@ -1,8 +1,6 @@
 use crate::transport;
 use crate::validate::Validate;
 use crate::{onvif as tt, types as pt};
-use std::io::{Read, Write};
-use yaserde::{YaDeserialize, YaSerialize};
 
 // The service capabilities reflect optional functionality of a service. The
 // information is static

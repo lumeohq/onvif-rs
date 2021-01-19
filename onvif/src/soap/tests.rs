@@ -34,9 +34,6 @@ fn test_soap() {
 
 #[test]
 fn test_unsoap() {
-    use std::io::Read;
-    use yaserde::YaDeserialize;
-
     #[derive(Default, PartialEq, Debug, YaDeserialize)]
     #[yaserde(prefix = "my", namespace = "my: http://www.example.my/schema")]
     pub struct Book {

@@ -1,9 +1,6 @@
-use crate::utils;
 use crate::validate::Validate;
 use macro_utils::*;
-use std::io::{Read, Write};
 use std::str::FromStr;
-use yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ContentType(pub String);

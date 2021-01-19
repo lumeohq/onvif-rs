@@ -1,11 +1,8 @@
 pub use crate::common::*;
-use crate::utils;
 use crate::{b_2 as wsnt, soap_envelope as soapenv, validate::Validate, xmlmime as xmime, xop};
 use macro_utils::*;
-use std::io::{Read, Write};
 use std::str::FromStr;
 use xsd_types::types as xs;
-use yaserde::{YaDeserialize, YaSerialize};
 
 // Base class for physical entities like inputs and outputs.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
