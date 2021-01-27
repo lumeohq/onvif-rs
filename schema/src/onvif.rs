@@ -1,11 +1,9 @@
-pub use crate::common::*;
-use crate::utils;
 use crate::{b_2 as wsnt, soap_envelope as soapenv, validate::Validate, xmlmime as xmime, xop};
 use macro_utils::*;
-use std::io::{Read, Write};
 use std::str::FromStr;
 use xsd_types::types as xs;
-use yaserde::{YaDeserialize, YaSerialize};
+
+pub use crate::common::*;
 
 // Base class for physical entities like inputs and outputs.
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
@@ -24,7 +22,7 @@ pub struct Name(pub String);
 
 impl Validate for Name {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() > "64".parse().unwrap() {
+        if self.0.len() > 64 {
             return Err(format!(
                 "MaxLength validation error. \nExpected: 0 length <= 64 \nActual: 0 length == {}",
                 self.0.len()
@@ -117,18 +115,22 @@ impl Validate for IntList {}
 pub struct IntAttrList(pub Vec<i32>);
 
 impl Validate for IntAttrList {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct FloatAttrList(pub Vec<f64>);
 
 impl Validate for FloatAttrList {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct StringAttrList(pub Vec<String>);
 
 impl Validate for StringAttrList {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ReferenceTokenList(pub Vec<ReferenceToken>);
 
 impl Validate for ReferenceTokenList {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FloatList {
@@ -418,6 +420,7 @@ pub struct RotateExtension {}
 impl Validate for RotateExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum RotateMode {
     // Enable the Rotate feature. Degree of rotation is specified Degree
     // parameter.
@@ -581,6 +584,7 @@ pub struct RotateOptionsExtension {}
 impl Validate for RotateOptionsExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum SceneOrientationMode {
     #[yaserde(rename = "MANUAL")]
     Manual,
@@ -598,6 +602,7 @@ impl Default for SceneOrientationMode {
 impl Validate for SceneOrientationMode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum SceneOrientationOption {
     Below,
     Horizon,
@@ -636,6 +641,7 @@ impl Validate for SceneOrientation {}
 pub struct ViewModes(pub String);
 
 impl Validate for ViewModes {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct VideoEncoderConfiguration {
@@ -697,6 +703,7 @@ pub struct VideoEncoderConfiguration {
 impl Validate for VideoEncoderConfiguration {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum VideoEncoding {
     #[yaserde(rename = "JPEG")]
     Jpeg,
@@ -715,6 +722,7 @@ impl Default for VideoEncoding {
 impl Validate for VideoEncoding {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Mpeg4Profile {
     #[yaserde(rename = "SP")]
     Sp,
@@ -732,6 +740,7 @@ impl Default for Mpeg4Profile {
 impl Validate for Mpeg4Profile {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum H264Profile {
     Baseline,
     Main,
@@ -1047,6 +1056,7 @@ impl Validate for H264Options2 {}
 // Video Media Subtypes as referenced by IANA (without the leading "video/"
 // Video Media Type). See also
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum VideoEncodingMimeNames {
     #[yaserde(rename = "JPEG")]
     Jpeg,
@@ -1066,6 +1076,7 @@ impl Default for VideoEncodingMimeNames {
 impl Validate for VideoEncodingMimeNames {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum VideoEncodingProfiles {
     Simple,
     AdvancedSimple,
@@ -1310,6 +1321,7 @@ pub struct AudioEncoderConfiguration {
 impl Validate for AudioEncoderConfiguration {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum AudioEncoding {
     G711,
     G726,
@@ -1357,6 +1369,7 @@ impl Validate for AudioEncoderConfigurationOption {}
 // Audio Media Subtypes as referenced by IANA (without the leading "audio/"
 // Audio Media Type). See also
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum AudioEncodingMimeNames {
     #[yaserde(rename = "PCMU")]
     Pcmu,
@@ -1598,6 +1611,7 @@ pub struct MetadataConfigurationOptionsExtension2 {}
 impl Validate for MetadataConfigurationOptionsExtension2 {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum MetadataCompressionType {
     None,
     #[yaserde(rename = "GZIP")]
@@ -2007,6 +2021,7 @@ pub struct StreamSetup {
 impl Validate for StreamSetup {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum StreamType {
     #[yaserde(rename = "RTP-Unicast")]
     RtpUnicast,
@@ -2040,6 +2055,7 @@ pub struct Transport {
 impl Validate for Transport {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum TransportProtocol {
     #[yaserde(rename = "UDP")]
     Udp,
@@ -2088,6 +2104,7 @@ pub struct MediaUri {
 impl Validate for MediaUri {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ScopeDefinition {
     Fixed,
     Configurable,
@@ -2117,6 +2134,7 @@ pub struct Scope {
 impl Validate for Scope {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum DiscoveryMode {
     Discoverable,
     NonDiscoverable,
@@ -2188,10 +2206,10 @@ pub struct NetworkInterfaceConfigPriority(pub xs::Integer);
 
 impl Validate for NetworkInterfaceConfigPriority {
     fn validate(&self) -> Result<(), String> {
-        if self.0 < "0".parse().unwrap() {
+        if self.0 < "0".parse::<xs::Integer>().unwrap() {
             return Err(format!("MinInclusive validation error: invalid value of 0! \nExpected: 0 >= 0.\nActual: 0 == {}", self.0));
         }
-        if self.0 > "31".parse().unwrap() {
+        if self.0 > "31".parse::<xs::Integer>().unwrap() {
             return Err(format!("MaxInclusive validation error: invalid value of 0! \nExpected: 0 <= 31.\nActual: 0 == {}", self.0));
         }
         Ok(())
@@ -2247,6 +2265,7 @@ pub struct NetworkInterfaceConnectionSetting {
 impl Validate for NetworkInterfaceConnectionSetting {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Duplex {
     Full,
     Half,
@@ -2265,6 +2284,7 @@ impl Validate for Duplex {}
 pub struct IanaIfTypes(pub i32);
 
 impl Validate for IanaIfTypes {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct NetworkInterfaceInfo {
@@ -2373,6 +2393,7 @@ pub struct Ipv6ConfigurationExtension {}
 impl Validate for Ipv6ConfigurationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Ipv6DHCPConfiguration {
     Auto,
     Stateful,
@@ -2417,6 +2438,7 @@ pub struct NetworkProtocolExtension {}
 impl Validate for NetworkProtocolExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum NetworkProtocolType {
     #[yaserde(rename = "HTTP")]
     Http,
@@ -2436,6 +2458,7 @@ impl Default for NetworkProtocolType {
 impl Validate for NetworkProtocolType {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum NetworkHostType {
     #[yaserde(rename = "IPv4")]
     Ipv4,
@@ -2521,6 +2544,7 @@ impl Validate for PrefixedIPv4Address {}
 pub struct Ipv4Address(pub String);
 
 impl Validate for Ipv4Address {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PrefixedIPv6Address {
@@ -2539,11 +2563,14 @@ impl Validate for PrefixedIPv6Address {}
 pub struct Ipv6Address(pub String);
 
 impl Validate for Ipv6Address {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct HwAddress(pub String);
 
 impl Validate for HwAddress {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Iptype {
     #[yaserde(rename = "IPv4")]
     Ipv4,
@@ -2564,6 +2591,7 @@ impl Validate for Iptype {}
 pub struct Dnsname(pub String);
 
 impl Validate for Dnsname {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct HostnameInformation {
@@ -2649,7 +2677,9 @@ impl Validate for NtpinformationExtension {}
 pub struct Domain(pub String);
 
 impl Validate for Domain {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum IpaddressFilterType {
     Allow,
     Deny,
@@ -2692,6 +2722,7 @@ pub struct DynamicDNSInformationExtension {}
 impl Validate for DynamicDNSInformationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum DynamicDNSType {
     NoUpdate,
     ClientUpdates,
@@ -2896,13 +2927,13 @@ pub struct Dot11SSIDType(pub String);
 
 impl Validate for Dot11SSIDType {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() < "1".parse().unwrap() {
+        if self.0.is_empty() {
             return Err(format!(
                 "MinLength validation error. \nExpected: 0 length >= 1 \nActual: 0 length == {}",
                 self.0.len()
             ));
         }
-        if self.0.len() > "32".parse().unwrap() {
+        if self.0.len() > 32 {
             return Err(format!(
                 "MaxLength validation error. \nExpected: 0 length <= 32 \nActual: 0 length == {}",
                 self.0.len()
@@ -2913,6 +2944,7 @@ impl Validate for Dot11SSIDType {
 }
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Dot11StationMode {
     #[yaserde(rename = "Ad-hoc")]
     AdHoc,
@@ -2957,6 +2989,7 @@ pub struct Dot11SecurityConfigurationExtension {}
 impl Validate for Dot11SecurityConfigurationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Dot11SecurityMode {
     None,
     #[yaserde(rename = "WEP")]
@@ -2977,6 +3010,7 @@ impl Default for Dot11SecurityMode {
 impl Validate for Dot11SecurityMode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Dot11Cipher {
     #[yaserde(rename = "CCMP")]
     Ccmp,
@@ -3000,7 +3034,7 @@ pub struct Dot11PSK(pub String);
 
 impl Validate for Dot11PSK {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() != "32".parse().unwrap() {
+        if self.0.len() != 32 {
             return Err(format!(
                 "Length validation error. \nExpected: 0 length == 32 \nActual: 0 length == {}",
                 self.0.len()
@@ -3014,6 +3048,7 @@ impl Validate for Dot11PSK {
 pub struct Dot11PSKPassphrase(pub String);
 
 impl Validate for Dot11PSKPassphrase {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Dot11PSKSet {
@@ -3072,6 +3107,7 @@ impl Validate for Dot11Capabilities {}
 pub struct Dot11SignalStrength(pub String);
 
 impl Validate for Dot11SignalStrength {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct Dot11Status {
@@ -3097,6 +3133,7 @@ pub struct Dot11Status {
 impl Validate for Dot11Status {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Dot11AuthAndMangementSuite {
     None,
     Dot1X,
@@ -3149,6 +3186,7 @@ pub struct Dot11AvailableNetworksExtension {}
 impl Validate for Dot11AvailableNetworksExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum CapabilityCategory {
     All,
     Analytics,
@@ -3768,6 +3806,7 @@ impl Validate for AnalyticsDeviceExtension {}
 
 // Enumeration describing the available system log modes.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum SystemLogType {
     // Indicates that a system log is requested.
     System,
@@ -3819,7 +3858,7 @@ pub struct BinaryData {
     #[yaserde(prefix = "tt", rename = "Data")]
     pub data: String,
 
-    #[yaserde(attribute, prefix = "xmime" rename = "contentType")]
+    #[yaserde(attribute, prefix = "xmime", rename = "contentType")]
     pub content_type: Option<xmime::ContentType>,
 }
 
@@ -3831,7 +3870,7 @@ pub struct AttachmentData {
     #[yaserde(prefix = "xop", rename = "Include")]
     pub include: xop::Include,
 
-    #[yaserde(attribute, prefix = "xmime" rename = "contentType")]
+    #[yaserde(attribute, prefix = "xmime", rename = "contentType")]
     pub content_type: Option<xmime::ContentType>,
 }
 
@@ -3872,6 +3911,7 @@ impl Validate for SystemLogUri {}
 
 // Enumeration describing the available factory default modes.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum FactoryDefaultType {
     // Indicates that a hard factory default is requested.
     Hard,
@@ -3889,6 +3929,7 @@ impl Default for FactoryDefaultType {
 impl Validate for FactoryDefaultType {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum SetDateTimeType {
     // Indicates that the date and time are set manually.
     Manual,
@@ -4017,6 +4058,7 @@ pub struct RemoteUser {
 impl Validate for RemoteUser {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum UserLevel {
     Administrator,
     Operator,
@@ -4261,6 +4303,7 @@ pub struct GenericEapPwdConfigurationExtension {}
 impl Validate for GenericEapPwdConfigurationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum RelayLogicalState {
     #[yaserde(rename = "active")]
     Active,
@@ -4278,6 +4321,7 @@ impl Default for RelayLogicalState {
 impl Validate for RelayLogicalState {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum RelayIdleState {
     #[yaserde(rename = "closed")]
     Closed,
@@ -4315,6 +4359,7 @@ pub struct RelayOutputSettings {
 impl Validate for RelayOutputSettings {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum RelayMode {
     Monostable,
     Bistable,
@@ -4343,6 +4388,7 @@ pub struct RelayOutput {
 impl Validate for RelayOutput {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum DigitalIdleState {
     #[yaserde(rename = "closed")]
     Closed,
@@ -4624,6 +4670,7 @@ pub struct Reverse {
 impl Validate for Reverse {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum EflipMode {
     #[yaserde(rename = "OFF")]
     Off,
@@ -4642,6 +4689,7 @@ impl Default for EflipMode {
 impl Validate for EflipMode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ReverseMode {
     #[yaserde(rename = "OFF")]
     Off,
@@ -4939,7 +4987,7 @@ pub struct AuxiliaryData(pub String);
 
 impl Validate for AuxiliaryData {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() > "128".parse().unwrap() {
+        if self.0.len() > 128 {
             return Err(format!(
                 "MaxLength validation error. \nExpected: 0 length <= 128 \nActual: 0 length == {}",
                 self.0.len()
@@ -4950,6 +4998,7 @@ impl Validate for AuxiliaryData {
 }
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum PtzpresetTourState {
     Idle,
     Touring,
@@ -4967,6 +5016,7 @@ impl Default for PtzpresetTourState {
 impl Validate for PtzpresetTourState {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum PtzpresetTourDirection {
     Forward,
     Backward,
@@ -4983,6 +5033,7 @@ impl Default for PtzpresetTourDirection {
 impl Validate for PtzpresetTourDirection {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum PtzpresetTourOperation {
     Start,
     Stop,
@@ -5082,6 +5133,7 @@ pub mod ptz_preset_tour_preset_detail {
     use super::*;
 
     #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
     pub enum PtzpresetTourPresetDetailChoice {
         // Option to specify the preset position with Preset Token defined in
         // advance.
@@ -5309,6 +5361,7 @@ pub struct FocusConfiguration {
 impl Validate for FocusConfiguration {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum AutoFocusMode {
     #[yaserde(rename = "AUTO")]
     Auto,
@@ -5326,6 +5379,7 @@ impl Default for AutoFocusMode {
 impl Validate for AutoFocusMode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Afmodes {
     // Focus of a moving camera is updated only once after stopping a pan, tilt
     // or zoom movement.
@@ -5454,6 +5508,7 @@ pub struct Exposure {
 impl Validate for Exposure {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum WideDynamicMode {
     #[yaserde(rename = "OFF")]
     Off,
@@ -5486,6 +5541,7 @@ impl Validate for WideDynamicRange {}
 
 // Enumeration describing the available backlight compenstation modes.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum BacklightCompensationMode {
     // Backlight compensation is disabled.
     #[yaserde(rename = "OFF")]
@@ -5519,6 +5575,7 @@ pub struct BacklightCompensation {
 impl Validate for BacklightCompensation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ExposurePriority {
     LowNoise,
     FrameRate,
@@ -5775,6 +5832,7 @@ pub struct ContinuousFocusOptions {
 impl Validate for ContinuousFocusOptions {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ExposureMode {
     #[yaserde(rename = "AUTO")]
     Auto,
@@ -5792,6 +5850,7 @@ impl Default for ExposureMode {
 impl Validate for ExposureMode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Enabled {
     #[yaserde(rename = "ENABLED")]
     Enabled,
@@ -5809,6 +5868,7 @@ impl Default for Enabled {
 impl Validate for Enabled {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum WhiteBalanceMode {
     #[yaserde(rename = "AUTO")]
     Auto,
@@ -5826,6 +5886,7 @@ impl Default for WhiteBalanceMode {
 impl Validate for WhiteBalanceMode {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum IrCutFilterMode {
     #[yaserde(rename = "ON")]
     On,
@@ -6037,6 +6098,7 @@ pub struct ImageStabilizationExtension {}
 impl Validate for ImageStabilizationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ImageStabilizationMode {
     #[yaserde(rename = "OFF")]
     Off,
@@ -6089,6 +6151,7 @@ pub struct IrCutFilterAutoAdjustmentExtension {}
 impl Validate for IrCutFilterAutoAdjustmentExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum IrCutFilterAutoBoundaryType {
     Common,
     ToOn,
@@ -6223,6 +6286,7 @@ pub struct ToneCompensationExtension {}
 impl Validate for ToneCompensationExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ToneCompensationMode {
     #[yaserde(rename = "OFF")]
     Off,
@@ -6267,6 +6331,7 @@ pub struct DefoggingExtension {}
 impl Validate for DefoggingExtension {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum DefoggingMode {
     #[yaserde(rename = "OFF")]
     Off,
@@ -6724,7 +6789,9 @@ impl Validate for NoiseReductionOptions {}
 pub struct TopicNamespaceLocation(pub String);
 
 impl Validate for TopicNamespaceLocation {}
+
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum PropertyOperation {
     Initialized,
     Deleted,
@@ -6807,6 +6874,7 @@ pub mod item_list {
     }
 
     impl Validate for SimpleItemType {}
+
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
     #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
     pub struct ElementItemType {
@@ -6898,6 +6966,7 @@ pub mod item_list_description {
     }
 
     impl Validate for SimpleItemDescriptionType {}
+
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
     #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
     pub struct ElementItemDescriptionType {
@@ -6930,6 +6999,7 @@ impl Validate for Polyline {}
 
 // pub type Polyline = Polyline;
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Direction {
     Left,
     Right,
@@ -7417,6 +7487,7 @@ impl Validate for ReceiverConfiguration {}
 
 // Specifies a receiver connection mode.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ReceiverMode {
     // The receiver connects on demand, as required by consumers of the media
     // streams.
@@ -7441,6 +7512,7 @@ impl Validate for ReceiverMode {}
 
 // Specifies the current connection state of the receiver.
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ReceiverState {
     // The receiver is not connected.
     NotConnected,
@@ -7481,10 +7553,12 @@ impl Validate for ReceiverStateInformation {}
 pub struct ReceiverReference(pub ReferenceToken);
 
 impl Validate for ReceiverReference {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct RecordingReference(pub ReferenceToken);
 
 impl Validate for RecordingReference {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct SourceReference {
@@ -7501,10 +7575,12 @@ impl Validate for SourceReference {}
 pub struct TrackReference(pub ReferenceToken);
 
 impl Validate for TrackReference {}
+
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct Description(pub String);
 
 impl Validate for Description {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct DateTimeRange {
@@ -7605,6 +7681,7 @@ impl Validate for MetadataFilter {}
 pub struct XpathExpression(pub String);
 
 impl Validate for XpathExpression {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct FindRecordingResultList {
@@ -7740,6 +7817,7 @@ pub struct FindMetadataResult {
 impl Validate for FindMetadataResult {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum SearchState {
     // The search is queued and not yet started.
     Queued,
@@ -7765,6 +7843,7 @@ impl Validate for SearchState {}
 pub struct JobToken(pub ReferenceToken);
 
 impl Validate for JobToken {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingInformation {
@@ -7835,6 +7914,7 @@ pub struct RecordingSourceInformation {
 impl Validate for RecordingSourceInformation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum RecordingStatus {
     Initiated,
     Recording,
@@ -7881,6 +7961,7 @@ pub struct TrackInformation {
 impl Validate for TrackInformation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum TrackType {
     Video,
     Audio,
@@ -8036,6 +8117,7 @@ impl Validate for MetadataAttributes {}
 pub struct RecordingJobReference(pub ReferenceToken);
 
 impl Validate for RecordingJobReference {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingConfiguration {
@@ -8170,6 +8252,7 @@ impl Validate for RecordingJobConfiguration {}
 pub struct RecordingJobMode(pub String);
 
 impl Validate for RecordingJobMode {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingJobConfigurationExtension {}
@@ -8268,6 +8351,7 @@ impl Validate for RecordingJobStateInformationExtension {}
 pub struct RecordingJobState(pub String);
 
 impl Validate for RecordingJobState {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct RecordingJobStateSource {
@@ -8530,6 +8614,7 @@ pub struct AnalyticsEngineControl {
 impl Validate for AnalyticsEngineControl {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ModeOfOperation {
     Idle,
     Active,
@@ -8609,6 +8694,7 @@ impl Validate for ActionEngineEventPayloadExtension {}
 pub struct AudioClassType(pub String);
 
 impl Validate for AudioClassType {}
+
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct AudioClassCandidate {
@@ -8680,6 +8766,7 @@ pub struct Osdreference {}
 impl Validate for Osdreference {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Osdtype {
     Text,
     Image,
@@ -8823,6 +8910,7 @@ pub struct ColorspaceRange {
 impl Validate for ColorspaceRange {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum ColorOptionsChoice {
     // List the supported color.
     ColorList(Vec<Color>),

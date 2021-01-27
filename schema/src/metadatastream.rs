@@ -1,9 +1,7 @@
 use crate::b_2 as wsnt;
 pub use crate::common::*;
 use crate::validate::Validate;
-use std::io::{Read, Write};
 use xsd_types::types as xs;
-use yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]

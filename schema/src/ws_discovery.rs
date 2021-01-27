@@ -1,9 +1,4 @@
-use std::io::{Read, Write};
-use yaserde::{YaDeserialize, YaSerialize};
-
 pub mod probe {
-    use super::*;
-
     #[derive(Default, PartialEq, Debug, YaSerialize)]
     #[yaserde(
         prefix = "d",
@@ -56,8 +51,6 @@ pub mod probe {
 }
 
 pub mod probe_matches {
-    use super::*;
-
     #[derive(Default, PartialEq, Debug, YaDeserialize)]
     #[yaserde(
         prefix = "d",

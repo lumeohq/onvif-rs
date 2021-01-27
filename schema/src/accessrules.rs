@@ -1,8 +1,6 @@
 use crate::transport;
 use crate::types as pt;
 use crate::validate::Validate;
-use std::io::{Read, Write};
-use yaserde::{YaDeserialize, YaSerialize};
 
 // The service capabilities reflect optional functionality of a service. The
 // information is static

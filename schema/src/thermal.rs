@@ -1,8 +1,6 @@
 use crate::onvif as tt;
 use crate::transport;
 use crate::validate::Validate;
-use std::io::{Read, Write};
-use yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 pub enum Polarity {

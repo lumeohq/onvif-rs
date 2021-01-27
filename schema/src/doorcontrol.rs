@@ -1,9 +1,7 @@
 use crate::transport;
 use crate::types as pt;
 use crate::validate::Validate;
-use std::io::{Read, Write};
 use xsd_types::types as xs;
-use yaserde::{YaDeserialize, YaSerialize};
 
 // ServiceCapabilities structure reflects optional functionality of a service.
 // The information is static and does not change during device operation.
