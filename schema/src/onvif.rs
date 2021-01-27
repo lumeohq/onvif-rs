@@ -2927,7 +2927,7 @@ pub struct Dot11SSIDType(pub String);
 
 impl Validate for Dot11SSIDType {
     fn validate(&self) -> Result<(), String> {
-        if self.0.len() < 1 {
+        if self.0.is_empty() {
             return Err(format!(
                 "MinLength validation error. \nExpected: 0 length >= 1 \nActual: 0 length == {}",
                 self.0.len()
