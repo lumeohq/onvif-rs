@@ -4,14 +4,14 @@ use async_trait::async_trait;
 use reqwest::Url;
 use schema::transport::{Error, Transport};
 
-#[derive(Default, Debug, Clone)]
+#[derive(Clone)]
 pub struct Client {
     uri: String,
     client: reqwest::Client,
     credentials: Option<Credentials>,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Clone)]
 pub struct Credentials {
     pub username: String,
     pub password: String,
