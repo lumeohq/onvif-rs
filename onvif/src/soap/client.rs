@@ -81,10 +81,16 @@ enum RequestAuthType {
 impl Transport for Client {
     async fn request(&self, message: &str) -> Result<String, Error> {
         match self.config.auth_type {
-            AuthType::Any => match self.request_with_digest(message).await {
-                Ok(success) => Ok(success),
-                Err(_) => self.request_with_username_token(message).await,
-            },
+            AuthType::Any => {
+                match self.request_with_digest(message).await {
+                    Ok(success) => Ok(success),
+                    Err(Error::Authorization(e)) => {
+                        warn!("Failed to authorize with Digest auth: {}. Trying UsernameToken auth ...", e);
+                        self.request_with_username_token(message).await
+                    }
+                    Err(e) => Err(e),
+                }
+            }
             AuthType::Digest => self.request_with_digest(message).await,
             AuthType::UsernameToken => self.request_with_username_token(message).await,
         }
@@ -123,7 +129,7 @@ impl Client {
         };
 
         let soap_msg = soap::soap(message, &username_token)
-            .map_err(|e| Error::Transport(format!("{:?}", e)))?;
+            .map_err(|e| Error::Protocol(format!("{:?}", e)))?;
 
         let mut request = self
             .client
@@ -135,7 +141,7 @@ impl Client {
                 .config
                 .credentials
                 .as_ref()
-                .ok_or_else(|| Error::Transport("No credentials".to_string()))?;
+                .ok_or_else(|| Error::Authorization("No credentials".to_string()))?;
 
             request = request.header(
                 "Authorization",
@@ -147,7 +153,7 @@ impl Client {
             .body(soap_msg)
             .send()
             .await
-            .map_err(|e| Error::Transport(e.to_string()))?;
+            .map_err(|e| Error::Protocol(e.to_string()))?;
 
         debug!("{} response.status() = {}", uri, response.status());
 
@@ -155,23 +161,26 @@ impl Client {
             response
                 .text()
                 .await
-                .map_err(|e| Error::Transport(e.to_string()))
+                .map_err(|e| Error::Protocol(e.to_string()))
                 .and_then(|text| {
-                    soap::unsoap(&text).map_err(|e| Error::Transport(format!("{:?}", e)))
+                    soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{:?}", e)))
                 })
-        } else if response.status() == reqwest::StatusCode::UNAUTHORIZED
-            && matches!(auth_type, RequestAuthType::Digest)
-        {
-            // If we got 401 then we should retry with digest HTTP auth.
-            // 401 response has all needed data for authentication.
-            self.request_recursive(message, &uri, auth_type, Some(&response), redirections)
-                .await
+        } else if response.status() == reqwest::StatusCode::UNAUTHORIZED {
+            match auth_type {
+                RequestAuthType::Digest => {
+                    // If we got 401 then we should retry with digest HTTP auth.
+                    // 401 response has all the needed data for authentication.
+                    self.request_recursive(message, &uri, auth_type, Some(&response), redirections)
+                        .await
+                }
+                _ => Err(Error::Authorization("Unauthorized".to_string())),
+            }
         } else if response.status().is_redirection() {
             // reqwest changes method on 302, so we have to handle redirections ourselves
             // https://github.com/seanmonstar/reqwest/issues/912
 
             if redirections > 0 {
-                return Err(Error::Transport("Redirection limit exceeded".to_string()));
+                return Err(Error::Redirection("Redirection limit exceeded".to_string()));
             }
 
             self.request_recursive(
@@ -183,17 +192,16 @@ impl Client {
             )
             .await
         } else {
-            Err(Error::Transport(response.status().to_string()))
+            Err(Error::Other(response.status().to_string()))
         }
     }
 
     fn get_redirect_location(response: &reqwest::Response) -> Result<Url, Error> {
-        Url::parse(
-            response.headers()[reqwest::header::LOCATION]
-                .to_str()
-                .map_err(|e| Error::Transport(e.to_string()))?,
-        )
-        .map_err(|e| Error::Transport(e.to_string()))
+        response.headers()[reqwest::header::LOCATION]
+            .to_str()
+            .map_err(|e| Error::Redirection(e.to_string()))?
+            .parse::<Url>()
+            .map_err(|e| Error::Redirection(e.to_string()))
     }
 
     pub fn username_token_auth(&self) -> Option<soap::auth::UsernameToken> {
@@ -210,7 +218,7 @@ impl Client {
     ) -> Result<String, Error> {
         let www_authenticate = res.headers()[reqwest::header::WWW_AUTHENTICATE]
             .to_str()
-            .map_err(|e| Error::Transport(e.to_string()))?;
+            .map_err(|e| Error::Authorization(e.to_string()))?;
 
         let mut context =
             digest_auth::AuthContext::new(&creds.username, &creds.password, url.path());
@@ -218,9 +226,9 @@ impl Client {
         context.method = digest_auth::HttpMethod::POST;
 
         Ok(digest_auth::parse(www_authenticate)
-            .map_err(|e| Error::Transport(e.to_string()))?
+            .map_err(|e| Error::Authorization(e.to_string()))?
             .respond(&context)
-            .map_err(|e| Error::Transport(e.to_string()))?
+            .map_err(|e| Error::Authorization(e.to_string()))?
             .to_string())
     }
 }
