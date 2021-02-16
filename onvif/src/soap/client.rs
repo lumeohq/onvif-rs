@@ -21,12 +21,18 @@ impl ClientBuilder {
             config: Config {
                 uri: uri.to_string(),
                 credentials: None,
+                auth_type: AuthType::Any,
             },
         }
     }
 
     pub fn credentials(mut self, credentials: Option<Credentials>) -> Self {
         self.config.credentials = credentials;
+        self
+    }
+
+    pub fn auth_type(mut self, auth_type: AuthType) -> Self {
+        self.config.auth_type = auth_type;
         self
     }
 
@@ -46,6 +52,17 @@ impl ClientBuilder {
 struct Config {
     uri: String,
     credentials: Option<Credentials>,
+    auth_type: AuthType,
+}
+
+#[derive(Clone, Debug)]
+pub enum AuthType {
+    /// First try to authorize with Digest and in case of error try UsernameToken auth
+    Any,
+    /// Use only Digest auth
+    Digest,
+    /// Use only UsernameToken auth
+    UsernameToken,
 }
 
 #[derive(Clone)]
