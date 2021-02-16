@@ -71,32 +71,54 @@ pub struct Credentials {
     pub password: String,
 }
 
+#[derive(Clone, Copy)]
+enum RequestAuthType {
+    Digest,
+    UsernameToken,
+}
+
 #[async_trait]
 impl Transport for Client {
     async fn request(&self, message: &str) -> Result<String, Error> {
         let uri = Url::parse(&self.config.uri).map_err(|e| Error::Transport(e.to_string()))?;
 
-        self.request(message, &uri, None, 0).await
+        match self.config.auth_type {
+            AuthType::Any => match self.request_with_digest(message, &uri).await {
+                Ok(success) => Ok(success),
+                Err(_) => self.request_with_username_token(message, &uri).await,
+            },
+            AuthType::Digest => self.request_with_digest(message, &uri).await,
+            AuthType::UsernameToken => self.request_with_username_token(message, &uri).await,
+        }
     }
 }
 
 impl Client {
-    pub fn username_token(&self) -> Option<soap::auth::UsernameToken> {
-        self.config
-            .credentials
-            .as_ref()
-            .map(|c| soap::auth::UsernameToken::new(&c.username, &c.password))
+    async fn request_with_digest(&self, message: &str, uri: &Url) -> Result<String, Error> {
+        self.request_recursive(message, &uri, RequestAuthType::Digest, None, 0)
+            .await
+    }
+
+    async fn request_with_username_token(&self, message: &str, uri: &Url) -> Result<String, Error> {
+        self.request_recursive(message, &uri, RequestAuthType::UsernameToken, None, 0)
+            .await
     }
 
     #[async_recursion]
-    async fn request(
+    async fn request_recursive(
         &self,
         message: &str,
         uri: &Url,
+        auth_type: RequestAuthType,
         prev_response: Option<&'async_recursion reqwest::Response>,
         redirections: u32,
     ) -> Result<String, Error> {
-        let soap_msg = soap::soap(message, &self.username_token())
+        let username_token = match auth_type {
+            RequestAuthType::UsernameToken => self.username_token_auth(),
+            _ => None,
+        };
+
+        let soap_msg = soap::soap(message, &username_token)
             .map_err(|e| Error::Transport(format!("{:?}", e)))?;
 
         let mut request = self
@@ -133,10 +155,12 @@ impl Client {
                 .and_then(|text| {
                     soap::unsoap(&text).map_err(|e| Error::Transport(format!("{:?}", e)))
                 })
-        } else if response.status() == reqwest::StatusCode::UNAUTHORIZED {
+        } else if response.status() == reqwest::StatusCode::UNAUTHORIZED
+            && matches!(auth_type, RequestAuthType::Digest)
+        {
             // If we got 401 then we should retry with digest HTTP auth.
             // 401 response has all needed data for authentication.
-            self.request(message, &uri, Some(&response), redirections)
+            self.request_recursive(message, &uri, auth_type, Some(&response), redirections)
                 .await
         } else if response.status().is_redirection() {
             // reqwest changes method on 302, so we have to handle redirections ourselves
@@ -146,9 +170,10 @@ impl Client {
                 return Err(Error::Transport("Redirection limit exceeded".to_string()));
             }
 
-            self.request(
+            self.request_recursive(
                 message,
                 &Client::get_redirect_location(&response)?,
+                auth_type,
                 None,
                 redirections + 1,
             )
@@ -165,6 +190,13 @@ impl Client {
                 .map_err(|e| Error::Transport(e.to_string()))?,
         )
         .map_err(|e| Error::Transport(e.to_string()))
+    }
+
+    pub fn username_token_auth(&self) -> Option<soap::auth::UsernameToken> {
+        self.config
+            .credentials
+            .as_ref()
+            .map(|c| soap::auth::UsernameToken::new(&c.username, &c.password))
     }
 
     fn digest_auth(
