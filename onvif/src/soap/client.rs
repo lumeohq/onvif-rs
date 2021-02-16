@@ -6,8 +6,45 @@ use schema::transport::{Error, Transport};
 
 #[derive(Clone)]
 pub struct Client {
-    uri: String,
     client: reqwest::Client,
+    config: Config,
+}
+
+#[derive(Clone)]
+pub struct ClientBuilder {
+    config: Config,
+}
+
+impl ClientBuilder {
+    pub fn new(uri: &str) -> Self {
+        Self {
+            config: Config {
+                uri: uri.to_string(),
+                credentials: None,
+            },
+        }
+    }
+
+    pub fn credentials(mut self, credentials: Option<Credentials>) -> Self {
+        self.config.credentials = credentials;
+        self
+    }
+
+    pub fn build(self) -> Client {
+        Client {
+            client: reqwest::Client::builder()
+                .danger_accept_invalid_certs(true)
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .unwrap(),
+            config: self.config,
+        }
+    }
+}
+
+#[derive(Clone)]
+struct Config {
+    uri: String,
     credentials: Option<Credentials>,
 }
 
@@ -20,27 +57,16 @@ pub struct Credentials {
 #[async_trait]
 impl Transport for Client {
     async fn request(&self, message: &str) -> Result<String, Error> {
-        let uri = Url::parse(&self.uri).map_err(|e| Error::Transport(e.to_string()))?;
+        let uri = Url::parse(&self.config.uri).map_err(|e| Error::Transport(e.to_string()))?;
 
         self.request(message, &uri, None, 0).await
     }
 }
 
 impl Client {
-    pub fn new(uri: &str, credentials: Option<Credentials>) -> Self {
-        Client {
-            uri: uri.into(),
-            client: reqwest::Client::builder()
-                .danger_accept_invalid_certs(true)
-                .redirect(reqwest::redirect::Policy::none())
-                .build()
-                .unwrap(),
-            credentials,
-        }
-    }
-
     pub fn username_token(&self) -> Option<soap::auth::UsernameToken> {
-        self.credentials
+        self.config
+            .credentials
             .as_ref()
             .map(|c| soap::auth::UsernameToken::new(&c.username, &c.password))
     }
@@ -63,6 +89,7 @@ impl Client {
 
         if let Some(response) = prev_response {
             let creds = self
+                .config
                 .credentials
                 .as_ref()
                 .ok_or_else(|| Error::Transport("No credentials".to_string()))?;
