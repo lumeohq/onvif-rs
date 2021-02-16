@@ -1,7 +1,7 @@
 use log::debug;
 use onvif::{schema, soap};
-use reqwest::Url;
 use structopt::StructOpt;
+use url::Url;
 
 #[derive(StructOpt)]
 #[structopt(name = "camera", about = "ONVIF camera control tool")]
@@ -79,7 +79,7 @@ impl Clients {
             .ok_or_else(|| "--uri must be specified.".to_string())?;
         let devicemgmt_uri = base_uri.join("onvif/device_service").unwrap();
         let mut out = Self {
-            devicemgmt: soap::client::ClientBuilder::new(devicemgmt_uri.as_str())
+            devicemgmt: soap::client::ClientBuilder::new(&devicemgmt_uri)
                 .credentials(creds.clone())
                 .build(),
             imaging: None,
@@ -100,8 +100,9 @@ impl Clients {
                     &s.x_addr, &base_uri
                 ));
             }
+            let url = Url::parse(&s.x_addr).map_err(|e| e.to_string())?;
             let svc = Some(
-                soap::client::ClientBuilder::new(&s.x_addr)
+                soap::client::ClientBuilder::new(&url)
                     .credentials(creds.clone())
                     .build(),
             );

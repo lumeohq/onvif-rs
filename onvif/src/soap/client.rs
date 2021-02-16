@@ -1,8 +1,8 @@
 use crate::soap;
 use async_recursion::async_recursion;
 use async_trait::async_trait;
-use reqwest::Url;
 use schema::transport::{Error, Transport};
+use url::Url;
 
 #[derive(Clone)]
 pub struct Client {
@@ -16,10 +16,10 @@ pub struct ClientBuilder {
 }
 
 impl ClientBuilder {
-    pub fn new(uri: &str) -> Self {
+    pub fn new(uri: &Url) -> Self {
         Self {
             config: Config {
-                uri: uri.to_string(),
+                uri: uri.clone(),
                 credentials: None,
                 auth_type: AuthType::Any,
             },
@@ -50,7 +50,7 @@ impl ClientBuilder {
 
 #[derive(Clone)]
 struct Config {
-    uri: String,
+    uri: Url,
     credentials: Option<Credentials>,
     auth_type: AuthType,
 }
@@ -80,28 +80,32 @@ enum RequestAuthType {
 #[async_trait]
 impl Transport for Client {
     async fn request(&self, message: &str) -> Result<String, Error> {
-        let uri = Url::parse(&self.config.uri).map_err(|e| Error::Transport(e.to_string()))?;
-
         match self.config.auth_type {
-            AuthType::Any => match self.request_with_digest(message, &uri).await {
+            AuthType::Any => match self.request_with_digest(message).await {
                 Ok(success) => Ok(success),
-                Err(_) => self.request_with_username_token(message, &uri).await,
+                Err(_) => self.request_with_username_token(message).await,
             },
-            AuthType::Digest => self.request_with_digest(message, &uri).await,
-            AuthType::UsernameToken => self.request_with_username_token(message, &uri).await,
+            AuthType::Digest => self.request_with_digest(message).await,
+            AuthType::UsernameToken => self.request_with_username_token(message).await,
         }
     }
 }
 
 impl Client {
-    async fn request_with_digest(&self, message: &str, uri: &Url) -> Result<String, Error> {
-        self.request_recursive(message, &uri, RequestAuthType::Digest, None, 0)
+    async fn request_with_digest(&self, message: &str) -> Result<String, Error> {
+        self.request_recursive(message, &self.config.uri, RequestAuthType::Digest, None, 0)
             .await
     }
 
-    async fn request_with_username_token(&self, message: &str, uri: &Url) -> Result<String, Error> {
-        self.request_recursive(message, &uri, RequestAuthType::UsernameToken, None, 0)
-            .await
+    async fn request_with_username_token(&self, message: &str) -> Result<String, Error> {
+        self.request_recursive(
+            message,
+            &self.config.uri,
+            RequestAuthType::UsernameToken,
+            None,
+            0,
+        )
+        .await
     }
 
     #[async_recursion]
