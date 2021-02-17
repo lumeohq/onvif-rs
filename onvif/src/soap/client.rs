@@ -4,6 +4,24 @@ use async_trait::async_trait;
 use schema::transport::{Error, Transport};
 use url::Url;
 
+macro_rules! log {
+    ($lvl:expr, $self:ident, $($arg:tt)+) => {
+        log::log!($lvl, "{}: {}", $self.config.uri, format_args!($($arg)+))
+    };
+}
+
+macro_rules! debug {
+    ($($arg:tt)+) => {
+        log!(log::Level::Debug, $($arg)+)
+    }
+}
+
+macro_rules! warn {
+    ($($arg:tt)+) => {
+        log!(log::Level::Warn, $($arg)+)
+    };
+}
+
 #[derive(Clone)]
 pub struct Client {
     client: reqwest::Client,
@@ -71,7 +89,7 @@ pub struct Credentials {
     pub password: String,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum RequestAuthType {
     Digest,
     UsernameToken,
@@ -80,12 +98,12 @@ enum RequestAuthType {
 #[async_trait]
 impl Transport for Client {
     async fn request(&self, message: &str) -> Result<String, Error> {
-        match self.config.auth_type {
+        let result = match self.config.auth_type {
             AuthType::Any => {
                 match self.request_with_digest(message).await {
                     Ok(success) => Ok(success),
                     Err(Error::Authorization(e)) => {
-                        warn!("Failed to authorize with Digest auth: {}. Trying UsernameToken auth ...", e);
+                        warn!(self, "Failed to authorize with Digest auth: {}. Trying UsernameToken auth ...", e);
                         self.request_with_username_token(message).await
                     }
                     Err(e) => Err(e),
@@ -93,7 +111,14 @@ impl Transport for Client {
             }
             AuthType::Digest => self.request_with_digest(message).await,
             AuthType::UsernameToken => self.request_with_username_token(message).await,
+        };
+
+        match &result {
+            Ok(response) => debug!(self, "Request succeeded: {}", response),
+            Err(e) => warn!(self, "Request failed: {:?}", e),
         }
+
+        result
     }
 }
 
@@ -128,6 +153,14 @@ impl Client {
             _ => None,
         };
 
+        debug!(
+            self,
+            "About to make request. auth_type={:?}, prev_response={}, redirections={}",
+            auth_type,
+            prev_response.is_some(),
+            redirections
+        );
+
         let soap_msg = soap::soap(message, &username_token)
             .map_err(|e| Error::Protocol(format!("{:?}", e)))?;
 
@@ -146,8 +179,12 @@ impl Client {
             request = request.header(
                 "Authorization",
                 Client::digest_auth(&response, &creds, uri)?,
-            )
+            );
+
+            debug!(self, "Digest headers added");
         }
+
+        debug!(self, "Request body: {}", soap_msg);
 
         let response = request
             .body(soap_msg)
@@ -155,17 +192,20 @@ impl Client {
             .await
             .map_err(|e| Error::Protocol(e.to_string()))?;
 
-        debug!("{} response.status() = {}", uri, response.status());
+        let status = response.status();
 
-        if response.status().is_success() {
+        debug!(self, "Response status: {}", status);
+
+        if status.is_success() {
             response
                 .text()
                 .await
                 .map_err(|e| Error::Protocol(e.to_string()))
                 .and_then(|text| {
+                    debug!(self, "Response body: {}", text);
                     soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{:?}", e)))
                 })
-        } else if response.status() == reqwest::StatusCode::UNAUTHORIZED {
+        } else if status == reqwest::StatusCode::UNAUTHORIZED {
             match auth_type {
                 RequestAuthType::Digest => {
                     // If we got 401 then we should retry with digest HTTP auth.
@@ -175,7 +215,7 @@ impl Client {
                 }
                 _ => Err(Error::Authorization("Unauthorized".to_string())),
             }
-        } else if response.status().is_redirection() {
+        } else if status.is_redirection() {
             // reqwest changes method on 302, so we have to handle redirections ourselves
             // https://github.com/seanmonstar/reqwest/issues/912
 
@@ -183,16 +223,18 @@ impl Client {
                 return Err(Error::Redirection("Redirection limit exceeded".to_string()));
             }
 
-            self.request_recursive(
-                message,
-                &Client::get_redirect_location(&response)?,
-                auth_type,
-                None,
-                redirections + 1,
-            )
-            .await
+            let new_url = Client::get_redirect_location(&response)?;
+
+            debug!(self, "Redirecting to {} ...", new_url);
+
+            self.request_recursive(message, &new_url, auth_type, None, redirections + 1)
+                .await
         } else {
-            Err(Error::Other(response.status().to_string()))
+            if let Ok(text) = response.text().await {
+                debug!(self, "Got HTTP error with body: {}", text);
+            }
+
+            Err(Error::Other(status.to_string()))
         }
     }
 

@@ -1,6 +1,7 @@
 use crate::soap;
 use async_stream::stream;
 use futures_core::stream::Stream;
+use log::{debug, warn};
 use schema::ws_discovery::{probe, probe_matches};
 use std::{
     future::Future,
