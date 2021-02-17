@@ -1,6 +1,7 @@
 use crate::soap;
 use async_stream::stream;
 use futures_core::stream::Stream;
+use log::{debug, warn};
 use schema::ws_discovery::{probe, probe_matches};
 use std::{
     future::Future,
@@ -12,6 +13,7 @@ use tokio::{
     net::UdpSocket,
     time::{self, Duration, Instant},
 };
+use url::Url;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -71,7 +73,7 @@ pub enum Error {
 ///     println!("Devices found: {:?}", addrs);
 /// };
 /// ```
-pub async fn discover(duration: Duration) -> Result<impl Stream<Item = String>, Error> {
+pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Url>, Error> {
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Serde)?;
 
@@ -137,9 +139,9 @@ async fn recv_string(s: &UdpSocket, timeout: Duration) -> io::Result<String> {
 async fn get_responding_addr<F, Fut>(
     envelope: probe_matches::Envelope,
     mut check_addr: F,
-) -> Option<String>
+) -> Option<Url>
 where
-    F: FnMut(String) -> Fut,
+    F: FnMut(Url) -> Fut,
     Fut: Future<Output = bool>,
 {
     let iter = envelope
@@ -148,12 +150,18 @@ where
         .probe_match
         .iter()
         .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
-        .map(|x| x.to_string());
+        .filter_map(|x| match Url::parse(x) {
+            Ok(uri) => Some(uri),
+            Err(e) => {
+                warn!("Could not parse URL '{}': {:?}", x, e);
+                None
+            }
+        });
 
     for addr in iter {
         if check_addr(addr.clone()).await {
             debug!("Responding addr: {:?}", addr);
-            return Some(addr);
+            return Some(addr.clone());
         }
     }
 
@@ -173,9 +181,9 @@ fn build_probe() -> probe::Envelope {
     }
 }
 
-async fn is_addr_responding(uri: String) -> bool {
+async fn is_addr_responding(uri: Url) -> bool {
     schema::devicemgmt::get_system_date_and_time(
-        &soap::client::Client::new(&uri, None),
+        &soap::client::ClientBuilder::new(&uri).build(),
         &Default::default(),
     )
     .await
@@ -221,12 +229,12 @@ fn test_xaddrs_extraction() {
         make_xml(bad_uuid, "http://addr_30 http://addr_31"),
     ];
 
-    async fn is_addr_responding(uri: String) -> bool {
+    async fn is_addr_responding(uri: Url) -> bool {
         let responding_addrs = vec![
-            "http://addr_10".to_string(),
-            "http://addr_21".to_string(),
-            "http://addr_22".to_string(),
-            "http://addr_30".to_string(),
+            "http://addr_10".parse().unwrap(),
+            "http://addr_21".parse().unwrap(),
+            "http://addr_22".parse().unwrap(),
+            "http://addr_30".parse().unwrap(),
         ];
 
         responding_addrs.contains(&uri)
@@ -246,14 +254,14 @@ fn test_xaddrs_extraction() {
     assert_eq!(actual.len(), 2);
 
     // OK: message UUID matches and addr responds
-    assert!(actual.contains(&"http://addr_10".to_string()));
+    assert!(actual.contains(&Url::parse("http://addr_10").unwrap()));
 
     // OK: message UUID matches and addr responds
-    assert!(actual.contains(&"http://addr_21".to_string()));
+    assert!(actual.contains(&Url::parse("http://addr_21").unwrap()));
 
     // BAD: message UUID matches and addr responds but we take only first one
-    assert!(!actual.contains(&"http://addr_22".to_string()));
+    assert!(!actual.contains(&Url::parse("http://addr_22").unwrap()));
 
     // BAD: wrong message UUID
-    assert!(!actual.contains(&"http://addr_30".to_string()));
+    assert!(!actual.contains(&Url::parse("http://addr_30").unwrap()));
 }

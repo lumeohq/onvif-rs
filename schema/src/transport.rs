@@ -8,8 +8,14 @@ pub enum Error {
     Serialization(String),
     #[error("Deserialization failed: {0}")]
     Deserialization(String),
-    #[error("Transport error: {0}")]
-    Transport(String),
+    #[error("Authorization failed: {0}")]
+    Authorization(String),
+    #[error("Redirection error: {0}")]
+    Redirection(String),
+    #[error("Protocol error: {0}")]
+    Protocol(String),
+    #[error("Other: {0}")]
+    Other(String),
 }
 
 #[async_trait]
