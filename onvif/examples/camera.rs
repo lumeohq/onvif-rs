@@ -50,6 +50,9 @@ enum Cmd {
 
     /// Gets information about the currently enabled and supported video analytics.
     GetAnalytics,
+
+    // Try to get any possible information
+    GetAll,
 }
 
 struct Clients {
@@ -416,5 +419,14 @@ async fn main() {
         Cmd::EnableAnalytics => enable_analytics(&clients).await,
         Cmd::GetAnalytics => get_analytics(&clients).await,
         Cmd::GetStatus => get_status(&clients).await,
+        Cmd::GetAll => {
+            get_system_date_and_time(&clients).await;
+            get_capabilities(&clients).await;
+            get_service_capabilities(&clients).await;
+            get_stream_uris(&clients).await;
+            get_hostname(&clients).await;
+            get_analytics(&clients).await;
+            get_status(&clients).await;
+        }
     }
 }
