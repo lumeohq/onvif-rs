@@ -94,8 +94,7 @@ impl Clients {
             analytics: None,
         };
         let services = schema::devicemgmt::get_services(&out.devicemgmt, &Default::default())
-            .await
-            .unwrap();
+            .await?;
         for s in &services.service {
             if !s.x_addr.starts_with(base_uri.as_str()) {
                 return Err(format!(
