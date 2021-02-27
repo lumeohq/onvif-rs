@@ -18,6 +18,12 @@ pub enum Error {
     Other(String),
 }
 
+impl From<Error> for String {
+    fn from(error: Error) -> String {
+        error.to_string()
+    }
+}
+
 #[async_trait]
 pub trait Transport {
     async fn request(&self, message: &str) -> Result<String, Error>;
