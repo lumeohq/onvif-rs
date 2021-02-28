@@ -4,7 +4,10 @@ pub mod probe {
         prefix = "d",
         namespace = "d: http://schemas.xmlsoap.org/ws/2005/04/discovery"
     )]
-    pub struct Probe {}
+    pub struct Probe {
+        #[yaserde(prefix = "d", rename = "Types")]
+        pub types: String,
+    }
 
     #[derive(Default, PartialEq, Debug, YaSerialize)]
     #[yaserde(
