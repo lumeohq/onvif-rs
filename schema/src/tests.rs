@@ -406,7 +406,9 @@ fn probe_serialization() {
                 <w:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</w:Action>
             </s:Header>
             <s:Body>
-                <d:Probe />
+                <d:Probe>
+                    <d:Types></d:Types>
+                </d:Probe>
             </s:Body>
         </s:Envelope>
         "#;
