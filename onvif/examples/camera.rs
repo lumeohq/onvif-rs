@@ -38,6 +38,9 @@ enum Cmd {
 
     GetHostname,
 
+    // Gets model, firmware, manufacturer and others informations related to the device.
+    GetDeviceInformation,
+
     SetHostname {
         hostname: String,
     },
@@ -133,6 +136,15 @@ async fn get_capabilities(clients: &Clients) {
     println!(
         "{:#?}",
         &schema::devicemgmt::get_capabilities(&clients.devicemgmt, &Default::default())
+            .await
+            .unwrap()
+    );
+}
+
+async fn get_device_information(clients: &Clients) {
+    println!(
+        "{:#?}",
+        &schema::devicemgmt::get_device_information(&clients.devicemgmt, &Default::default())
             .await
             .unwrap()
     );
@@ -413,6 +425,7 @@ async fn main() {
         Cmd::GetStreamUris => get_stream_uris(&clients).await,
         Cmd::GetHostname => get_hostname(&clients).await,
         Cmd::SetHostname { hostname } => set_hostname(&clients, hostname).await,
+        Cmd::GetDeviceInformation => get_device_information(&clients).await,
         Cmd::EnableAnalytics => enable_analytics(&clients).await,
         Cmd::GetAnalytics => get_analytics(&clients).await,
         Cmd::GetStatus => get_status(&clients).await,
