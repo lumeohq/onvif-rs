@@ -50,6 +50,9 @@ enum Cmd {
 
     /// Gets information about the currently enabled and supported video analytics.
     GetAnalytics,
+
+    // Try to get any possible information
+    GetAll,
 }
 
 struct Clients {
@@ -90,9 +93,8 @@ impl Clients {
             media2: None,
             analytics: None,
         };
-        let services = schema::devicemgmt::get_services(&out.devicemgmt, &Default::default())
-            .await
-            .unwrap();
+        let services =
+            schema::devicemgmt::get_services(&out.devicemgmt, &Default::default()).await?;
         for s in &services.service {
             if !s.x_addr.starts_with(base_uri.as_str()) {
                 return Err(format!(
@@ -130,76 +132,59 @@ impl Clients {
 }
 
 async fn get_capabilities(clients: &Clients) {
-    println!(
-        "{:#?}",
-        &schema::devicemgmt::get_capabilities(&clients.devicemgmt, &Default::default())
-            .await
-            .unwrap()
-    );
+    match schema::devicemgmt::get_capabilities(&clients.devicemgmt, &Default::default()).await {
+        Ok(capabilities) => println!("{:#?}", capabilities),
+        Err(error) => println!("Failed to fetch capabilities: {}", error.to_string()),
+    }
 }
 
 async fn get_service_capabilities(clients: &Clients) {
-    println!(
-        "devicemgmt: {:#?}",
-        &schema::devicemgmt::get_service_capabilities(&clients.devicemgmt, &Default::default())
-            .await
-            .unwrap()
-    );
+    match schema::event::get_service_capabilities(&clients.devicemgmt, &Default::default()).await {
+        Ok(capability) => println!("devicemgmt: {:#?}", capability),
+        Err(error) => println!("Failed to fetch devicemgmt: {}", error.to_string()),
+    }
+
     if let Some(ref event) = clients.event {
-        println!(
-            "event: {:#?}",
-            &schema::event::get_service_capabilities(event, &Default::default())
-                .await
-                .unwrap()
-        );
+        match schema::event::get_service_capabilities(event, &Default::default()).await {
+            Ok(capability) => println!("event: {:#?}", capability),
+            Err(error) => println!("Failed to fetch event: {}", error.to_string()),
+        }
     }
     if let Some(ref deviceio) = clients.deviceio {
-        println!(
-            "deviceio: {:#?}",
-            &schema::deviceio::get_service_capabilities(deviceio, &Default::default())
-                .await
-                .unwrap()
-        );
+        match schema::event::get_service_capabilities(deviceio, &Default::default()).await {
+            Ok(capability) => println!("deviceio: {:#?}", capability),
+            Err(error) => println!("Failed to fetch deviceio: {}", error.to_string()),
+        }
     }
     if let Some(ref media) = clients.media {
-        println!(
-            "media: {:#?}",
-            &schema::media::get_service_capabilities(media, &Default::default())
-                .await
-                .unwrap()
-        );
+        match schema::event::get_service_capabilities(media, &Default::default()).await {
+            Ok(capability) => println!("media: {:#?}", capability),
+            Err(error) => println!("Failed to fetch media: {}", error.to_string()),
+        }
     }
     if let Some(ref media2) = clients.media2 {
-        println!(
-            "media2: {:#?}",
-            &schema::media2::get_service_capabilities(media2, &Default::default())
-                .await
-                .unwrap()
-        );
+        match schema::event::get_service_capabilities(media2, &Default::default()).await {
+            Ok(capability) => println!("media2: {:#?}", capability),
+            Err(error) => println!("Failed to fetch media2: {}", error.to_string()),
+        }
     }
     if let Some(ref imaging) = clients.imaging {
-        println!(
-            "imaging: {:#?}",
-            &schema::imaging::get_service_capabilities(imaging, &Default::default())
-                .await
-                .unwrap()
-        );
+        match schema::event::get_service_capabilities(imaging, &Default::default()).await {
+            Ok(capability) => println!("imaging: {:#?}", capability),
+            Err(error) => println!("Failed to fetch imaging: {}", error.to_string()),
+        }
     }
     if let Some(ref ptz) = clients.ptz {
-        println!(
-            "ptz: {:#?}",
-            &schema::ptz::get_service_capabilities(ptz, &Default::default())
-                .await
-                .unwrap()
-        );
+        match schema::event::get_service_capabilities(ptz, &Default::default()).await {
+            Ok(capability) => println!("ptz: {:#?}", capability),
+            Err(error) => println!("Failed to fetch ptz: {}", error.to_string()),
+        }
     }
     if let Some(ref analytics) = clients.analytics {
-        println!(
-            "analytics: {:#?}",
-            &schema::analytics::get_service_capabilities(analytics, &Default::default())
-                .await
-                .unwrap()
-        );
+        match schema::event::get_service_capabilities(analytics, &Default::default()).await {
+            Ok(capability) => println!("analytics: {:#?}", capability),
+            Err(error) => println!("Failed to fetch analytics: {}", error.to_string()),
+        }
     }
 }
 
@@ -416,5 +401,14 @@ async fn main() {
         Cmd::EnableAnalytics => enable_analytics(&clients).await,
         Cmd::GetAnalytics => get_analytics(&clients).await,
         Cmd::GetStatus => get_status(&clients).await,
+        Cmd::GetAll => {
+            get_system_date_and_time(&clients).await;
+            get_capabilities(&clients).await;
+            get_service_capabilities(&clients).await;
+            get_stream_uris(&clients).await;
+            get_hostname(&clients).await;
+            get_analytics(&clients).await;
+            get_status(&clients).await;
+        }
     }
 }
