@@ -2,6 +2,7 @@ use crate::soap;
 use async_recursion::async_recursion;
 use async_trait::async_trait;
 use schema::transport::{Error, Transport};
+use std::time::Duration;
 use url::Url;
 
 macro_rules! log {
@@ -40,6 +41,7 @@ impl ClientBuilder {
                 uri: uri.clone(),
                 credentials: None,
                 auth_type: AuthType::Any,
+                timeout: Duration::from_secs(5),
             },
         }
     }
@@ -54,11 +56,17 @@ impl ClientBuilder {
         self
     }
 
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.config.timeout = timeout;
+        self
+    }
+
     pub fn build(self) -> Client {
         Client {
             client: reqwest::Client::builder()
                 .danger_accept_invalid_certs(true)
                 .redirect(reqwest::redirect::Policy::none())
+                .timeout(self.config.timeout)
                 .build()
                 .unwrap(),
             config: self.config,
@@ -71,6 +79,7 @@ struct Config {
     uri: Url,
     credentials: Option<Credentials>,
     auth_type: AuthType,
+    timeout: Duration,
 }
 
 #[derive(Clone, Debug)]
