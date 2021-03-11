@@ -598,3 +598,24 @@ fn nested_structs_with_same_named_fields() {
         }
     );
 }
+
+#[test]
+fn extension_inside_extension() {
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // If field `extension` in `SecurityCapabilitiesExtension` is uncommented accidentally
+    // then this test will fail. Also note that there's a bunch of such cases in `onvif.rs`.
+    let ser = r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <tt:SecurityCapabilities xmlns:tt="http://www.onvif.org/ver10/schema">
+        <tt:Extension>
+            <tt:TLS1.0>false</tt:TLS1.0>
+            <tt:Extension>
+                <tt:RemoteUserHandling>false</tt:RemoteUserHandling>
+            </tt:Extension>
+        </tt:Extension>
+    </tt:SecurityCapabilities>
+    "#;
+
+    let _ = yaserde::de::from_str::<tt::SecurityCapabilities>(ser).unwrap();
+}

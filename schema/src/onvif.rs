@@ -194,18 +194,19 @@ pub struct VideoSourceExtension {
     // 2.00 is supported.
     #[yaserde(prefix = "tt", rename = "Imaging")]
     pub imaging: Option<ImagingSettings20>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<VideoSourceExtension2>,
 }
 
 impl Validate for VideoSourceExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoSourceExtension2 {}
-
-impl Validate for VideoSourceExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct VideoSourceExtension2 {}
+//
+// impl Validate for VideoSourceExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -285,18 +286,19 @@ pub struct ProfileExtension {
     // Optional configuration of the Audio decoder.
     #[yaserde(prefix = "tt", rename = "AudioDecoderConfiguration")]
     pub audio_decoder_configuration: Option<AudioDecoderConfiguration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ProfileExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<ProfileExtension2>,
 }
 
 impl Validate for ProfileExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ProfileExtension2 {}
-
-impl Validate for ProfileExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct ProfileExtension2 {}
+//
+// impl Validate for ProfileExtension2 {}
 
 // pub type VideoSourceConfiguration = VideoSourceConfiguration;
 // pub type AudioSourceConfiguration = AudioSourceConfiguration;
@@ -371,28 +373,29 @@ pub struct VideoSourceConfigurationExtension {
     // parameters.
     #[yaserde(prefix = "tt", rename = "Rotate")]
     pub rotate: Option<Rotate>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceConfigurationExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<VideoSourceConfigurationExtension2>,
 }
 
 impl Validate for VideoSourceConfigurationExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoSourceConfigurationExtension2 {
-    // Optional element describing the geometric lens distortion. Multiple
-    // instances for future variable lens support.
-    #[yaserde(prefix = "tt", rename = "LensDescription")]
-    pub lens_description: Vec<LensDescription>,
-
-    // Optional element describing the scene orientation in the camera’s field
-    // of view.
-    #[yaserde(prefix = "tt", rename = "SceneOrientation")]
-    pub scene_orientation: SceneOrientation,
-}
-
-impl Validate for VideoSourceConfigurationExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct VideoSourceConfigurationExtension2 {
+//     // Optional element describing the geometric lens distortion. Multiple
+//     // instances for future variable lens support.
+//     #[yaserde(prefix = "tt", rename = "LensDescription")]
+//     pub lens_description: Vec<LensDescription>,
+//
+//     // Optional element describing the scene orientation in the camera’s field
+//     // of view.
+//     #[yaserde(prefix = "tt", rename = "SceneOrientation")]
+//     pub scene_orientation: SceneOrientation,
+// }
+//
+// impl Validate for VideoSourceConfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -536,22 +539,23 @@ pub struct VideoSourceConfigurationOptionsExtension {
     // Options of parameters for Rotation feature.
     #[yaserde(prefix = "tt", rename = "Rotate")]
     pub rotate: Option<RotateOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoSourceConfigurationOptionsExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<VideoSourceConfigurationOptionsExtension2>,
 }
 
 impl Validate for VideoSourceConfigurationOptionsExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoSourceConfigurationOptionsExtension2 {
-    // Scene orientation modes supported by the device for this configuration.
-    #[yaserde(prefix = "tt", rename = "SceneOrientationMode")]
-    pub scene_orientation_mode: Vec<SceneOrientationMode>,
-}
-
-impl Validate for VideoSourceConfigurationOptionsExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct VideoSourceConfigurationOptionsExtension2 {
+//     // Scene orientation modes supported by the device for this configuration.
+//     #[yaserde(prefix = "tt", rename = "SceneOrientationMode")]
+//     pub scene_orientation_mode: Vec<SceneOrientationMode>,
+// }
+//
+// impl Validate for VideoSourceConfigurationOptionsExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -872,18 +876,19 @@ pub struct VideoEncoderOptionsExtension {
     // Optional H.264 encoder settings ranges.
     #[yaserde(prefix = "tt", rename = "H264")]
     pub h264: Option<H264Options2>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<VideoEncoderOptionsExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<VideoEncoderOptionsExtension2>,
 }
 
 impl Validate for VideoEncoderOptionsExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct VideoEncoderOptionsExtension2 {}
-
-impl Validate for VideoEncoderOptionsExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct VideoEncoderOptionsExtension2 {}
+//
+// impl Validate for VideoEncoderOptionsExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -1597,18 +1602,19 @@ pub struct MetadataConfigurationOptionsExtension {
     // from tt:MetadataCompressionType.
     #[yaserde(prefix = "tt", rename = "CompressionType")]
     pub compression_type: Vec<String>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<MetadataConfigurationOptionsExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<MetadataConfigurationOptionsExtension2>,
 }
 
 impl Validate for MetadataConfigurationOptionsExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct MetadataConfigurationOptionsExtension2 {}
-
-impl Validate for MetadataConfigurationOptionsExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct MetadataConfigurationOptionsExtension2 {}
+//
+// impl Validate for MetadataConfigurationOptionsExtension2 {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2194,9 +2200,10 @@ pub struct NetworkInterfaceExtension {
 
     #[yaserde(prefix = "tt", rename = "Dot11")]
     pub dot_11: Vec<Dot11Configuration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkInterfaceExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<NetworkInterfaceExtension2>,
 }
 
 impl Validate for NetworkInterfaceExtension {}
@@ -2222,11 +2229,11 @@ pub struct Dot3Configuration {}
 
 impl Validate for Dot3Configuration {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkInterfaceExtension2 {}
-
-impl Validate for NetworkInterfaceExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct NetworkInterfaceExtension2 {}
+//
+// impl Validate for NetworkInterfaceExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -2775,9 +2782,10 @@ pub struct NetworkInterfaceSetConfigurationExtension {
 
     #[yaserde(prefix = "tt", rename = "Dot11")]
     pub dot_11: Vec<Dot11Configuration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkInterfaceSetConfigurationExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<NetworkInterfaceSetConfigurationExtension2>,
 }
 
 impl Validate for NetworkInterfaceSetConfigurationExtension {}
@@ -2864,18 +2872,19 @@ pub struct NetworkZeroConfigurationExtension {
     // further interfaces.
     #[yaserde(prefix = "tt", rename = "Additional")]
     pub additional: Vec<NetworkZeroConfiguration>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkZeroConfigurationExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<NetworkZeroConfigurationExtension2>,
 }
 
 impl Validate for NetworkZeroConfigurationExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkZeroConfigurationExtension2 {}
-
-impl Validate for NetworkZeroConfigurationExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct NetworkZeroConfigurationExtension2 {}
+//
+// impl Validate for NetworkZeroConfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3076,11 +3085,11 @@ pub struct Dot11PSKSetExtension {}
 
 impl Validate for Dot11PSKSetExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkInterfaceSetConfigurationExtension2 {}
-
-impl Validate for NetworkInterfaceSetConfigurationExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct NetworkInterfaceSetConfigurationExtension2 {}
+//
+// impl Validate for NetworkInterfaceSetConfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3263,18 +3272,19 @@ pub struct CapabilitiesExtension {
 
     #[yaserde(prefix = "tt", rename = "AnalyticsDevice")]
     pub analytics_device: Option<AnalyticsDeviceCapabilities>,
-
-    #[yaserde(prefix = "tt", rename = "Extensions")]
-    pub extensions: Option<CapabilitiesExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extensions")]
+    // pub extensions: Option<CapabilitiesExtension2>,
 }
 
 impl Validate for CapabilitiesExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct CapabilitiesExtension2 {}
-
-impl Validate for CapabilitiesExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct CapabilitiesExtension2 {}
+//
+// impl Validate for CapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3380,18 +3390,19 @@ pub struct IocapabilitiesExtension {
 
     #[yaserde(prefix = "tt", rename = "AuxiliaryCommands")]
     pub auxiliary_commands: Vec<AuxiliaryData>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: IocapabilitiesExtension2,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: IocapabilitiesExtension2,
 }
 
 impl Validate for IocapabilitiesExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct IocapabilitiesExtension2 {}
-
-impl Validate for IocapabilitiesExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct IocapabilitiesExtension2 {}
+//
+// impl Validate for IocapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3486,18 +3497,19 @@ impl Validate for NetworkCapabilities {}
 pub struct NetworkCapabilitiesExtension {
     #[yaserde(prefix = "tt", rename = "Dot11Configuration")]
     pub dot_11_configuration: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<NetworkCapabilitiesExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<NetworkCapabilitiesExtension2>,
 }
 
 impl Validate for NetworkCapabilitiesExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct NetworkCapabilitiesExtension2 {}
-
-impl Validate for NetworkCapabilitiesExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct NetworkCapabilitiesExtension2 {}
+//
+// impl Validate for NetworkCapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3545,28 +3557,29 @@ impl Validate for SecurityCapabilities {}
 pub struct SecurityCapabilitiesExtension {
     #[yaserde(prefix = "tt", rename = "TLS1.0")]
     pub tls1_0: bool,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SecurityCapabilitiesExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<SecurityCapabilitiesExtension2>,
 }
 
 impl Validate for SecurityCapabilitiesExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SecurityCapabilitiesExtension2 {
-    #[yaserde(prefix = "tt", rename = "Dot1X")]
-    pub dot_1x: bool,
-
-    // EAP Methods supported by the device. The int values refer to the
-    #[yaserde(prefix = "tt", rename = "SupportedEAPMethod")]
-    pub supported_eap_method: Vec<i32>,
-
-    #[yaserde(prefix = "tt", rename = "RemoteUserHandling")]
-    pub remote_user_handling: bool,
-}
-
-impl Validate for SecurityCapabilitiesExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct SecurityCapabilitiesExtension2 {
+//     #[yaserde(prefix = "tt", rename = "Dot1X")]
+//     pub dot_1x: bool,
+//
+//     // EAP Methods supported by the device. The int values refer to the
+//     #[yaserde(prefix = "tt", rename = "SupportedEAPMethod")]
+//     pub supported_eap_method: Vec<i32>,
+//
+//     #[yaserde(prefix = "tt", rename = "RemoteUserHandling")]
+//     pub remote_user_handling: bool,
+// }
+//
+// impl Validate for SecurityCapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -3619,18 +3632,19 @@ pub struct SystemCapabilitiesExtension {
 
     #[yaserde(prefix = "tt", rename = "HttpSupportInformation")]
     pub http_support_information: Option<bool>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<SystemCapabilitiesExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<SystemCapabilitiesExtension2>,
 }
 
 impl Validate for SystemCapabilitiesExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct SystemCapabilitiesExtension2 {}
-
-impl Validate for SystemCapabilitiesExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct SystemCapabilitiesExtension2 {}
+//
+// impl Validate for SystemCapabilitiesExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4472,18 +4486,19 @@ pub struct PtznodeExtension {
     // Detail of supported Preset Tour feature.
     #[yaserde(prefix = "tt", rename = "SupportedPresetTour")]
     pub supported_preset_tour: Option<PtzpresetTourSupported>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtznodeExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<PtznodeExtension2>,
 }
 
 impl Validate for PtznodeExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtznodeExtension2 {}
-
-impl Validate for PtznodeExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct PtznodeExtension2 {}
+//
+// impl Validate for PtznodeExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -4612,18 +4627,19 @@ pub struct PtzconfigurationExtension {
     // Optional element to configure PT Control Direction related features.
     #[yaserde(prefix = "tt", rename = "PTControlDirection")]
     pub pt_control_direction: Option<PtcontrolDirection>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<PtzconfigurationExtension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<PtzconfigurationExtension2>,
 }
 
 impl Validate for PtzconfigurationExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct PtzconfigurationExtension2 {}
-
-impl Validate for PtzconfigurationExtension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct PtzconfigurationExtension2 {}
+//
+// impl Validate for PtzconfigurationExtension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6026,53 +6042,54 @@ pub struct ImagingSettingsExtension20 {
     // Optional element to configure Image Stabilization feature.
     #[yaserde(prefix = "tt", rename = "ImageStabilization")]
     pub image_stabilization: Option<ImageStabilization>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension202>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<ImagingSettingsExtension202>,
 }
 
 impl Validate for ImagingSettingsExtension20 {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingSettingsExtension202 {
-    // An optional parameter applied to only auto mode to adjust timing of
-    // toggling Ir cut filter.
-    #[yaserde(prefix = "tt", rename = "IrCutFilterAutoAdjustment")]
-    pub ir_cut_filter_auto_adjustment: Vec<IrCutFilterAutoAdjustment>,
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct ImagingSettingsExtension202 {
+//     // An optional parameter applied to only auto mode to adjust timing of
+//     // toggling Ir cut filter.
+//     #[yaserde(prefix = "tt", rename = "IrCutFilterAutoAdjustment")]
+//     pub ir_cut_filter_auto_adjustment: Vec<IrCutFilterAutoAdjustment>,
+//
+//     #[yaserde(prefix = "tt", rename = "Extension")]
+//     pub extension: Option<ImagingSettingsExtension203>,
+// }
+//
+// impl Validate for ImagingSettingsExtension202 {}
 
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension203>,
-}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct ImagingSettingsExtension203 {
+//     // Optional element to configure Image Contrast Compensation.
+//     #[yaserde(prefix = "tt", rename = "ToneCompensation")]
+//     pub tone_compensation: Option<ToneCompensation>,
+//
+//     // Optional element to configure Image Defogging.
+//     #[yaserde(prefix = "tt", rename = "Defogging")]
+//     pub defogging: Option<Defogging>,
+//
+//     // Optional element to configure Image Noise Reduction.
+//     #[yaserde(prefix = "tt", rename = "NoiseReduction")]
+//     pub noise_reduction: Option<NoiseReduction>,
+//
+//     #[yaserde(prefix = "tt", rename = "Extension")]
+//     pub extension: Option<ImagingSettingsExtension204>,
+// }
+//
+// impl Validate for ImagingSettingsExtension203 {}
 
-impl Validate for ImagingSettingsExtension202 {}
-
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingSettingsExtension203 {
-    // Optional element to configure Image Contrast Compensation.
-    #[yaserde(prefix = "tt", rename = "ToneCompensation")]
-    pub tone_compensation: Option<ToneCompensation>,
-
-    // Optional element to configure Image Defogging.
-    #[yaserde(prefix = "tt", rename = "Defogging")]
-    pub defogging: Option<Defogging>,
-
-    // Optional element to configure Image Noise Reduction.
-    #[yaserde(prefix = "tt", rename = "NoiseReduction")]
-    pub noise_reduction: Option<NoiseReduction>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingSettingsExtension204>,
-}
-
-impl Validate for ImagingSettingsExtension203 {}
-
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingSettingsExtension204 {}
-
-impl Validate for ImagingSettingsExtension204 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct ImagingSettingsExtension204 {}
+//
+// impl Validate for ImagingSettingsExtension204 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
@@ -6416,25 +6433,26 @@ pub struct ImagingOptions20Extension {
     // Options of parameters for Image Stabilization feature.
     #[yaserde(prefix = "tt", rename = "ImageStabilization")]
     pub image_stabilization: Option<ImageStabilizationOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingOptions20Extension2>,
+    // `Extension` inside `Extension` causes infinite loop at deserialization
+    // https://github.com/media-io/yaserde/issues/76
+    // #[yaserde(prefix = "tt", rename = "Extension")]
+    // pub extension: Option<ImagingOptions20Extension2>,
 }
 
 impl Validate for ImagingOptions20Extension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct ImagingOptions20Extension2 {
-    // Options of parameters for adjustment of Ir cut filter auto mode.
-    #[yaserde(prefix = "tt", rename = "IrCutFilterAutoAdjustment")]
-    pub ir_cut_filter_auto_adjustment: Option<IrCutFilterAutoAdjustmentOptions>,
-
-    #[yaserde(prefix = "tt", rename = "Extension")]
-    pub extension: Option<ImagingOptions20Extension3>,
-}
-
-impl Validate for ImagingOptions20Extension2 {}
+// #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+// #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+// pub struct ImagingOptions20Extension2 {
+//     // Options of parameters for adjustment of Ir cut filter auto mode.
+//     #[yaserde(prefix = "tt", rename = "IrCutFilterAutoAdjustment")]
+//     pub ir_cut_filter_auto_adjustment: Option<IrCutFilterAutoAdjustmentOptions>,
+//
+//     #[yaserde(prefix = "tt", rename = "Extension")]
+//     pub extension: Option<ImagingOptions20Extension3>,
+// }
+//
+// impl Validate for ImagingOptions20Extension2 {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
