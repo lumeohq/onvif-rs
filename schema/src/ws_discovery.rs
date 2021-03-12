@@ -54,12 +54,20 @@ pub mod probe {
 }
 
 pub mod probe_matches {
+    use url::Url;
+
     #[derive(Default, PartialEq, Debug, YaDeserialize)]
     #[yaserde(
         prefix = "d",
         namespace = "d: http://schemas.xmlsoap.org/ws/2005/04/discovery"
     )]
     pub struct ProbeMatch {
+        #[yaserde(prefix = "d", rename = "Types")]
+        pub types: String,
+
+        #[yaserde(prefix = "d", rename = "Scopes")]
+        pub scopes: String,
+
         #[yaserde(prefix = "d", rename = "XAddrs")]
         pub x_addrs: String,
     }
@@ -104,5 +112,85 @@ pub mod probe_matches {
 
         #[yaserde(prefix = "s", rename = "Body")]
         pub body: Body,
+    }
+
+    impl ProbeMatch {
+        pub fn types(&self) -> Vec<&str> {
+            self.types.split_whitespace().collect()
+        }
+
+        pub fn scopes(&self) -> Vec<Url> {
+            Self::split_string_to_urls(&self.scopes)
+        }
+
+        pub fn x_addrs(&self) -> Vec<Url> {
+            Self::split_string_to_urls(&self.x_addrs)
+        }
+
+        pub fn name(&self) -> Option<String> {
+            self.find_in_scopes("onvif://www.onvif.org/name/")
+        }
+
+        pub fn hardware(&self) -> Option<String> {
+            self.find_in_scopes("onvif://www.onvif.org/hardware/")
+        }
+
+        pub fn find_in_scopes(&self, prefix: &str) -> Option<String> {
+            self.scopes()
+                .iter()
+                .find_map(|url| url.as_str().strip_prefix(prefix).map(|s| s.to_string()))
+        }
+
+        fn split_string_to_urls(s: &str) -> Vec<Url> {
+            s.split_whitespace()
+                .filter_map(|addr| Url::parse(addr).ok())
+                .collect()
+        }
+    }
+
+    #[test]
+    fn probe_match() {
+        let ser = r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <wsd:ProbeMatch xmlns:wsd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+                        xmlns:dn="http://www.onvif.org/ver10/network/wsdl"
+                        xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
+            <wsd:Types>
+                dn:NetworkVideoTransmitter
+                tds:Device
+            </wsd:Types>
+            <wsd:Scopes>
+                onvif://www.onvif.org/name/MyCamera2000
+                onvif://www.onvif.org/hardware/My-HW-2000
+                onvif://www.onvif.org/type/audio_encoder
+                onvif://www.onvif.org/type/video_encoder
+                onvif://www.onvif.org/type/ptz
+                onvif://www.onvif.org/Profile/G
+                onvif://www.onvif.org/Profile/Streaming
+            </wsd:Scopes>
+            <wsd:XAddrs>
+                http://192.168.0.100:80/onvif/device_service
+                http://10.0.0.200:80/onvif/device_service
+            </wsd:XAddrs>
+        </wsd:ProbeMatch>
+        "#;
+
+        let de: ProbeMatch = yaserde::de::from_str(ser).unwrap();
+
+        assert_eq!(de.name(), Some("MyCamera2000".to_string()));
+        assert_eq!(de.hardware(), Some("My-HW-2000".to_string()));
+        assert!(de
+            .find_in_scopes("onvif://www.onvif.org/type/video_encoder")
+            .is_some());
+        assert!(de
+            .find_in_scopes("onvif://www.onvif.org/type/video_analytics")
+            .is_none());
+        assert_eq!(
+            de.x_addrs(),
+            vec![
+                Url::parse("http://192.168.0.100:80/onvif/device_service").unwrap(),
+                Url::parse("http://10.0.0.200:80/onvif/device_service").unwrap()
+            ]
+        );
     }
 }

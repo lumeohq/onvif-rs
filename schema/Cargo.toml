@@ -19,6 +19,7 @@ bigdecimal = "0.2.0"
 macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
 xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
 thiserror = "1.0.23"
+url = "2.2.1"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
