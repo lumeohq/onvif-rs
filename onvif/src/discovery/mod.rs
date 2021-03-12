@@ -1,7 +1,7 @@
 use crate::soap;
 use async_stream::stream;
 use futures_core::stream::Stream;
-use log::{debug, warn};
+use log::debug;
 use schema::{
     transport::Error as TransportError,
     ws_discovery::{probe, probe_matches},
@@ -25,6 +25,12 @@ pub enum Error {
 
     #[error("(De)serialization error: {0}")]
     Serde(String),
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Device {
+    pub name: Option<String>,
+    pub url: Url,
 }
 
 /// Discovers devices on a local network asynchronously using WS-discovery.
@@ -52,7 +58,7 @@ pub enum Error {
 ///         .unwrap()
 ///         .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| {
 ///             async move {
-///                 println!("Device found at address: {}", addr);
+///                 println!("Device found: {:?}", addr);
 ///             }
 ///         })
 ///         .await;
@@ -67,16 +73,16 @@ pub enum Error {
 /// use std::collections::HashSet;
 ///
 /// async {
-///     let addrs = discovery::discover(std::time::Duration::from_secs(1))
+///     let devices = discovery::discover(std::time::Duration::from_secs(1))
 ///         .await
 ///         .unwrap()
 ///         .collect::<HashSet<_>>()
 ///         .await;
 ///
-///     println!("Devices found: {:?}", addrs);
+///     println!("Devices found: {:?}", devices);
 /// };
 /// ```
-pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Url>, Error> {
+pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, Error> {
     let probe = build_probe();
     let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Serde)?;
 
@@ -142,29 +148,20 @@ async fn recv_string(s: &UdpSocket, timeout: Duration) -> io::Result<String> {
 async fn get_responding_addr<F, Fut>(
     envelope: probe_matches::Envelope,
     mut check_addr: F,
-) -> Option<Url>
+) -> Option<Device>
 where
     F: FnMut(Url) -> Fut,
     Fut: Future<Output = bool>,
 {
-    let iter = envelope
-        .body
-        .probe_matches
-        .probe_match
-        .iter()
-        .flat_map(|probe_match| probe_match.x_addrs.split_whitespace())
-        .filter_map(|x| match Url::parse(x) {
-            Ok(uri) => Some(uri),
-            Err(e) => {
-                warn!("Could not parse URL '{}': {:?}", x, e);
-                None
+    for probe_match in &envelope.body.probe_matches.probe_match {
+        for url in probe_match.x_addrs() {
+            if check_addr(url.clone()).await {
+                debug!("Responding addr: {:?}", url);
+                return Some(Device {
+                    url,
+                    name: probe_match.name(),
+                });
             }
-        });
-
-    for addr in iter {
-        if check_addr(addr.clone()).await {
-            debug!("Responding addr: {:?}", addr);
-            return Some(addr.clone());
         }
     }
 
@@ -214,6 +211,7 @@ fn test_xaddrs_extraction() {
                             <d:XAddrs>http://something.else</d:XAddrs>
                         </d:ProbeMatch>
                         <d:ProbeMatch>
+                            <d:Scopes>onvif://www.onvif.org/name/MyCamera2000</d:Scopes>
                             <d:XAddrs>{xaddrs}</d:XAddrs>
                         </d:ProbeMatch>
                     </d:ProbeMatches>
@@ -259,14 +257,26 @@ fn test_xaddrs_extraction() {
     assert_eq!(actual.len(), 2);
 
     // OK: message UUID matches and addr responds
-    assert!(actual.contains(&Url::parse("http://addr_10").unwrap()));
+    assert!(actual.contains(&Device {
+        url: Url::parse("http://addr_10").unwrap(),
+        name: Some("MyCamera2000".to_string())
+    }));
 
     // OK: message UUID matches and addr responds
-    assert!(actual.contains(&Url::parse("http://addr_21").unwrap()));
+    assert!(actual.contains(&Device {
+        url: Url::parse("http://addr_21").unwrap(),
+        name: Some("MyCamera2000".to_string())
+    }));
 
     // BAD: message UUID matches and addr responds but we take only first one
-    assert!(!actual.contains(&Url::parse("http://addr_22").unwrap()));
+    assert!(!actual.contains(&Device {
+        url: Url::parse("http://addr_22").unwrap(),
+        name: Some("MyCamera2000".to_string())
+    }));
 
     // BAD: wrong message UUID
-    assert!(!actual.contains(&Url::parse("http://addr_30").unwrap()));
+    assert!(!actual.contains(&Device {
+        url: Url::parse("http://addr_30").unwrap(),
+        name: Some("MyCamera2000".to_string())
+    }));
 }
