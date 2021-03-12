@@ -2,7 +2,10 @@ use crate::soap;
 use async_stream::stream;
 use futures_core::stream::Stream;
 use log::{debug, warn};
-use schema::ws_discovery::{probe, probe_matches};
+use schema::{
+    transport::Error as TransportError,
+    ws_discovery::{probe, probe_matches},
+};
 use std::{
     future::Future,
     net::{IpAddr, Ipv4Addr, SocketAddr},
@@ -182,12 +185,14 @@ fn build_probe() -> probe::Envelope {
 }
 
 async fn is_addr_responding(uri: Url) -> bool {
-    schema::devicemgmt::get_system_date_and_time(
-        &soap::client::ClientBuilder::new(&uri).build(),
-        &Default::default(),
+    matches!(
+        schema::devicemgmt::get_system_date_and_time(
+            &soap::client::ClientBuilder::new(&uri).build(),
+            &Default::default(),
+        )
+        .await,
+        Ok(_) | Err(TransportError::Authorization(_))
     )
-    .await
-    .is_ok()
 }
 
 #[test]
