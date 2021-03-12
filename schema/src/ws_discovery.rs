@@ -54,6 +54,7 @@ pub mod probe {
 }
 
 pub mod probe_matches {
+    use percent_encoding::percent_decode_str;
     use url::Url;
 
     #[derive(Default, PartialEq, Debug, YaDeserialize)]
@@ -136,9 +137,11 @@ pub mod probe_matches {
         }
 
         pub fn find_in_scopes(&self, prefix: &str) -> Option<String> {
-            self.scopes()
-                .iter()
-                .find_map(|url| url.as_str().strip_prefix(prefix).map(|s| s.to_string()))
+            self.scopes().iter().find_map(|url| {
+                url.as_str()
+                    .strip_prefix(prefix)
+                    .map(|s| percent_decode_str(&s).decode_utf8_lossy().to_string())
+            })
         }
 
         fn split_string_to_urls(s: &str) -> Vec<Url> {
@@ -160,7 +163,7 @@ pub mod probe_matches {
                 tds:Device
             </wsd:Types>
             <wsd:Scopes>
-                onvif://www.onvif.org/name/MyCamera2000
+                onvif://www.onvif.org/name/My%20Camera%202000
                 onvif://www.onvif.org/hardware/My-HW-2000
                 onvif://www.onvif.org/type/audio_encoder
                 onvif://www.onvif.org/type/video_encoder
@@ -177,7 +180,7 @@ pub mod probe_matches {
 
         let de: ProbeMatch = yaserde::de::from_str(ser).unwrap();
 
-        assert_eq!(de.name(), Some("MyCamera2000".to_string()));
+        assert_eq!(de.name(), Some("My Camera 2000".to_string()));
         assert_eq!(de.hardware(), Some("My-HW-2000".to_string()));
         assert!(de
             .find_in_scopes("onvif://www.onvif.org/type/video_encoder")

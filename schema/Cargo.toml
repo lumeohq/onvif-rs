@@ -18,6 +18,7 @@ num-bigint = "0.3.1"
 bigdecimal = "0.2.0"
 macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
 xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
+percent-encoding = "2.1.0"
 thiserror = "1.0.23"
 url = "2.2.1"
 
