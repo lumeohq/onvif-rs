@@ -1,3 +1,4 @@
+use crate::schema::transport;
 use onvif::{schema, soap};
 use structopt::StructOpt;
 use tracing::debug;
@@ -148,13 +149,13 @@ async fn get_capabilities(clients: &Clients) {
     }
 }
 
-async fn get_device_information(clients: &Clients) {
+async fn get_device_information(clients: &Clients) -> Result<(), transport::Error> {
     println!(
         "{:#?}",
         &schema::devicemgmt::get_device_information(&clients.devicemgmt, &Default::default())
-            .await
-            .unwrap()
+            .await?
     );
+    Ok(())
 }
 
 async fn get_service_capabilities(clients: &Clients) {
@@ -214,11 +215,12 @@ async fn get_system_date_and_time(clients: &Clients) {
     println!("{:#?}", date);
 }
 
-async fn get_stream_uris(clients: &Clients) {
-    let media_client = clients.media.as_ref().unwrap();
-    let profiles = schema::media::get_profiles(media_client, &Default::default())
-        .await
-        .unwrap();
+async fn get_stream_uris(clients: &Clients) -> Result<(), transport::Error> {
+    let media_client = clients
+        .media
+        .as_ref()
+        .ok_or_else(|| transport::Error::Other("Client media is not available".into()))?;
+    let profiles = schema::media::get_profiles(media_client, &Default::default()).await?;
     debug!("get_profiles response: {:#?}", &profiles);
     let requests: Vec<_> = profiles
         .profiles
@@ -240,8 +242,7 @@ async fn get_stream_uris(clients: &Clients) {
             .iter()
             .map(|r| schema::media::get_stream_uri(media_client, r)),
     )
-    .await
-    .unwrap();
+    .await?;
     for (p, resp) in profiles.profiles.iter().zip(responses.iter()) {
         println!("token={} name={}", &p.token.0, &p.name.0);
         println!("    {}", &resp.media_uri.uri);
@@ -261,13 +262,15 @@ async fn get_stream_uris(clients: &Clients) {
             );
         }
     }
+    Ok(())
 }
 
-async fn get_snapshot_uris(clients: &Clients) {
-    let media_client = clients.media.as_ref().unwrap();
-    let profiles = schema::media::get_profiles(media_client, &Default::default())
-        .await
-        .unwrap();
+async fn get_snapshot_uris(clients: &Clients) -> Result<(), transport::Error> {
+    let media_client = clients
+        .media
+        .as_ref()
+        .ok_or_else(|| transport::Error::Other("Client media is not available".into()))?;
+    let profiles = schema::media::get_profiles(media_client, &Default::default()).await?;
     debug!("get_profiles response: {:#?}", &profiles);
     let requests: Vec<_> = profiles
         .profiles
@@ -282,18 +285,16 @@ async fn get_snapshot_uris(clients: &Clients) {
             .iter()
             .map(|r| schema::media::get_snapshot_uri(media_client, r)),
     )
-    .await
-    .unwrap();
+    .await?;
     for (p, resp) in profiles.profiles.iter().zip(responses.iter()) {
         println!("token={} name={}", &p.token.0, &p.name.0);
         println!("    snapshot_uri={}", &resp.media_uri.uri);
     }
+    Ok(())
 }
 
-async fn get_hostname(clients: &Clients) {
-    let resp = schema::devicemgmt::get_hostname(&clients.devicemgmt, &Default::default())
-        .await
-        .unwrap();
+async fn get_hostname(clients: &Clients) -> Result<(), transport::Error> {
+    let resp = schema::devicemgmt::get_hostname(&clients.devicemgmt, &Default::default()).await?;
     debug!("get_hostname response: {:#?}", &resp);
     println!(
         "{}",
@@ -302,25 +303,28 @@ async fn get_hostname(clients: &Clients) {
             .as_deref()
             .unwrap_or("(unset)")
     );
+    Ok(())
 }
 
-async fn set_hostname(clients: &Clients, hostname: String) {
+async fn set_hostname(clients: &Clients, hostname: String) -> Result<(), transport::Error> {
     schema::devicemgmt::set_hostname(
         &clients.devicemgmt,
         &schema::devicemgmt::SetHostname { name: hostname },
     )
-    .await
-    .unwrap();
+    .await?;
+    Ok(())
 }
 
-async fn enable_analytics(clients: &Clients) {
-    let media_client = clients.media.as_ref().unwrap();
-    let mut config = schema::media::get_metadata_configurations(media_client, &Default::default())
-        .await
-        .unwrap();
+async fn enable_analytics(clients: &Clients) -> Result<(), transport::Error> {
+    let media_client = clients
+        .media
+        .as_ref()
+        .ok_or_else(|| transport::Error::Other("Client media is not available".into()))?;
+    let mut config =
+        schema::media::get_metadata_configurations(media_client, &Default::default()).await?;
     if config.configurations.len() != 1 {
         println!("Expected exactly one analytics config");
-        return;
+        return Ok(());
     }
     let mut c = config.configurations.pop().unwrap();
     let token_str = c.token.0.clone();
@@ -342,8 +346,7 @@ async fn enable_analytics(clients: &Clients) {
                 force_persistence: true,
             },
         )
-        .await
-        .unwrap();
+        .await?;
     } else {
         println!(
             "Analytics already enabled in metadata configuration {}",
@@ -351,9 +354,7 @@ async fn enable_analytics(clients: &Clients) {
         );
     }
 
-    let profiles = schema::media::get_profiles(media_client, &Default::default())
-        .await
-        .unwrap();
+    let profiles = schema::media::get_profiles(media_client, &Default::default()).await?;
     let requests: Vec<_> = profiles
         .profiles
         .iter()
@@ -378,27 +379,29 @@ async fn enable_analytics(clients: &Clients) {
                 .iter()
                 .map(|r| schema::media::add_metadata_configuration(media_client, r)),
         )
-        .await
-        .unwrap();
+        .await?;
     } else {
         println!(
             "Metadata already enabled on {} configs",
             profiles.profiles.len()
         );
     }
+    Ok(())
 }
 
-async fn get_analytics(clients: &Clients) {
-    let config = schema::media::get_video_analytics_configurations(
-        clients.media.as_ref().unwrap(),
-        &Default::default(),
-    )
-    .await
-    .unwrap();
+async fn get_analytics(clients: &Clients) -> Result<(), transport::Error> {
+    let media_client = clients
+        .media
+        .as_ref()
+        .ok_or_else(|| transport::Error::Other("Client media is not available".into()))?;
+    let config =
+        schema::media::get_video_analytics_configurations(media_client, &Default::default())
+            .await?;
+
     println!("{:#?}", &config);
     let c = match config.configurations.first() {
         Some(c) => c,
-        None => return,
+        None => return Ok(()),
     };
     if let Some(ref a) = clients.analytics {
         let mods = schema::analytics::get_supported_analytics_modules(
@@ -407,27 +410,32 @@ async fn get_analytics(clients: &Clients) {
                 configuration_token: schema::onvif::ReferenceToken(c.token.0.clone()),
             },
         )
-        .await
-        .unwrap();
+        .await?;
         println!("{:#?}", &mods);
     }
+
+    Ok(())
 }
 
-async fn get_status(clients: &Clients) {
+async fn get_status(clients: &Clients) -> Result<(), transport::Error> {
     if let Some(ref ptz) = clients.ptz {
-        let media_client = clients.media.as_ref().unwrap();
+        let media_client = match clients.media.as_ref() {
+            Some(client) => client,
+            None => {
+                return Err(transport::Error::Other(
+                    "Client media is not available".into(),
+                ))
+            }
+        };
         let profile = &schema::media::get_profiles(media_client, &Default::default())
-            .await
-            .unwrap()
+            .await?
             .profiles[0];
         let profile_token = schema::onvif::ReferenceToken(profile.token.0.clone());
-        println!(
-            "ptz status: {:#?}",
-            &schema::ptz::get_status(ptz, &schema::ptz::GetStatus { profile_token })
-                .await
-                .unwrap()
-        );
+        let status =
+            &schema::ptz::get_status(ptz, &schema::ptz::GetStatus { profile_token }).await?;
+        println!("ptz status: {:#?}", status);
     }
+    Ok(())
 }
 
 #[tokio::main]
@@ -441,23 +449,33 @@ async fn main() {
         Cmd::GetSystemDateAndTime => get_system_date_and_time(&clients).await,
         Cmd::GetCapabilities => get_capabilities(&clients).await,
         Cmd::GetServiceCapabilities => get_service_capabilities(&clients).await,
-        Cmd::GetStreamUris => get_stream_uris(&clients).await,
-        Cmd::GetSnapshotUris => get_snapshot_uris(&clients).await,
-        Cmd::GetHostname => get_hostname(&clients).await,
-        Cmd::SetHostname { hostname } => set_hostname(&clients, hostname).await,
-        Cmd::GetDeviceInformation => get_device_information(&clients).await,
-        Cmd::EnableAnalytics => enable_analytics(&clients).await,
-        Cmd::GetAnalytics => get_analytics(&clients).await,
-        Cmd::GetStatus => get_status(&clients).await,
+        Cmd::GetStreamUris => get_stream_uris(&clients).await.unwrap(),
+        Cmd::GetSnapshotUris => get_snapshot_uris(&clients).await.unwrap(),
+        Cmd::GetHostname => get_hostname(&clients).await.unwrap(),
+        Cmd::SetHostname { hostname } => set_hostname(&clients, hostname).await.unwrap(),
+        Cmd::GetDeviceInformation => get_device_information(&clients).await.unwrap(),
+        Cmd::EnableAnalytics => enable_analytics(&clients).await.unwrap(),
+        Cmd::GetAnalytics => get_analytics(&clients).await.unwrap(),
+        Cmd::GetStatus => get_status(&clients).await.unwrap(),
         Cmd::GetAll => {
             get_system_date_and_time(&clients).await;
             get_capabilities(&clients).await;
             get_service_capabilities(&clients).await;
-            get_stream_uris(&clients).await;
-            get_snapshot_uris(&clients).await;
-            get_hostname(&clients).await;
-            get_analytics(&clients).await;
-            get_status(&clients).await;
+            get_stream_uris(&clients).await.unwrap_or_else(|error| {
+                println!("Error while fetching stream urls: {:#?}", error);
+            });
+            get_snapshot_uris(&clients).await.unwrap_or_else(|error| {
+                println!("Error while fetching snapshot urls: {:#?}", error);
+            });
+            get_hostname(&clients).await.unwrap_or_else(|error| {
+                println!("Error while fetching hostname: {:#?}", error);
+            });
+            get_analytics(&clients).await.unwrap_or_else(|error| {
+                println!("Error while fetching analytics: {:#?}", error);
+            });
+            get_status(&clients).await.unwrap_or_else(|error| {
+                println!("Error while fetching status: {:#?}", error);
+            });
         }
     }
 }
