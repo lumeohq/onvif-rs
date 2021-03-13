@@ -461,6 +461,11 @@ async fn main() {
             get_system_date_and_time(&clients).await;
             get_capabilities(&clients).await;
             get_service_capabilities(&clients).await;
+            get_device_information(&clients)
+                .await
+                .unwrap_or_else(|error| {
+                    println!("Error while fetching device information: {:#?}", error);
+                });
             get_stream_uris(&clients).await.unwrap_or_else(|error| {
                 println!("Error while fetching stream urls: {:#?}", error);
             });
