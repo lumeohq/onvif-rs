@@ -3,6 +3,7 @@ pub mod client;
 #[cfg(test)]
 mod tests;
 
+use auth::username_token::UsernameToken;
 use schema::soap_envelope;
 use xmltree::{Element, Namespace, XMLNode};
 
@@ -23,7 +24,7 @@ pub struct Response {
     pub response: Option<String>,
 }
 
-pub fn soap(xml: &str, username_token: &Option<auth::UsernameToken>) -> Result<String, Error> {
+pub fn soap(xml: &str, username_token: &Option<UsernameToken>) -> Result<String, Error> {
     let app_data = parse(xml)?;
 
     let mut namespaces = app_data.namespaces.clone().unwrap_or_else(Namespace::empty);
