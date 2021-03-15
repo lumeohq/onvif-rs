@@ -267,7 +267,10 @@ impl Client {
         creds: &Credentials,
         url: &Url,
     ) -> Result<String, Error> {
-        let www_authenticate = res.headers()[reqwest::header::WWW_AUTHENTICATE]
+        let www_authenticate = res
+            .headers()
+            .get(reqwest::header::WWW_AUTHENTICATE)
+            .ok_or_else(|| Error::Authorization("No www-authenticate header".to_string()))?
             .to_str()
             .map_err(|e| Error::Authorization(e.to_string()))?;
 
