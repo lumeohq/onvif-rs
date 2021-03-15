@@ -1,4 +1,4 @@
-use crate::soap;
+use crate::soap::{self, auth::username_token::UsernameToken};
 use async_recursion::async_recursion;
 use async_trait::async_trait;
 use schema::transport::{Error, Transport};
@@ -255,11 +255,11 @@ impl Client {
             .map_err(|e| Error::Redirection(e.to_string()))
     }
 
-    pub fn username_token_auth(&self) -> Option<soap::auth::UsernameToken> {
+    pub fn username_token_auth(&self) -> Option<UsernameToken> {
         self.config
             .credentials
             .as_ref()
-            .map(|c| soap::auth::UsernameToken::new(&c.username, &c.password))
+            .map(|c| UsernameToken::new(&c.username, &c.password))
     }
 
     fn digest_auth(
