@@ -2,7 +2,10 @@ use crate::soap::{self, auth::username_token::UsernameToken};
 use async_recursion::async_recursion;
 use async_trait::async_trait;
 use schema::transport::{Error, Transport};
-use std::time::Duration;
+use std::{
+    fmt::{Debug, Formatter},
+    time::Duration,
+};
 use url::Url;
 
 macro_rules! log {
@@ -96,6 +99,12 @@ pub enum AuthType {
 pub struct Credentials {
     pub username: String,
     pub password: String,
+}
+
+impl Debug for Credentials {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{} [password hidden]", self.username))
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
