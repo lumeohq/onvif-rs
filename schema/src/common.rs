@@ -108,10 +108,10 @@ impl Validate for Ptzstatus {}
 #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub struct PtzmoveStatus {
     #[yaserde(prefix = "tt", rename = "PanTilt")]
-    pub pan_tilt: Option<MoveStatus>,
+    pub pan_tilt: Option<String>,
 
     #[yaserde(prefix = "tt", rename = "Zoom")]
-    pub zoom: Option<MoveStatus>,
+    pub zoom: Option<String>,
 }
 
 impl Validate for PtzmoveStatus {}
