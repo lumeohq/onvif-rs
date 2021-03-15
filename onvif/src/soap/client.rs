@@ -220,6 +220,10 @@ impl Client {
                     digest.set_401(response);
                 }
                 _ => {
+                    if let Ok(text) = response.text().await {
+                        debug!(self, "Got Unauthorized with body: {}", text);
+                    }
+
                     return Err(Error::Authorization("Unauthorized".to_string()));
                 }
             }
