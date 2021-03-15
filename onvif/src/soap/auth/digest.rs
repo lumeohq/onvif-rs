@@ -51,7 +51,7 @@ impl Digest {
 
     pub fn add_headers(&self, mut request: RequestBuilder) -> Result<RequestBuilder, Error> {
         match &self.state {
-            State::Default => Err(Error::InvalidState),
+            State::Default => Ok(request),
             State::Got401(response) => {
                 let creds = self.creds.as_ref().ok_or(Error::NoCredentials)?;
 
