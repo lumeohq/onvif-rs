@@ -1,4 +1,7 @@
-use crate::soap::{self, auth::username_token::UsernameToken};
+use crate::soap::{
+    self,
+    auth::{digest::Digest, username_token::UsernameToken},
+};
 use async_recursion::async_recursion;
 use async_trait::async_trait;
 use schema::transport::{Error, Transport};
@@ -107,9 +110,9 @@ impl Debug for Credentials {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 enum RequestAuthType {
-    Digest,
+    Digest(Digest),
     UsernameToken,
 }
 
@@ -142,19 +145,18 @@ impl Transport for Client {
 
 impl Client {
     async fn request_with_digest(&self, message: &str) -> Result<String, Error> {
-        self.request_recursive(message, &self.config.uri, RequestAuthType::Digest, None, 0)
+        let mut auth_type =
+            RequestAuthType::Digest(Digest::new(&self.config.uri, &self.config.credentials));
+
+        self.request_recursive(message, &self.config.uri, &mut auth_type, 0)
             .await
     }
 
     async fn request_with_username_token(&self, message: &str) -> Result<String, Error> {
-        self.request_recursive(
-            message,
-            &self.config.uri,
-            RequestAuthType::UsernameToken,
-            None,
-            0,
-        )
-        .await
+        let mut auth_type = RequestAuthType::UsernameToken;
+
+        self.request_recursive(message, &self.config.uri, &mut auth_type, 0)
+            .await
     }
 
     #[async_recursion]
@@ -162,8 +164,7 @@ impl Client {
         &self,
         message: &str,
         uri: &Url,
-        auth_type: RequestAuthType,
-        prev_response: Option<&'async_recursion reqwest::Response>,
+        auth_type: &mut RequestAuthType,
         redirections: u32,
     ) -> Result<String, Error> {
         let username_token = match auth_type {
@@ -173,10 +174,7 @@ impl Client {
 
         debug!(
             self,
-            "About to make request. auth_type={:?}, prev_response={}, redirections={}",
-            auth_type,
-            prev_response.is_some(),
-            redirections
+            "About to make request. auth_type={:?}, redirections={}", auth_type, redirections
         );
 
         let soap_msg = soap::soap(message, &username_token)
@@ -187,17 +185,10 @@ impl Client {
             .post(uri.as_str())
             .header("Content-Type", "application/soap+xml; charset=utf-8;");
 
-        if let Some(response) = prev_response {
-            let creds = self
-                .config
-                .credentials
-                .as_ref()
-                .ok_or_else(|| Error::Authorization("No credentials".to_string()))?;
-
-            request = request.header(
-                "Authorization",
-                Client::digest_auth(&response, &creds, uri)?,
-            );
+        if let RequestAuthType::Digest(digest) = auth_type {
+            request = digest
+                .add_headers(request)
+                .map_err(|e| Error::Authorization(e.to_string()))?;
 
             debug!(self, "Digest headers added");
         }
@@ -225,14 +216,16 @@ impl Client {
                 })
         } else if status == reqwest::StatusCode::UNAUTHORIZED {
             match auth_type {
-                RequestAuthType::Digest => {
-                    // If we got 401 then we should retry with digest HTTP auth.
-                    // 401 response has all the needed data for authentication.
-                    self.request_recursive(message, &uri, auth_type, Some(&response), redirections)
-                        .await
+                RequestAuthType::Digest(digest) if !digest.is_failed() => {
+                    digest.set_401(response);
                 }
-                _ => Err(Error::Authorization("Unauthorized".to_string())),
+                _ => {
+                    return Err(Error::Authorization("Unauthorized".to_string()));
+                }
             }
+
+            self.request_recursive(message, &uri, auth_type, redirections)
+                .await
         } else if status.is_redirection() {
             // reqwest changes method on 302, so we have to handle redirections ourselves
             // https://github.com/seanmonstar/reqwest/issues/912
@@ -245,7 +238,7 @@ impl Client {
 
             debug!(self, "Redirecting to {} ...", new_url);
 
-            self.request_recursive(message, &new_url, auth_type, None, redirections + 1)
+            self.request_recursive(message, &new_url, auth_type, redirections + 1)
                 .await
         } else {
             if let Ok(text) = response.text().await {
@@ -269,29 +262,5 @@ impl Client {
             .credentials
             .as_ref()
             .map(|c| UsernameToken::new(&c.username, &c.password))
-    }
-
-    fn digest_auth(
-        res: &reqwest::Response,
-        creds: &Credentials,
-        url: &Url,
-    ) -> Result<String, Error> {
-        let www_authenticate = res
-            .headers()
-            .get(reqwest::header::WWW_AUTHENTICATE)
-            .ok_or_else(|| Error::Authorization("No www-authenticate header".to_string()))?
-            .to_str()
-            .map_err(|e| Error::Authorization(e.to_string()))?;
-
-        let mut context =
-            digest_auth::AuthContext::new(&creds.username, &creds.password, url.path());
-
-        context.method = digest_auth::HttpMethod::POST;
-
-        Ok(digest_auth::parse(www_authenticate)
-            .map_err(|e| Error::Authorization(e.to_string()))?
-            .respond(&context)
-            .map_err(|e| Error::Authorization(e.to_string()))?
-            .to_string())
     }
 }
