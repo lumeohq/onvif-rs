@@ -117,6 +117,7 @@ pub struct PtzmoveStatus {
 impl Validate for PtzmoveStatus {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum MoveStatus {
     #[yaserde(rename = "IDLE")]
     Idle,
@@ -316,6 +317,7 @@ pub struct LocalOrientation {
 impl Validate for LocalOrientation {}
 
 #[derive(PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
 pub enum Entity {
     Device,
     VideoSource,
