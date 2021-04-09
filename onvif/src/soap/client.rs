@@ -195,11 +195,13 @@ impl Client {
 
         debug!(self, "Request body: {}", soap_msg);
 
-        let response = request
-            .body(soap_msg)
-            .send()
-            .await
-            .map_err(|e| Error::Protocol(e.to_string()))?;
+        let response = request.body(soap_msg).send().await.map_err(|e| match e {
+            e if e.is_connect() => Error::Connection(e.to_string()),
+            e if e.is_timeout() => Error::Timeout(e.to_string()),
+            e if e.is_redirect() => Error::Redirection(e.to_string()),
+            e if e.is_decode() || e.is_body() => Error::Protocol(e.to_string()),
+            e => Error::Other(e.to_string()),
+        })?;
 
         let status = response.status();
 
