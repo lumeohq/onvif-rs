@@ -249,6 +249,11 @@ impl Client {
         } else {
             if let Ok(text) = response.text().await {
                 debug!(self, "Got HTTP error with body: {}", text);
+                if let Err(soap::Error::Fault(f)) = soap::unsoap(&text) {
+                    if f.is_unauthorized() {
+                        return Err(Error::Authorization("Unauthorized".to_string()));
+                    }
+                }
             }
 
             Err(Error::Other(status.to_string()))
