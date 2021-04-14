@@ -1,3 +1,5 @@
+extern crate strum;
+
 use crate::soap::{
     self,
     auth::{digest::Digest, username_token::UsernameToken},
@@ -10,6 +12,7 @@ use std::{
     time::Duration,
 };
 use url::Url;
+use strum_macros::EnumString;
 
 macro_rules! log {
     ($lvl:expr, $self:ident, $($arg:tt)+) => {
@@ -88,7 +91,7 @@ struct Config {
     timeout: Duration,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, EnumString)]
 pub enum AuthType {
     /// First try to authorize with Digest and in case of error try UsernameToken auth
     Any,
