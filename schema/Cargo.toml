@@ -8,16 +8,16 @@ license = "MIT"
 [dependencies]
 log = "0.4.11"
 xml-rs = "0.8.3"
-yaserde = "0.5.1"
-yaserde_derive = "0.5.1"
+yaserde = "0.6.0"
+yaserde_derive = "0.6.0"
 # FIXME: the UtilsTupleIo from macro-utils currently requires itertools to be available
 itertools = "0.10.0"
 chrono = "0.4.19"
 async-trait = "0.1.42"
 num-bigint = "0.3.1"
 bigdecimal = "0.2.0"
-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
-xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
+macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "ecabc72" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "ecabc72" }
 percent-encoding = "2.1.0"
 thiserror = "1.0.23"
 url = "2.2.1"

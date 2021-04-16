@@ -14,8 +14,8 @@ schema = { version = "0.1.0", path = "../schema" }
 log = "0.4.11"
 xml-rs = "0.8.3"
 xmltree = "0.10.2"
-yaserde = "0.5.1"
-yaserde_derive = "0.5.1"
+yaserde = "0.6.0"
+yaserde_derive = "0.6.0"
 reqwest = { version = "0.11.0", default-features = false }
 digest_auth = "0.2.3"
 chrono = "0.4.19"
@@ -29,8 +29,8 @@ async-trait = "0.1.41"
 async-recursion = "0.3.1"
 num-bigint = "0.3.1"
 bigdecimal = "0.2.0"
-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
-xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "0819e36" }
+macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "ecabc72" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "ecabc72" }
 thiserror = "1.0"
 tokio = { version = "1.0.1", features = ["time"] }
 
