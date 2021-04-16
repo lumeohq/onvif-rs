@@ -5,10 +5,6 @@ authors = ["Chris Bruce <chris@lumeo.com>"]
 edition = "2018"
 license = "MIT"
 
-[features]
-default = ["reqwest/default-tls"]
-rustls = ["reqwest/rustls-tls"]
-
 [dependencies]
 schema = { version = "0.1.0", path = "../schema" }
 log = "0.4.11"
