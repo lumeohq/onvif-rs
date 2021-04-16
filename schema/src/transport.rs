@@ -12,6 +12,10 @@ pub enum Error {
     Authorization(String),
     #[error("Redirection error: {0}")]
     Redirection(String),
+    #[error("Connection error: {0}")]
+    Connection(String),
+    #[error("Timeout occurred: {0}")]
+    Timeout(String),
     #[error("Protocol error: {0}")]
     Protocol(String),
     #[error("Other: {0}")]

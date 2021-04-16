@@ -68,6 +68,15 @@ pub struct Fault {
     pub detail: Option<Detail>,
 }
 
+impl Fault {
+    pub fn is_unauthorized(&self) -> bool {
+        match self.code.subcode.as_ref() {
+            Some(subcode) => subcode.value.contains("NotAuthorized"),
+            None => false,
+        }
+    }
+}
+
 impl Validate for Fault {}
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
