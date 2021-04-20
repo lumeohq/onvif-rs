@@ -1,3 +1,8 @@
+// Generated code contains upper-case acronyms. Ideally it shouldn't, but changing the codegen
+// is not trivial (in addition to changing the casing being a breaking change, of course).
+// This issue is being tracked at <https://github.com/lumeohq/xsd-parser-rs/issues/123>.
+#![allow(clippy::upper_case_acronyms)]
+
 #[macro_use]
 extern crate yaserde_derive;
 
