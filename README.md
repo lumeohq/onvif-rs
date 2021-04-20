@@ -11,12 +11,13 @@ ONVIF-rs is a Rust client library implementation of the ONVIF specification.
 - [x] authentication using _WS-Security UsernameToken_ which is mandatory for all ONVIF devices
 - [x] zero unsafe
 
-## Installation
+## Usage
 
 Cargo.toml:
+
 ```toml
 [dependencies]
-onvif = "0.1"
+onvif = { git = "https://github.com/lumeohq/onvif-rs" }
 ```
 
 ## Troubleshooting 
@@ -32,7 +33,9 @@ cargo build
 ```
 
 ## Examples
+
 To [discover](onvif/examples/discovery.rs) devices on the local network:
+
 ```shell script
 cargo run --example discovery
 ```
@@ -51,13 +54,16 @@ cargo run --example camera -- get-stream-uris --uri=http://192.168.0.2:8000
 ```
 
 ## Dependencies
+
 - XSD -> Rust code generation: [xsd-parser-rs](https://github.com/lumeohq/xsd-parser-rs)
 - XML (de)serialization: [yaserde](https://github.com/media-io/yaserde)
 
 ## Contributing
+
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
 ## License
+
 [MIT](LICENSE)
