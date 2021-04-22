@@ -5,6 +5,13 @@ authors = ["Chris Bruce <chris@lumeo.com>"]
 edition = "2018"
 license = "MIT"
 
+[features]
+default = ["tls"]
+# hyper-rustls does not support IP hosts (like https://192.168.1.2) which are
+# very common for IP cameras. So we can use only native-tls for now.
+# https://github.com/ctz/hyper-rustls/issues/56
+tls = ["reqwest/native-tls"]
+
 [dependencies]
 schema = { version = "0.1.0", path = "../schema" }
 log = "0.4.11"
@@ -12,10 +19,7 @@ xml-rs = "0.8.3"
 xmltree = "0.10.2"
 yaserde = "0.6.0"
 yaserde_derive = "0.6.0"
-# hyper-rustls does not support IP hosts (like https://192.168.1.2) which are
-# very common for IP cameras. So we can use only native-tls for now.
-# https://github.com/ctz/hyper-rustls/issues/56
-reqwest = { version = "0.11.0", default-features = false, features = ["native-tls"] }
+reqwest = { version = "0.11.0", default-features = false }
 digest_auth = "0.2.3"
 chrono = "0.4.19"
 base64 = "0.13.0"
