@@ -2,6 +2,7 @@ use log::debug;
 use onvif::{schema, soap};
 use structopt::StructOpt;
 use url::Url;
+use onvif::soap::client::AuthType;
 
 #[derive(StructOpt)]
 #[structopt(name = "camera", about = "ONVIF camera control tool")]
@@ -11,6 +12,9 @@ struct Args {
 
     #[structopt(global = true, long, requires = "username")]
     password: Option<String>,
+
+    #[structopt(global = true, long, requires = "username")]
+    auth_type: Option<AuthType>,
 
     /// The device's base URI, typically just to the HTTP root.
     /// The service-specific path (such as `/onvif/device_support`) will be appended to this.
@@ -79,6 +83,7 @@ impl Clients {
             (None, None) => None,
             _ => panic!("username and password must be specified together"),
         };
+        let auth_type = args.auth_type.as_ref().unwrap_or(&AuthType::Any);
         let base_uri = args
             .uri
             .as_ref()
@@ -87,6 +92,7 @@ impl Clients {
         let mut out = Self {
             devicemgmt: soap::client::ClientBuilder::new(&devicemgmt_uri)
                 .credentials(creds.clone())
+                .auth_type(auth_type.clone())
                 .build(),
             imaging: None,
             ptz: None,
@@ -109,6 +115,7 @@ impl Clients {
             let svc = Some(
                 soap::client::ClientBuilder::new(&url)
                     .credentials(creds.clone())
+                    .auth_type(auth_type.clone())
                     .build(),
             );
             match s.namespace.as_str() {
@@ -142,12 +149,17 @@ async fn get_capabilities(clients: &Clients) {
 }
 
 async fn get_device_information(clients: &Clients) {
-    println!(
-        "{:#?}",
-        &schema::devicemgmt::get_device_information(&clients.devicemgmt, &Default::default())
-            .await
-            .unwrap()
-    );
+    let dev_info = match schema::devicemgmt::get_device_information(
+        &clients.devicemgmt,
+        &Default::default()
+    ).await {
+        Ok(response) => response,
+        Err(error) => {
+            println!("Failed to fetch device information: {}", error.to_string());
+            return;
+        }
+    };
+    println!("{:#?}", &dev_info);
 }
 
 async fn get_service_capabilities(clients: &Clients) {
@@ -163,37 +175,37 @@ async fn get_service_capabilities(clients: &Clients) {
         }
     }
     if let Some(ref deviceio) = clients.deviceio {
-        match schema::event::get_service_capabilities(deviceio, &Default::default()).await {
+        match schema::deviceio::get_service_capabilities(deviceio, &Default::default()).await {
             Ok(capability) => println!("deviceio: {:#?}", capability),
             Err(error) => println!("Failed to fetch deviceio: {}", error.to_string()),
         }
     }
     if let Some(ref media) = clients.media {
-        match schema::event::get_service_capabilities(media, &Default::default()).await {
+        match schema::media::get_service_capabilities(media, &Default::default()).await {
             Ok(capability) => println!("media: {:#?}", capability),
             Err(error) => println!("Failed to fetch media: {}", error.to_string()),
         }
     }
     if let Some(ref media2) = clients.media2 {
-        match schema::event::get_service_capabilities(media2, &Default::default()).await {
+        match schema::media2::get_service_capabilities(media2, &Default::default()).await {
             Ok(capability) => println!("media2: {:#?}", capability),
             Err(error) => println!("Failed to fetch media2: {}", error.to_string()),
         }
     }
     if let Some(ref imaging) = clients.imaging {
-        match schema::event::get_service_capabilities(imaging, &Default::default()).await {
+        match schema::imaging::get_service_capabilities(imaging, &Default::default()).await {
             Ok(capability) => println!("imaging: {:#?}", capability),
             Err(error) => println!("Failed to fetch imaging: {}", error.to_string()),
         }
     }
     if let Some(ref ptz) = clients.ptz {
-        match schema::event::get_service_capabilities(ptz, &Default::default()).await {
+        match schema::ptz::get_service_capabilities(ptz, &Default::default()).await {
             Ok(capability) => println!("ptz: {:#?}", capability),
             Err(error) => println!("Failed to fetch ptz: {}", error.to_string()),
         }
     }
     if let Some(ref analytics) = clients.analytics {
-        match schema::event::get_service_capabilities(analytics, &Default::default()).await {
+        match schema::analytics::get_service_capabilities(analytics, &Default::default()).await {
             Ok(capability) => println!("analytics: {:#?}", capability),
             Err(error) => println!("Failed to fetch analytics: {}", error.to_string()),
         }
@@ -209,9 +221,16 @@ async fn get_system_date_and_time(clients: &Clients) {
 
 async fn get_stream_uris(clients: &Clients) {
     let media_client = clients.media.as_ref().unwrap();
-    let profiles = schema::media::get_profiles(media_client, &Default::default())
-        .await
-        .unwrap();
+    let profiles = match schema::media::get_profiles(
+        media_client,
+        &Default::default()
+    ).await {
+        Ok(response) => response,
+        Err(error) => {
+            println!("Failed to fetch profiles: {}", error.to_string());
+            return;
+        }
+    };
     debug!("get_profiles response: {:#?}", &profiles);
     let requests: Vec<_> = profiles
         .profiles
@@ -257,9 +276,16 @@ async fn get_stream_uris(clients: &Clients) {
 }
 
 async fn get_hostname(clients: &Clients) {
-    let resp = schema::devicemgmt::get_hostname(&clients.devicemgmt, &Default::default())
-        .await
-        .unwrap();
+    let resp = match schema::devicemgmt::get_hostname(
+        &clients.devicemgmt,
+        &Default::default()
+    ).await {
+        Ok(response) => response,
+        Err(error) => {
+            println!("Failed to fetch hostname: {}", error.to_string());
+            return;
+        }
+    };
     debug!("get_hostname response: {:#?}", &resp);
     println!(
         "{}",
@@ -355,12 +381,17 @@ async fn enable_analytics(clients: &Clients) {
 }
 
 async fn get_analytics(clients: &Clients) {
-    let config = schema::media::get_video_analytics_configurations(
+    let config = match schema::media::get_video_analytics_configurations(
         clients.media.as_ref().unwrap(),
         &Default::default(),
-    )
-    .await
-    .unwrap();
+    ).await {
+        Ok(response) => response,
+        Err(error) => {
+            println!("Failed to fetch analytics: {}", error.to_string());
+            return;
+        }
+    };
+
     println!("{:#?}", &config);
     let c = match config.configurations.first() {
         Some(c) => c,
@@ -420,6 +451,7 @@ async fn main() {
             get_service_capabilities(&clients).await;
             get_stream_uris(&clients).await;
             get_hostname(&clients).await;
+            get_device_information(&clients).await;
             get_analytics(&clients).await;
             get_status(&clients).await;
         }
