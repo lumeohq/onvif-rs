@@ -68,17 +68,23 @@ impl ClientBuilder {
     }
 
     pub fn build(self) -> Client {
-        Client {
-            client: reqwest::Client::builder()
-                // hyper-rustls does not support IP hosts (like https://192.168.1.2) which are
-                // very common for IP cameras. So we can use only native-tls for now.
-                // https://github.com/ctz/hyper-rustls/issues/56
+        #[allow(unused_mut)]
+        let mut client_builder = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(self.config.timeout);
+
+        #[cfg(feature = "tls")]
+        {
+            // hyper-rustls does not support IP hosts (like https://192.168.1.2) which are
+            // very common for IP cameras. So we can use only native-tls for now.
+            // https://github.com/ctz/hyper-rustls/issues/56
+            client_builder = client_builder
                 .use_native_tls()
-                .danger_accept_invalid_certs(true)
-                .redirect(reqwest::redirect::Policy::none())
-                .timeout(self.config.timeout)
-                .build()
-                .unwrap(),
+                .danger_accept_invalid_certs(true);
+        }
+
+        Client {
+            client: client_builder.build().unwrap(),
             config: self.config,
         }
     }
