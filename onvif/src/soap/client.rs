@@ -240,7 +240,7 @@ impl Client {
                 }
             }
 
-            self.request_recursive(message, &uri, auth_type, redirections)
+            self.request_recursive(message, uri, auth_type, redirections)
                 .await
         } else if status.is_redirection() {
             // reqwest changes method on 302, so we have to handle redirections ourselves

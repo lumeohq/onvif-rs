@@ -48,7 +48,7 @@ fn basic_deserialization() {
         "#;
 
     let response: devicemgmt::GetSystemDateAndTimeResponse =
-        yaserde::de::from_str(&response).unwrap();
+        yaserde::de::from_str(response).unwrap();
 
     let de = response.system_date_and_time;
 
@@ -89,7 +89,7 @@ fn extend_base_deserialization() {
         </tt:VideoSourceConfiguration>
         "#;
 
-    let de: tt::VideoSourceConfiguration = yaserde::de::from_str(&ser).unwrap();
+    let de: tt::VideoSourceConfiguration = yaserde::de::from_str(ser).unwrap();
 
     assert_eq!(
         de.token,
@@ -160,7 +160,7 @@ fn choice_deserialization() {
         </tt:ColorOptions>
         "#;
 
-    let des: tt::ColorOptions = yaserde::de::from_str(&ser).unwrap();
+    let des: tt::ColorOptions = yaserde::de::from_str(ser).unwrap();
 
     match des.color_options_choice {
         tt::ColorOptionsChoice::ColorspaceRange(colors) => {
@@ -317,7 +317,7 @@ fn duration_deserialization() {
         </tt:MediaUri>
         "#;
 
-    let des: tt::MediaUri = yaserde::de::from_str(&ser).unwrap();
+    let des: tt::MediaUri = yaserde::de::from_str(ser).unwrap();
 
     assert_eq!(des.uri, "http://a/b/c".to_string());
     assert_eq!(des.invalid_after_connect, false);
@@ -478,7 +478,7 @@ fn probe_match_deserialization() {
         </SOAP-ENV:Envelope>
         "#;
 
-    let des: ws_discovery::probe_matches::Envelope = yaserde::de::from_str(&ser).unwrap();
+    let des: ws_discovery::probe_matches::Envelope = yaserde::de::from_str(ser).unwrap();
 
     assert_eq!(
         des.header.relates_to,
@@ -525,7 +525,7 @@ fn string_list_deserialization() {
         </tt:FocusOptions20Extension>
         "#;
 
-    let des: tt::FocusOptions20Extension = yaserde::de::from_str(&ser).unwrap();
+    let des: tt::FocusOptions20Extension = yaserde::de::from_str(ser).unwrap();
 
     assert_eq!(
         des.af_modes,
@@ -557,7 +557,7 @@ fn float_list_deserialization() {
         <FloatAttrList>1 2.3 3.99</FloatAttrList>
         "#;
 
-    let des: tt::FloatAttrList = yaserde::de::from_str(&ser).unwrap();
+    let des: tt::FloatAttrList = yaserde::de::from_str(ser).unwrap();
 
     assert_eq!(des, tt::FloatAttrList(vec![1.0, 2.3, 3.99]));
 }
@@ -572,7 +572,7 @@ fn nested_structs_with_same_named_attributes() {
         </tt:Profile>
         "#;
 
-    let des: tt::Profile = yaserde::de::from_str(&ser).unwrap();
+    let des: tt::Profile = yaserde::de::from_str(ser).unwrap();
 
     assert_eq!(des.token.0.as_str(), "a");
     assert_eq!(des.ptz_configuration.unwrap().token.0.as_str(), "b");
@@ -589,7 +589,7 @@ fn nested_structs_with_same_named_fields() {
         </tt:Profile>
         "#;
 
-    let des: tt::Profile = yaserde::de::from_str(&ser).unwrap();
+    let des: tt::Profile = yaserde::de::from_str(ser).unwrap();
     assert_eq!(
         des,
         tt::Profile {

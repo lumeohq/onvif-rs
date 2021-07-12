@@ -264,7 +264,7 @@ async fn get_hostname(clients: &Clients) {
     println!(
         "{}",
         match resp.hostname_information.name {
-            Some(ref h) => &h,
+            Some(ref h) => h,
             None => "(unset)",
         }
     );
