@@ -55,7 +55,7 @@ fn basic_deserialization() {
     println!("{:#?}", de);
 
     assert_eq!(de.date_time_type, tt::SetDateTimeType::Ntp);
-    assert_eq!(de.daylight_savings, false);
+    assert!(!de.daylight_savings);
     assert_eq!(de.time_zone.unwrap().tz, "PST7PDT");
     assert_eq!(de.utc_date_time.as_ref().unwrap().date.year, 2019);
     assert_eq!(de.utc_date_time.as_ref().unwrap().date.month, 11);
@@ -320,8 +320,8 @@ fn duration_deserialization() {
     let des: tt::MediaUri = yaserde::de::from_str(ser).unwrap();
 
     assert_eq!(des.uri, "http://a/b/c".to_string());
-    assert_eq!(des.invalid_after_connect, false);
-    assert_eq!(des.invalid_after_reboot, true);
+    assert!(!des.invalid_after_connect);
+    assert!(des.invalid_after_reboot);
     assert_approx_eq!(des.timeout.seconds, 60.0);
 }
 
