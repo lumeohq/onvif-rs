@@ -140,7 +140,7 @@ pub mod probe_matches {
             self.scopes().iter().find_map(|url| {
                 url.as_str()
                     .strip_prefix(prefix)
-                    .map(|s| percent_decode_str(&s).decode_utf8_lossy().to_string())
+                    .map(|s| percent_decode_str(s).decode_utf8_lossy().to_string())
             })
         }
 

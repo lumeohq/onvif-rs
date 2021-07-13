@@ -69,7 +69,7 @@ pub fn unsoap(xml: &str) -> Result<String, Error> {
     body.children
         .iter()
         .find_map(|node| match node {
-            XMLNode::Element(app_data) => Some(xml_element_to_string(&app_data)),
+            XMLNode::Element(app_data) => Some(xml_element_to_string(app_data)),
             _ => None,
         })
         .ok_or(Error::BodyIsEmpty)?

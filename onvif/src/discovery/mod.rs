@@ -101,7 +101,7 @@ pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, 
         let socket = UdpSocket::bind(local_socket_addr).await?;
         socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
         socket
-            .send_to(&probe_xml.as_bytes(), multi_socket_addr)
+            .send_to(probe_xml.as_bytes(), multi_socket_addr)
             .await?;
 
         socket
@@ -245,7 +245,7 @@ fn test_xaddrs_extraction() {
 
     let actual = input
         .iter()
-        .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok())
+        .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(xml).ok())
         .filter(|envelope| envelope.header.relates_to == our_uuid)
         .filter_map(|envelope| {
             tokio::runtime::Runtime::new()

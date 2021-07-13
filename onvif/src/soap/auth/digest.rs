@@ -55,8 +55,7 @@ impl Digest {
             State::Got401(response) => {
                 let creds = self.creds.as_ref().ok_or(Error::NoCredentials)?;
 
-                request =
-                    request.header("Authorization", digest_auth(response, &creds, &self.uri)?);
+                request = request.header("Authorization", digest_auth(response, creds, &self.uri)?);
 
                 Ok(request)
             }
