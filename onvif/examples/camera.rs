@@ -263,10 +263,10 @@ async fn get_hostname(clients: &Clients) {
     debug!("get_hostname response: {:#?}", &resp);
     println!(
         "{}",
-        match resp.hostname_information.name {
-            Some(ref h) => h,
-            None => "(unset)",
-        }
+        resp.hostname_information
+            .name
+            .as_deref()
+            .unwrap_or("(unset)")
     );
 }
 
