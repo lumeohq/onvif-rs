@@ -99,13 +99,13 @@ impl Clients {
         let services =
             schema::devicemgmt::get_services(&out.devicemgmt, &Default::default()).await?;
         for s in &services.service {
-            if !s.x_addr.starts_with(base_uri.as_str()) {
+            let url = Url::parse(&s.x_addr).map_err(|e| e.to_string())?;
+            if !url.as_str().starts_with(base_uri.as_str()) {
                 return Err(format!(
                     "Service URI {} is not within base URI {}",
                     &s.x_addr, &base_uri
                 ));
             }
-            let url = Url::parse(&s.x_addr).map_err(|e| e.to_string())?;
             let svc = Some(
                 soap::client::ClientBuilder::new(&url)
                     .credentials(creds.clone())
