@@ -12,10 +12,10 @@ yaserde = "0.6.0"
 yaserde_derive = "0.6.0"
 chrono = "0.4.19"
 async-trait = "0.1.42"
-num-bigint = "0.3.1"
-bigdecimal = "0.2.0"
-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "75806bc" }
-xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "75806bc" }
+num-bigint = "0.4.2"
+bigdecimal = "0.3.0"
+xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "91667d5" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "91667d5" }
 percent-encoding = "2.1.0"
 thiserror = "1.0.23"
 url = "2.2.1"

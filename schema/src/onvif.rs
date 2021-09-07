@@ -1,6 +1,6 @@
 use crate::{b_2 as wsnt, soap_envelope as soapenv, validate::Validate, xmlmime as xmime, xop};
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 use xsd_types::types as xs;
 
 pub use crate::common::*;

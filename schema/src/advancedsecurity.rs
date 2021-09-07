@@ -1,7 +1,7 @@
 use crate::transport;
 use crate::validate::Validate;
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 use xsd_types::types as xs;
 
 // Unique identifier for keys in the keystore.

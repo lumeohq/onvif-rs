@@ -1,8 +1,8 @@
 use crate::transport;
 use crate::types as pt;
 use crate::validate::Validate;
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 use xsd_types::types as xs;
 
 // The service capabilities reflect optional functionality of a service. The

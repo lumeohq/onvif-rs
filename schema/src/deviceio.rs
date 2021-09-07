@@ -1,8 +1,8 @@
 use crate::transport;
 use crate::validate::Validate;
 use crate::{devicemgmt as tds, onvif as tt};
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 use xsd_types::types as xs;
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]

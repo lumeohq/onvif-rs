@@ -1,8 +1,8 @@
 use crate::onvif as tt;
 use crate::transport;
 use crate::validate::Validate;
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(

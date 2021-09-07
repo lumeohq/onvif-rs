@@ -30,10 +30,10 @@ futures-core = "0.3.8"
 async-stream = "0.3.0"
 async-trait = "0.1.41"
 async-recursion = "0.3.1"
-num-bigint = "0.3.1"
-bigdecimal = "0.2.0"
-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "75806bc" }
-xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "75806bc" }
+num-bigint = "0.4.2"
+bigdecimal = "0.3.0"
+xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "91667d5" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "91667d5" }
 thiserror = "1.0"
 tokio = { version = "1.0.1", features = ["time"] }
 

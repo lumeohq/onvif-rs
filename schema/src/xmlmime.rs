@@ -1,6 +1,6 @@
 use crate::validate::Validate;
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 
 #[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
 pub struct ContentType(pub String);

@@ -1,7 +1,7 @@
 pub use crate::common::*;
 use crate::validate::Validate;
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 
 pub type EndpointReference = EndpointReferenceType;
 

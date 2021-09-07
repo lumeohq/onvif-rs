@@ -1,7 +1,7 @@
 pub use crate::common::*;
 use crate::validate::Validate;
-use macro_utils::*;
 use std::str::FromStr;
+use xsd_macro_utils::*;
 
 // Type used to reference logical and physical entities.
 // Token may be extended by intermediate terminal with adding prefix to make it
