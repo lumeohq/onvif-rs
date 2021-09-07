@@ -13,29 +13,29 @@ default = ["tls"]
 tls = ["reqwest/native-tls"]
 
 [dependencies]
-schema = { version = "0.1.0", path = "../schema" }
-log = "0.4.11"
-xml-rs = "0.8.3"
-xmltree = "0.10.2"
-yaserde = "0.7.1"
-yaserde_derive = "0.7.1"
-reqwest = { version = "0.11.0", default-features = false }
-digest_auth = "0.2.3"
-chrono = "0.4.19"
-base64 = "0.13.0"
-sha1 = "0.6.0"
-url = "2.2.0"
-uuid = { version = "0.8.1", features = ["v4"] }
-futures-core = "0.3.8"
+async-recursion = "0.3.1"
 async-stream = "0.3.0"
 async-trait = "0.1.41"
-async-recursion = "0.3.1"
-num-bigint = "0.4.2"
+base64 = "0.13.0"
 bigdecimal = "0.3.0"
-xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
-xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
+chrono = "0.4.19"
+digest_auth = "0.2.3"
+futures-core = "0.3.8"
+log = "0.4.11"
+num-bigint = "0.4.2"
+reqwest = { version = "0.11.0", default-features = false }
+schema = { version = "0.1.0", path = "../schema" }
+sha1 = "0.6.0"
 thiserror = "1.0"
 tokio = { version = "1.0.1", features = ["time"] }
+url = "2.2.0"
+uuid = { version = "0.8.1", features = ["v4"] }
+xml-rs = "0.8.3"
+xmltree = "0.10.2"
+xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
+xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
+yaserde = "0.7.1"
+yaserde_derive = "0.7.1"
 
 [dev-dependencies]
 dotenv = "0.15.0"
