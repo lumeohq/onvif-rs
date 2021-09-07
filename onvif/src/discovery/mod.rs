@@ -1,7 +1,6 @@
 use crate::soap;
 use async_stream::stream;
 use futures_core::stream::Stream;
-use log::debug;
 use schema::{
     transport::Error as TransportError,
     ws_discovery::{probe, probe_matches},
@@ -16,6 +15,7 @@ use tokio::{
     net::UdpSocket,
     time::{self, Duration, Instant},
 };
+use tracing::debug;
 use url::Url;
 
 #[derive(Debug, Error)]
