@@ -11,21 +11,21 @@ use std::{
 };
 use url::Url;
 
-macro_rules! log {
+macro_rules! event {
     ($lvl:expr, $self:ident, $($arg:tt)+) => {
-        log::log!($lvl, "{}: {}", $self.config.uri, format_args!($($arg)+))
+        tracing::event!($lvl, "{}: {}", $self.config.uri, format_args!($($arg)+))
     };
 }
 
 macro_rules! debug {
     ($($arg:tt)+) => {
-        log!(log::Level::Debug, $($arg)+)
+        event!(tracing::Level::DEBUG, $($arg)+)
     }
 }
 
 macro_rules! warn {
     ($($arg:tt)+) => {
-        log!(log::Level::Warn, $($arg)+)
+        event!(tracing::Level::WARN, $($arg)+)
     };
 }
 

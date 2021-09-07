@@ -1,6 +1,6 @@
-use log::debug;
 use onvif::{schema, soap};
 use structopt::StructOpt;
+use tracing::debug;
 use url::Url;
 
 #[derive(StructOpt)]
@@ -398,7 +398,7 @@ async fn get_status(clients: &Clients) {
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    tracing_subscriber::fmt::init();
 
     let args = Args::from_args();
     let clients = Clients::new(&args).await.unwrap();

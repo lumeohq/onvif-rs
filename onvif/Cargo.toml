@@ -21,13 +21,13 @@ bigdecimal = "0.3.0"
 chrono = "0.4.19"
 digest_auth = "0.2.3"
 futures-core = "0.3.8"
-log = "0.4.11"
 num-bigint = "0.4.2"
 reqwest = { version = "0.11.0", default-features = false }
 schema = { version = "0.1.0", path = "../schema" }
 sha1 = "0.6.0"
 thiserror = "1.0"
 tokio = { version = "1.0.1", features = ["time"] }
+tracing = "0.1.26"
 url = "2.2.0"
 uuid = { version = "0.8.1", features = ["v4"] }
 xml-rs = "0.8.3"
@@ -39,7 +39,7 @@ yaserde_derive = "0.7.1"
 
 [dev-dependencies]
 dotenv = "0.15.0"
-env_logger = "0.8.2"
 futures-util = "0.3.8"
 structopt = "0.3.21"
 tokio = { version = "1.0.1", features = ["full"] }
+tracing-subscriber = "0.2.20"

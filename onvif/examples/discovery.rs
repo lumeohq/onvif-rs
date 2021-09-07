@@ -4,7 +4,7 @@ use onvif::discovery;
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    env_logger::init();
+    tracing_subscriber::fmt::init();
 
     use futures_util::stream::StreamExt;
     const MAX_CONCURRENT_JUMPERS: usize = 100;
