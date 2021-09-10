@@ -160,6 +160,11 @@ where
         .probe_matches
         .probe_match
         .iter()
+        .filter(|probe_match| {
+            probe_match
+                .find_in_scopes("onvif://www.onvif.org")
+                .is_some()
+        })
         .flat_map(|probe_match| {
             probe_match
                 .x_addrs()
