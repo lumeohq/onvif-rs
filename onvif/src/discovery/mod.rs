@@ -1,12 +1,14 @@
 use crate::soap;
 use async_stream::stream;
 use futures_core::stream::Stream;
+use futures_util::{future::ready, stream::FuturesUnordered, StreamExt};
 use schema::{
     transport::Error as TransportError,
     ws_discovery::{probe, probe_matches},
 };
 use std::{
     future::Future,
+    iter,
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 use thiserror::Error;
@@ -147,25 +149,33 @@ async fn recv_string(s: &UdpSocket, timeout: Duration) -> io::Result<String> {
 
 async fn get_responding_addr<F, Fut>(
     envelope: probe_matches::Envelope,
-    mut check_addr: F,
+    check_addr: F,
 ) -> Option<Device>
 where
-    F: FnMut(Url) -> Fut,
+    F: Fn(Url) -> Fut + Copy,
     Fut: Future<Output = bool>,
 {
-    for probe_match in &envelope.body.probe_matches.probe_match {
-        for url in probe_match.x_addrs() {
-            if check_addr(url.clone()).await {
+    envelope
+        .body
+        .probe_matches
+        .probe_match
+        .iter()
+        .flat_map(|probe_match| {
+            probe_match
+                .x_addrs()
+                .into_iter()
+                .zip(iter::repeat(probe_match.name()))
+        })
+        .map(|(url, name)| async move {
+            check_addr(url.clone()).await.then(|| {
                 debug!("Responding addr: {:?}", url);
-                return Some(Device {
-                    url,
-                    name: probe_match.name(),
-                });
-            }
-        }
-    }
-
-    None
+                Device { name, url }
+            })
+        })
+        .collect::<FuturesUnordered<_>>()
+        .filter_map(ready)
+        .next()
+        .await
 }
 
 fn build_probe() -> probe::Envelope {
@@ -236,7 +246,6 @@ fn test_xaddrs_extraction() {
         let responding_addrs = vec![
             "http://addr_10".parse().unwrap(),
             "http://addr_21".parse().unwrap(),
-            "http://addr_22".parse().unwrap(),
             "http://addr_30".parse().unwrap(),
         ];
 
@@ -262,17 +271,16 @@ fn test_xaddrs_extraction() {
         name: Some("MyCamera2000".to_string())
     }));
 
-    // OK: message UUID matches and addr responds
-    assert!(actual.contains(&Device {
-        url: Url::parse("http://addr_21").unwrap(),
-        name: Some("MyCamera2000".to_string())
-    }));
-
-    // BAD: message UUID matches and addr responds but we take only first one
-    assert!(!actual.contains(&Device {
-        url: Url::parse("http://addr_22").unwrap(),
-        name: Some("MyCamera2000".to_string())
-    }));
+    // OK: message UUID matches and one of addresses responds
+    assert!(
+        actual.contains(&Device {
+            url: Url::parse("http://addr_21").unwrap(),
+            name: Some("MyCamera2000".to_string())
+        }) || actual.contains(&Device {
+            url: Url::parse("http://addr_22").unwrap(),
+            name: Some("MyCamera2000".to_string())
+        })
+    );
 
     // BAD: wrong message UUID
     assert!(!actual.contains(&Device {
