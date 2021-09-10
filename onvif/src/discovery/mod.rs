@@ -194,7 +194,9 @@ fn build_probe() -> probe::Envelope {
 async fn is_addr_responding(uri: Url) -> bool {
     matches!(
         schema::devicemgmt::get_system_date_and_time(
-            &soap::client::ClientBuilder::new(&uri).build(),
+            &soap::client::ClientBuilder::new(&uri)
+                .timeout(Duration::from_millis(500))
+                .build(),
             &Default::default(),
         )
         .await,
