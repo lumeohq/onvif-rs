@@ -36,6 +36,9 @@ enum Cmd {
     /// Gets RTSP URIs for all profiles, along with a summary of the video/audio streams.
     GetStreamUris,
 
+    /// Gets JPEG URIs for all profiles
+    GetSnapshotUris,
+
     GetHostname,
 
     // Gets model, firmware, manufacturer and others informations related to the device.
@@ -256,6 +259,33 @@ async fn get_stream_uris(clients: &Clients) {
     }
 }
 
+async fn get_snapshot_uris(clients: &Clients) {
+    let media_client = clients.media.as_ref().unwrap();
+    let profiles = schema::media::get_profiles(media_client, &Default::default())
+        .await
+        .unwrap();
+    debug!("get_profiles response: {:#?}", &profiles);
+    let requests: Vec<_> = profiles
+        .profiles
+        .iter()
+        .map(|p: &schema::onvif::Profile| schema::media::GetSnapshotUri {
+            profile_token: schema::onvif::ReferenceToken(p.token.0.clone()),
+        })
+        .collect();
+
+    let responses = futures_util::future::try_join_all(
+        requests
+            .iter()
+            .map(|r| schema::media::get_snapshot_uri(media_client, r)),
+    )
+    .await
+    .unwrap();
+    for (p, resp) in profiles.profiles.iter().zip(responses.iter()) {
+        println!("token={} name={}", &p.token.0, &p.name.0);
+        println!("    snapshot_uri={}", &resp.media_uri.uri);
+    }
+}
+
 async fn get_hostname(clients: &Clients) {
     let resp = schema::devicemgmt::get_hostname(&clients.devicemgmt, &Default::default())
         .await
@@ -408,6 +438,7 @@ async fn main() {
         Cmd::GetCapabilities => get_capabilities(&clients).await,
         Cmd::GetServiceCapabilities => get_service_capabilities(&clients).await,
         Cmd::GetStreamUris => get_stream_uris(&clients).await,
+        Cmd::GetSnapshotUris => get_snapshot_uris(&clients).await,
         Cmd::GetHostname => get_hostname(&clients).await,
         Cmd::SetHostname { hostname } => set_hostname(&clients, hostname).await,
         Cmd::GetDeviceInformation => get_device_information(&clients).await,
@@ -419,6 +450,7 @@ async fn main() {
             get_capabilities(&clients).await;
             get_service_capabilities(&clients).await;
             get_stream_uris(&clients).await;
+            get_snapshot_uris(&clients).await;
             get_hostname(&clients).await;
             get_analytics(&clients).await;
             get_status(&clients).await;
