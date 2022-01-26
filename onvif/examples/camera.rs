@@ -140,7 +140,7 @@ impl Clients {
 async fn get_capabilities(clients: &Clients) {
     match schema::devicemgmt::get_capabilities(&clients.devicemgmt, &Default::default()).await {
         Ok(capabilities) => println!("{:#?}", capabilities),
-        Err(error) => println!("Failed to fetch capabilities: {}", error.to_string()),
+        Err(error) => println!("Failed to fetch capabilities: {}", error),
     }
 }
 
@@ -156,49 +156,49 @@ async fn get_device_information(clients: &Clients) {
 async fn get_service_capabilities(clients: &Clients) {
     match schema::event::get_service_capabilities(&clients.devicemgmt, &Default::default()).await {
         Ok(capability) => println!("devicemgmt: {:#?}", capability),
-        Err(error) => println!("Failed to fetch devicemgmt: {}", error.to_string()),
+        Err(error) => println!("Failed to fetch devicemgmt: {}", error),
     }
 
     if let Some(ref event) = clients.event {
         match schema::event::get_service_capabilities(event, &Default::default()).await {
             Ok(capability) => println!("event: {:#?}", capability),
-            Err(error) => println!("Failed to fetch event: {}", error.to_string()),
+            Err(error) => println!("Failed to fetch event: {}", error),
         }
     }
     if let Some(ref deviceio) = clients.deviceio {
         match schema::event::get_service_capabilities(deviceio, &Default::default()).await {
             Ok(capability) => println!("deviceio: {:#?}", capability),
-            Err(error) => println!("Failed to fetch deviceio: {}", error.to_string()),
+            Err(error) => println!("Failed to fetch deviceio: {}", error),
         }
     }
     if let Some(ref media) = clients.media {
         match schema::event::get_service_capabilities(media, &Default::default()).await {
             Ok(capability) => println!("media: {:#?}", capability),
-            Err(error) => println!("Failed to fetch media: {}", error.to_string()),
+            Err(error) => println!("Failed to fetch media: {}", error),
         }
     }
     if let Some(ref media2) = clients.media2 {
         match schema::event::get_service_capabilities(media2, &Default::default()).await {
             Ok(capability) => println!("media2: {:#?}", capability),
-            Err(error) => println!("Failed to fetch media2: {}", error.to_string()),
+            Err(error) => println!("Failed to fetch media2: {}", error),
         }
     }
     if let Some(ref imaging) = clients.imaging {
         match schema::event::get_service_capabilities(imaging, &Default::default()).await {
             Ok(capability) => println!("imaging: {:#?}", capability),
-            Err(error) => println!("Failed to fetch imaging: {}", error.to_string()),
+            Err(error) => println!("Failed to fetch imaging: {}", error),
         }
     }
     if let Some(ref ptz) = clients.ptz {
         match schema::event::get_service_capabilities(ptz, &Default::default()).await {
             Ok(capability) => println!("ptz: {:#?}", capability),
-            Err(error) => println!("Failed to fetch ptz: {}", error.to_string()),
+            Err(error) => println!("Failed to fetch ptz: {}", error),
         }
     }
     if let Some(ref analytics) = clients.analytics {
         match schema::event::get_service_capabilities(analytics, &Default::default()).await {
             Ok(capability) => println!("analytics: {:#?}", capability),
-            Err(error) => println!("Failed to fetch analytics: {}", error.to_string()),
+            Err(error) => println!("Failed to fetch analytics: {}", error),
         }
     }
 }

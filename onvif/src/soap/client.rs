@@ -1,3 +1,5 @@
+#![allow(clippy::large_enum_variant)]
+
 use crate::soap::{
     self,
     auth::{digest::Digest, username_token::UsernameToken},
