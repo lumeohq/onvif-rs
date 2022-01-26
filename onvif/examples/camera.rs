@@ -19,6 +19,10 @@ struct Args {
     #[structopt(global = true, long)]
     uri: Option<Url>,
 
+    /// Service specific path
+    #[structopt(global = true, long, default_value = "onvif/device_service")]
+    service_path: String,
+
     #[structopt(subcommand)]
     cmd: Cmd,
 }
@@ -86,7 +90,7 @@ impl Clients {
             .uri
             .as_ref()
             .ok_or_else(|| "--uri must be specified.".to_string())?;
-        let devicemgmt_uri = base_uri.join("onvif/device_service").unwrap();
+        let devicemgmt_uri = base_uri.join(&args.service_path).unwrap();
         let mut out = Self {
             devicemgmt: soap::client::ClientBuilder::new(&devicemgmt_uri)
                 .credentials(creds.clone())
