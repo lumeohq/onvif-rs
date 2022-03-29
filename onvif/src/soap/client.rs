@@ -9,6 +9,7 @@ use async_trait::async_trait;
 use schema::transport::{Error, Transport};
 use std::{
     fmt::{Debug, Formatter},
+    sync::Arc,
     time::Duration,
 };
 use url::Url;
@@ -48,6 +49,7 @@ impl ClientBuilder {
             config: Config {
                 uri: uri.clone(),
                 credentials: None,
+                response_patcher: None,
                 auth_type: AuthType::Any,
                 timeout: Duration::from_secs(5),
             },
@@ -56,6 +58,11 @@ impl ClientBuilder {
 
     pub fn credentials(mut self, credentials: Option<Credentials>) -> Self {
         self.config.credentials = credentials;
+        self
+    }
+
+    pub fn response_patcher(mut self, response_patcher: Option<ResponsePatcher>) -> Self {
+        self.config.response_patcher = response_patcher;
         self
     }
 
@@ -96,6 +103,7 @@ impl ClientBuilder {
 struct Config {
     uri: Url,
     credentials: Option<Credentials>,
+    response_patcher: Option<ResponsePatcher>,
     auth_type: AuthType,
     timeout: Duration,
 }
@@ -121,6 +129,8 @@ impl Debug for Credentials {
         f.write_fmt(format_args!("{} [password hidden]", self.username))
     }
 }
+
+pub type ResponsePatcher = Arc<dyn Fn(&str) -> Result<String, String> + Send + Sync>;
 
 #[derive(Debug)]
 enum RequestAuthType {
@@ -226,7 +236,19 @@ impl Client {
                 .map_err(|e| Error::Protocol(e.to_string()))
                 .and_then(|text| {
                     debug!(self, "Response body: {}", text);
-                    soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{:?}", e)))
+                    let response =
+                        soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{:?}", e)))?;
+                    if let Some(response_patcher) = &self.config.response_patcher {
+                        match response_patcher(&response) {
+                            Ok(patched) => {
+                                debug!(self, "Response (SOAP unwrapped, patched): {}", patched);
+                                Ok(patched)
+                            }
+                            Err(e) => Err(Error::Protocol(format!("Patching failed: {e}"))),
+                        }
+                    } else {
+                        Ok(response)
+                    }
                 })
         } else if status == reqwest::StatusCode::UNAUTHORIZED {
             match auth_type {
