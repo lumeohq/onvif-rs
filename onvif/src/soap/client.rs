@@ -244,7 +244,7 @@ impl Client {
                                 debug!(self, "Response (SOAP unwrapped, patched): {}", patched);
                                 Ok(patched)
                             }
-                            Err(e) => Err(Error::Protocol(format!("Patching failed: {e}"))),
+                            Err(e) => Err(Error::Protocol(format!("Patching failed: {e}",e=e))),
                         }
                     } else {
                         Ok(response)
