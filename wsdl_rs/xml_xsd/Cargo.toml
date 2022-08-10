@@ -1,0 +1,9 @@
+[package]
+name = "xml_xsd"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+xml-rs = "0.8.3"
+yaserde = "0.7.1"
+yaserde_derive = "0.7.1"

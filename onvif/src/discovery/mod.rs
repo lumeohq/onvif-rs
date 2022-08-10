@@ -2,10 +2,8 @@ use crate::soap;
 use async_stream::stream;
 use futures_core::stream::Stream;
 use futures_util::{future::ready, stream::FuturesUnordered, StreamExt};
-use schema::{
-    transport::Error as TransportError,
-    ws_discovery::{probe, probe_matches},
-};
+use schema::transport::Error as TransportError;
+use schema::ws_discovery::{probe, probe_matches};
 use std::{
     future::Future,
     iter,

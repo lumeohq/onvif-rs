@@ -3,84 +3,78 @@
 // This issue is being tracked at <https://github.com/lumeohq/xsd-parser-rs/issues/123>.
 #![allow(clippy::upper_case_acronyms)]
 
-#[macro_use]
-extern crate yaserde_derive;
-
-pub mod transport;
-pub mod validate;
+pub use transport;
 
 // xsd:
-pub mod common;
+pub use common;
 #[cfg(feature = "metadatastream")]
-#[allow(clippy::large_enum_variant)]
-pub mod metadatastream;
-pub mod onvif;
+pub use metadatastream;
+pub use onvif;
 #[cfg(feature = "radiometry")]
-pub mod radiometry;
+pub use radiometry;
 #[cfg(feature = "rules")]
-pub mod rules;
-pub mod soap_envelope;
-pub mod types;
-pub mod xmlmime;
-pub mod xop;
+pub use rules;
+pub use soap_envelope;
+pub use types;
+pub use xmlmime;
+pub use xop;
 
 // wsdl:
 #[cfg(feature = "accesscontrol")]
-pub mod accesscontrol;
+pub use accesscontrol;
 #[cfg(feature = "accessrules")]
-pub mod accessrules;
+pub use accessrules;
 #[cfg(feature = "actionengine")]
-pub mod actionengine;
+pub use actionengine;
 #[cfg(feature = "advancedsecurity")]
-pub mod advancedsecurity;
+pub use advancedsecurity;
 #[cfg(feature = "analytics")]
-pub mod analytics;
+pub use analytics;
 #[cfg(feature = "authenticationbehavior")]
-pub mod authenticationbehavior;
-pub mod b_2;
+pub use authenticationbehavior;
+pub use b_2;
 #[cfg(feature = "bf_2")]
-pub mod bf_2;
+pub use bf_2;
 #[cfg(feature = "credential")]
-pub mod credential;
+pub use credential;
 #[cfg(feature = "deviceio")]
-pub mod deviceio;
+pub use deviceio;
 #[cfg(feature = "devicemgmt")]
-pub mod devicemgmt;
+pub use devicemgmt;
 #[cfg(feature = "display")]
-pub mod display;
+pub use display;
 #[cfg(feature = "doorcontrol")]
-pub mod doorcontrol;
+pub use doorcontrol;
 #[cfg(feature = "event")]
-pub mod event;
+pub use event;
 #[cfg(feature = "imaging")]
-pub mod imaging;
+pub use imaging;
 #[cfg(feature = "media")]
-pub mod media;
+pub use media;
 #[cfg(feature = "media2")]
-pub mod media2;
+pub use media2;
 #[cfg(feature = "provisioning")]
-pub mod provisioning;
+pub use provisioning;
 #[cfg(feature = "ptz")]
-pub mod ptz;
+pub use ptz;
 #[cfg(feature = "receiver")]
-pub mod receiver;
+pub use receiver;
 #[cfg(feature = "recording")]
-pub mod recording;
+pub use recording;
 #[cfg(feature = "replay")]
-pub mod replay;
+pub use replay;
 #[cfg(feature = "schedule")]
-pub mod schedule;
+pub use schedule;
 #[cfg(feature = "search")]
-pub mod search;
-pub mod t_1;
+pub use search;
+pub use t_1;
 #[cfg(feature = "thermal")]
-pub mod thermal;
+pub use thermal;
 #[cfg(feature = "uplink")]
-pub mod uplink;
-pub mod ws_addr;
-pub mod ws_discovery;
-pub mod xml_xsd;
+pub use uplink;
+pub use ws_addr;
+pub use ws_discovery;
+pub use xml_xsd;
 
 #[cfg(test)]
 mod tests;
-mod utils;

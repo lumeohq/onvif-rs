@@ -1,11 +1,12 @@
 use super::*;
 
-use crate::transport;
-use crate::utils::xml_eq::assert_xml_eq;
 use assert_approx_eq::assert_approx_eq;
 use async_trait::async_trait;
 use onvif as tt;
+use utils::assert_xml_eq;
 use xsd_types::types as xs;
+
+mod utils;
 
 pub struct FakeTransport {
     pub response: String,

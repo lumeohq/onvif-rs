@@ -1,0 +1,9 @@
+[package]
+name = "transport"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.42"
+thiserror = "1.0.23"
+yaserde = "0.7.1"
