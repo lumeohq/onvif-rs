@@ -22,3 +22,67 @@ yaserde_derive = "0.7.1"
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
 tokio = { version = "1.0.1", features = ["full"] }
+
+[features]
+default = [
+    "metadatastream",
+    "radiometry",
+    "rules",
+    "accesscontrol",
+    "accessrules",
+    "actionengine",
+    "advancedsecurity",
+    "analytics",
+    "authenticationbehavior",
+    "bf_2",
+    "credential",
+    "deviceio",
+    "devicemgmt",
+    "display",
+    "doorcontrol",
+    "event",
+    "imaging",
+    "media",
+    "media2",
+    "provisioning",
+    "ptz",
+    "receiver",
+    "recording",
+    "replay",
+    "schedule",
+    "search",
+    "thermal",
+    "uplink",
+]
+
+# xsd:
+metadatastream = []
+radiometry = []
+rules = []
+
+# wsdl:
+accesscontrol = []
+accessrules = []
+actionengine = []
+advancedsecurity = []
+analytics = []
+authenticationbehavior = []
+bf_2 = []
+credential = []
+deviceio = ["devicemgmt"]
+devicemgmt = []
+display = []
+doorcontrol = []
+event = []
+imaging = []
+media = []
+media2 = []
+provisioning = []
+ptz = []
+receiver = []
+recording = []
+replay = []
+schedule = []
+search = []
+thermal = []
+uplink = []
