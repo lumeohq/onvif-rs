@@ -2,6 +2,7 @@
 name = "onvif-xsd"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 b_2 = { path = "../../wsdl_rs/b_2" }
