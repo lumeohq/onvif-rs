@@ -2,6 +2,7 @@
 name = "search"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 onvif = { package = "onvif-xsd", path = "../../xsd_rs/onvif_xsd" }
