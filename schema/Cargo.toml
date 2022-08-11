@@ -6,19 +6,63 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-async-trait = "0.1.42"
 bigdecimal = "0.3.0"
 chrono = "0.4.19"
 num-bigint = "0.4.2"
 percent-encoding = "2.1.0"
-thiserror = "1.0.23"
+transport = { path = "../transport" }
 url = "2.2.1"
+validate = { path = "../validate" }
 xml-rs = "0.8.3"
 xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
 xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
-yaserde = "0.7.1"
-yaserde_derive = "0.7.1"
+
+# xsd
+common = { path = "../xsd_rs/common" }
+metadatastream = { path = "../xsd_rs/metadatastream", optional = true }
+onvif = { package = "onvif-xsd", path = "../xsd_rs/onvif_xsd" }
+radiometry = { path = "../xsd_rs/radiometry", optional = true }
+rules = { path = "../xsd_rs/rules", optional = true }
+soap_envelope = { path = "../xsd_rs/soap_envelope" }
+types = { path = "../xsd_rs/types" }
+xmlmime = { path = "../xsd_rs/xmlmime" }
+xop = { path = "../xsd_rs/xop" }
+
+# wsdl
+accesscontrol = { path = "../wsdl_rs/accesscontrol" , optional = true}
+accessrules = { path = "../wsdl_rs/accessrules" , optional = true}
+actionengine = { path = "../wsdl_rs/actionengine" , optional = true}
+advancedsecurity = { path = "../wsdl_rs/advancedsecurity" , optional = true}
+analytics = { path = "../wsdl_rs/analytics" , optional = true}
+authenticationbehavior = { path = "../wsdl_rs/authenticationbehavior" , optional = true}
+b_2 = { path = "../wsdl_rs/b_2" }
+bf_2 = { path = "../wsdl_rs/bf_2" , optional = true}
+credential = { path = "../wsdl_rs/credential" , optional = true}
+deviceio = { path = "../wsdl_rs/deviceio" , optional = true}
+devicemgmt = { path = "../wsdl_rs/devicemgmt" , optional = true}
+display = { path = "../wsdl_rs/display" , optional = true}
+doorcontrol = { path = "../wsdl_rs/doorcontrol" , optional = true}
+event = { path = "../wsdl_rs/event" , optional = true}
+imaging = { path = "../wsdl_rs/imaging" , optional = true}
+media = { path = "../wsdl_rs/media" , optional = true}
+media2 = { path = "../wsdl_rs/media2" , optional = true}
+provisioning = { path = "../wsdl_rs/provisioning" , optional = true}
+ptz = { path = "../wsdl_rs/ptz" , optional = true}
+receiver = { path = "../wsdl_rs/receiver" , optional = true}
+recording = { path = "../wsdl_rs/recording" , optional = true}
+replay = { path = "../wsdl_rs/replay" , optional = true}
+schedule = { path = "../wsdl_rs/schedule" , optional = true}
+search = { path = "../wsdl_rs/search" , optional = true}
+t_1 = { path = "../wsdl_rs/t_1" }
+thermal = { path = "../wsdl_rs/thermal" , optional = true}
+uplink = { path = "../wsdl_rs/uplink" , optional = true}
+ws_addr = { path = "../wsdl_rs/ws_addr" }
+ws_discovery = { path = "../wsdl_rs/ws_discovery" }
+xml_xsd = { path = "../wsdl_rs/xml_xsd" }
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
+async-trait = "0.1.42"
 tokio = { version = "1.0.1", features = ["full"] }
+yaserde = "0.7.1"
+yaserde_derive = "0.7.1"

@@ -1,5 +1,5 @@
-use crate::schema::transport;
-use onvif::{schema, soap};
+use onvif::soap;
+use schema::{self, transport};
 use structopt::StructOpt;
 use tracing::debug;
 use url::Url;
