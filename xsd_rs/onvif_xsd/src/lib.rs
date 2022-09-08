@@ -1,3 +1,5 @@
+#![allow(clippy::derive_partial_eq_without_eq)]
+
 use b_2 as wsnt;
 use soap_envelope as soapenv;
 use std::str::FromStr;

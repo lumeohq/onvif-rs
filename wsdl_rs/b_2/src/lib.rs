@@ -1,3 +1,5 @@
+#![allow(clippy::derive_partial_eq_without_eq)]
+
 use t_1 as wstop;
 use validate::Validate;
 use ws_addr as wsa;

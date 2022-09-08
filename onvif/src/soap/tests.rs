@@ -34,7 +34,7 @@ fn test_soap() {
 
 #[test]
 fn test_unsoap() {
-    #[derive(Default, PartialEq, Debug, YaDeserialize)]
+    #[derive(Default, Eq, PartialEq, Debug, YaDeserialize)]
     #[yaserde(prefix = "my", namespace = "my: http://www.example.my/schema")]
     pub struct Book {
         #[yaserde(prefix = "my", rename = "Title")]

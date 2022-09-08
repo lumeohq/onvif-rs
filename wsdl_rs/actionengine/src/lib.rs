@@ -1,3 +1,5 @@
+#![allow(clippy::derive_partial_eq_without_eq)]
+
 use b_2 as wsnt;
 use onvif as tt;
 use validate::Validate;
