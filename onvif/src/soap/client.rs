@@ -146,7 +146,7 @@ impl Transport for Client {
                 match self.request_with_digest(message).await {
                     Ok(success) => Ok(success),
                     Err(Error::Authorization(e)) => {
-                        warn!(self, "Failed to authorize with Digest auth: {}. Trying UsernameToken auth ...", e);
+                        debug!(self, "Failed to authorize with Digest auth: {}. Trying UsernameToken auth ...", e);
                         self.request_with_username_token(message).await
                     }
                     Err(e) => Err(e),
