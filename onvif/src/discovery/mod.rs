@@ -1,5 +1,4 @@
 use crate::soap;
-use async_stream::stream;
 use futures_core::stream::Stream;
 use futures_util::{future::ready, stream::FuturesUnordered, StreamExt};
 use schema::transport::Error as TransportError;
@@ -8,13 +7,16 @@ use std::{
     future::Future,
     iter,
     net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
 };
 use thiserror::Error;
 use tokio::{
     io,
     net::UdpSocket,
-    time::{self, Duration, Instant},
+    sync::mpsc::channel,
+    time::{timeout, Duration},
 };
+use tokio_stream::wrappers::ReceiverStream;
 use tracing::debug;
 use url::Url;
 
@@ -83,8 +85,8 @@ pub struct Device {
 /// };
 /// ```
 pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, Error> {
-    let probe = build_probe();
-    let probe_xml = yaserde::ser::to_string(&probe).map_err(Error::Serde)?;
+    let probe = Arc::new(build_probe());
+    let probe_xml = yaserde::ser::to_string(probe.as_ref()).map_err(Error::Serde)?;
 
     debug!("Probe XML: {}", probe_xml);
 
@@ -107,40 +109,60 @@ pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, 
         socket
     };
 
-    Ok(stream! {
-        let probe = &probe;
-        let socket = &socket;
+    const CONCURRENCY_LIMIT: usize = 32;
+    let (xml_sender, xml_receiver) = channel(32);
+    let (device_sender, device_receiver) = channel(32);
+    let xml_receiver = ReceiverStream::new(xml_receiver);
+    let device_receiver = ReceiverStream::new(device_receiver);
 
-        let start = Instant::now();
-        loop {
-            let elapsed = start.elapsed();
-            if elapsed >= duration {
+    let produce_xmls = async move {
+        while let Ok(xml) = recv_string(&socket).await {
+            debug!("Probe match XML: {}", xml);
+            if xml_sender.send(xml).await.is_err() {
+                debug!("Channel closed, exiting ...");
                 break;
             }
+        }
+    };
 
-            let timeout = duration - elapsed;
+    let produce_devices = xml_receiver.for_each_concurrent(CONCURRENCY_LIMIT, move |xml| {
+        let probe = probe.clone();
+        let device_sender = device_sender.clone();
 
-            // Separate async block to be able to short-circuit on `None`.
-            let try_produce_item = async move {
-                let xml = recv_string(socket, timeout).await.ok()?;
-                debug!("Probe match XML: {}", xml);
-                let envelope = yaserde::de::from_str::<probe_matches::Envelope>(&xml).ok()?;
-                if envelope.header.relates_to != probe.header.message_id {
-                    return None;
+        async move {
+            let envelope = match yaserde::de::from_str::<probe_matches::Envelope>(&xml) {
+                Ok(envelope) => envelope,
+                Err(e) => {
+                    debug!("Deserialization failed: {e}");
+                    return;
                 }
-                get_responding_addr(envelope, is_addr_responding).await
             };
 
-            if let Some(item) = try_produce_item.await {
-                yield item;
+            if envelope.header.relates_to != probe.header.message_id {
+                debug!("Unrelated message");
+                return;
+            }
+
+            if let Some(device) = get_responding_addr(envelope, is_addr_responding).await {
+                debug!("Found device at {}", device.url);
+                // It's ok to ignore the sending error as user can drop the receiver soon
+                // (for example, after the first device discovered).
+                let _ = device_sender.send(device).await;
+            } else {
+                debug!("No responding addresses found");
             }
         }
-    })
+    });
+
+    tokio::spawn(timeout(duration, produce_xmls));
+    tokio::spawn(timeout(duration, produce_devices));
+
+    Ok(device_receiver)
 }
 
-async fn recv_string(s: &UdpSocket, timeout: Duration) -> io::Result<String> {
+async fn recv_string(s: &UdpSocket) -> io::Result<String> {
     let mut buf = vec![0; 16 * 1024];
-    let (len, _src) = time::timeout(timeout, s.recv_from(&mut buf)).await??;
+    let (len, _src) = s.recv_from(&mut buf).await?;
 
     Ok(String::from_utf8_lossy(&buf[..len]).to_string())
 }
