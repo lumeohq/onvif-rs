@@ -1,9 +1,9 @@
-use crate::soap;
 use futures_core::stream::Stream;
 use futures_util::{future::ready, stream::FuturesUnordered, StreamExt};
 use schema::transport::Error as TransportError;
 use schema::ws_discovery::{probe, probe_matches};
 use std::{
+    collections::HashSet,
     future::Future,
     iter,
     net::{IpAddr, Ipv4Addr, SocketAddr},
@@ -19,6 +19,8 @@ use tokio::{
 use tokio_stream::wrappers::ReceiverStream;
 use tracing::debug;
 use url::Url;
+
+use crate::{soap, utils::hash::calculate_hash};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -115,9 +117,20 @@ pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, 
     let xml_receiver = ReceiverStream::new(xml_receiver);
     let device_receiver = ReceiverStream::new(device_receiver);
 
+    let mut known_responses = HashSet::new();
+
     let produce_xmls = async move {
-        while let Ok(xml) = recv_string(&socket).await {
-            debug!("Probe match XML: {}", xml);
+        while let Ok((xml, src)) = recv_string(&socket).await {
+            if !known_responses.insert(calculate_hash(&xml)) {
+                debug!("Duplicate response from {src}, skipping ...");
+                continue;
+            }
+
+            debug!(
+                "Probe match XML: {} Channel capacity: {}",
+                xml,
+                xml_sender.capacity()
+            );
             if xml_sender.send(xml).await.is_err() {
                 debug!("Channel closed, exiting ...");
                 break;
@@ -160,11 +173,11 @@ pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, 
     Ok(device_receiver)
 }
 
-async fn recv_string(s: &UdpSocket) -> io::Result<String> {
+async fn recv_string(s: &UdpSocket) -> io::Result<(String, SocketAddr)> {
     let mut buf = vec![0; 16 * 1024];
-    let (len, _src) = s.recv_from(&mut buf).await?;
+    let (len, src) = s.recv_from(&mut buf).await?;
 
-    Ok(String::from_utf8_lossy(&buf[..len]).to_string())
+    Ok((String::from_utf8_lossy(&buf[..len]).to_string(), src))
 }
 
 async fn get_responding_addr<F, Fut>(
