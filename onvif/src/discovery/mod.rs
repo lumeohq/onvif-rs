@@ -1,11 +1,7 @@
 use futures_core::stream::Stream;
-use futures_util::{future::ready, stream::FuturesUnordered, StreamExt};
-use schema::transport::Error as TransportError;
 use schema::ws_discovery::{probe, probe_matches};
 use std::{
     collections::HashSet,
-    future::Future,
-    iter,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
 };
@@ -20,7 +16,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use tracing::debug;
 use url::Url;
 
-use crate::{soap, utils::hash::calculate_hash};
+use crate::utils::hash::calculate_hash;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -34,13 +30,13 @@ pub enum Error {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Device {
     pub name: Option<String>,
-    pub url: Url,
+    pub urls: Vec<Url>,
 }
 
 /// Discovers devices on a local network asynchronously using WS-discovery.
 ///
 /// Internally it sends a multicast probe and waits for responses for a specified amount of time.
-/// The result is a stream of discovered devices one address per device.
+/// The result is a stream of discovered devices.
 /// The stream is terminated after provided amount of time.
 ///
 /// There are many different ways to iterate over and process the values in a `Stream`
@@ -111,63 +107,44 @@ pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, 
         socket
     };
 
-    const CONCURRENCY_LIMIT: usize = 32;
-    let (xml_sender, xml_receiver) = channel(32);
     let (device_sender, device_receiver) = channel(32);
-    let xml_receiver = ReceiverStream::new(xml_receiver);
     let device_receiver = ReceiverStream::new(device_receiver);
 
     let mut known_responses = HashSet::new();
 
-    let produce_xmls = async move {
+    let produce_devices = async move {
         while let Ok((xml, src)) = recv_string(&socket).await {
             if !known_responses.insert(calculate_hash(&xml)) {
                 debug!("Duplicate response from {src}, skipping ...");
                 continue;
             }
 
-            debug!(
-                "Probe match XML: {} Channel capacity: {}",
-                xml,
-                xml_sender.capacity()
-            );
-            if xml_sender.send(xml).await.is_err() {
-                debug!("Channel closed, exiting ...");
-                break;
-            }
-        }
-    };
+            debug!("Probe match XML: {}", xml,);
 
-    let produce_devices = xml_receiver.for_each_concurrent(CONCURRENCY_LIMIT, move |xml| {
-        let probe = probe.clone();
-        let device_sender = device_sender.clone();
-
-        async move {
             let envelope = match yaserde::de::from_str::<probe_matches::Envelope>(&xml) {
                 Ok(envelope) => envelope,
                 Err(e) => {
                     debug!("Deserialization failed: {e}");
-                    return;
+                    continue;
                 }
             };
 
             if envelope.header.relates_to != probe.header.message_id {
                 debug!("Unrelated message");
-                return;
+                continue;
             }
 
-            if let Some(device) = get_responding_addr(envelope, is_addr_responding).await {
-                debug!("Found device at {}", device.url);
+            if let Some(device) = device_from_envelope(envelope) {
+                debug!("Found device {device:?}");
                 // It's ok to ignore the sending error as user can drop the receiver soon
                 // (for example, after the first device discovered).
                 let _ = device_sender.send(device).await;
             } else {
-                debug!("No responding addresses found");
+                debug!("No devices found");
             }
         }
-    });
+    };
 
-    tokio::spawn(timeout(duration, produce_xmls));
     tokio::spawn(timeout(duration, produce_devices));
 
     Ok(device_receiver)
@@ -180,40 +157,22 @@ async fn recv_string(s: &UdpSocket) -> io::Result<(String, SocketAddr)> {
     Ok((String::from_utf8_lossy(&buf[..len]).to_string(), src))
 }
 
-async fn get_responding_addr<F, Fut>(
-    envelope: probe_matches::Envelope,
-    check_addr: F,
-) -> Option<Device>
-where
-    F: Fn(Url) -> Fut + Copy,
-    Fut: Future<Output = bool>,
-{
-    envelope
+fn device_from_envelope(envelope: probe_matches::Envelope) -> Option<Device> {
+    let onvif_probe_match = envelope
         .body
         .probe_matches
         .probe_match
         .iter()
-        .filter(|probe_match| {
+        .find(|probe_match| {
             probe_match
                 .find_in_scopes("onvif://www.onvif.org")
                 .is_some()
-        })
-        .flat_map(|probe_match| {
-            probe_match
-                .x_addrs()
-                .into_iter()
-                .zip(iter::repeat(probe_match.name()))
-        })
-        .map(|(url, name)| async move {
-            check_addr(url.clone()).await.then(|| {
-                debug!("Responding addr: {:?}", url);
-                Device { name, url }
-            })
-        })
-        .collect::<FuturesUnordered<_>>()
-        .filter_map(ready)
-        .next()
-        .await
+        })?;
+
+    let name = onvif_probe_match.name();
+    let urls = onvif_probe_match.x_addrs();
+
+    Some(Device { name, urls })
 }
 
 fn build_probe() -> probe::Envelope {
@@ -227,19 +186,6 @@ fn build_probe() -> probe::Envelope {
         },
         ..Default::default()
     }
-}
-
-async fn is_addr_responding(uri: Url) -> bool {
-    matches!(
-        schema::devicemgmt::get_system_date_and_time(
-            &soap::client::ClientBuilder::new(&uri)
-                .timeout(Duration::from_millis(500))
-                .build(),
-            &Default::default(),
-        )
-        .await,
-        Ok(_) | Err(TransportError::Authorization(_))
-    )
 }
 
 #[test]
@@ -277,54 +223,29 @@ fn test_xaddrs_extraction() {
     let bad_uuid = "uuid:84ede3de-7dec-11d0-c360-F00000000000";
 
     let input = vec![
-        make_xml(our_uuid, "http://addr_10"),
         make_xml(our_uuid, "http://addr_20 http://addr_21 http://addr_22"),
         make_xml(bad_uuid, "http://addr_30 http://addr_31"),
     ];
-
-    async fn is_addr_responding(uri: Url) -> bool {
-        let responding_addrs = vec![
-            "http://addr_10".parse().unwrap(),
-            "http://addr_21".parse().unwrap(),
-            "http://addr_30".parse().unwrap(),
-        ];
-
-        responding_addrs.contains(&uri)
-    }
 
     let actual = input
         .iter()
         .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(xml).ok())
         .filter(|envelope| envelope.header.relates_to == our_uuid)
-        .filter_map(|envelope| {
-            tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(get_responding_addr(envelope, is_addr_responding))
-        })
+        .filter_map(device_from_envelope)
         .collect::<Vec<_>>();
 
-    assert_eq!(actual.len(), 2);
+    assert_eq!(actual.len(), 1);
 
     // OK: message UUID matches and addr responds
-    assert!(actual.contains(&Device {
-        url: Url::parse("http://addr_10").unwrap(),
-        name: Some("MyCamera2000".to_string())
-    }));
-
-    // OK: message UUID matches and one of addresses responds
-    assert!(
-        actual.contains(&Device {
-            url: Url::parse("http://addr_21").unwrap(),
+    assert_eq!(
+        actual,
+        &[Device {
+            urls: vec![
+                Url::parse("http://addr_20").unwrap(),
+                Url::parse("http://addr_21").unwrap(),
+                Url::parse("http://addr_22").unwrap()
+            ],
             name: Some("MyCamera2000".to_string())
-        }) || actual.contains(&Device {
-            url: Url::parse("http://addr_22").unwrap(),
-            name: Some("MyCamera2000".to_string())
-        })
+        }]
     );
-
-    // BAD: wrong message UUID
-    assert!(!actual.contains(&Device {
-        url: Url::parse("http://addr_30").unwrap(),
-        name: Some("MyCamera2000".to_string())
-    }));
 }
