@@ -2,6 +2,7 @@ use futures_core::stream::Stream;
 use schema::ws_discovery::{probe, probe_matches};
 use std::{
     collections::HashSet,
+    fmt::{Debug, Formatter},
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
 };
@@ -16,7 +17,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use tracing::debug;
 use url::Url;
 
-use crate::utils::hash::calculate_hash;
+use crate::utils::{display_list::DisplayList, hash::calculate_hash};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -27,10 +28,19 @@ pub enum Error {
     Serde(String),
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Eq, Hash, PartialEq)]
 pub struct Device {
     pub name: Option<String>,
     pub urls: Vec<Url>,
+}
+
+impl Debug for Device {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Device")
+            .field("name", &self.name)
+            .field("url", &DisplayList(&self.urls))
+            .finish()
+    }
 }
 
 /// Discovers devices on a local network asynchronously using WS-discovery.
