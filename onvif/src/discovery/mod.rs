@@ -26,6 +26,9 @@ pub enum Error {
 
     #[error("(De)serialization error: {0}")]
     Serde(String),
+
+    #[error("Unsupported feature: {0}")]
+    Unsupported(String),
 }
 
 #[derive(Clone, Eq, Hash, PartialEq)]
@@ -46,12 +49,14 @@ impl Debug for Device {
 #[derive(Debug, Clone)]
 pub struct DiscoveryBuilder {
     duration: Duration,
+    listen_address: IpAddr,
 }
 
 impl Default for DiscoveryBuilder {
     fn default() -> Self {
         Self {
             duration: Duration::from_secs(5),
+            listen_address: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
         }
     }
 }
@@ -60,6 +65,16 @@ impl DiscoveryBuilder {
     /// How long to listen for the responses from the network.
     pub fn duration(&mut self, duration: Duration) -> &mut Self {
         self.duration = duration;
+        self
+    }
+
+    /// Address to listen on.
+    ///
+    /// By default, it is 0.0.0.0 which is fine for a single-NIC case. With multiple NICs, it's
+    /// problematic because 0.0.0.0 is routed to only one NIC, but you may want to run the discovery
+    /// on a specific network.
+    pub fn listen_address(&mut self, listen_address: IpAddr) -> &mut Self {
+        self.listen_address = listen_address;
         self
     }
 
@@ -113,7 +128,10 @@ impl DiscoveryBuilder {
     /// };
     /// ```
     pub async fn run(&self) -> Result<impl Stream<Item = Device>, Error> {
-        let Self { duration } = self;
+        let Self {
+            duration,
+            listen_address,
+        } = self;
 
         let probe = Arc::new(build_probe());
         let probe_xml = yaserde::ser::to_string(probe.as_ref()).map_err(Error::Serde)?;
@@ -121,17 +139,21 @@ impl DiscoveryBuilder {
         debug!("Probe XML: {}", probe_xml);
 
         let socket = {
-            const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
             const LOCAL_PORT: u16 = 0;
 
             const MULTI_IPV4_ADDR: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
             const MULTI_PORT: u16 = 3702;
 
-            let local_socket_addr = SocketAddr::new(IpAddr::V4(LOCAL_IPV4_ADDR), LOCAL_PORT);
+            let local_socket_addr = SocketAddr::new(*listen_address, LOCAL_PORT);
             let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
 
             let socket = UdpSocket::bind(local_socket_addr).await?;
-            socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
+
+            match listen_address {
+                IpAddr::V4(addr) => socket.join_multicast_v4(MULTI_IPV4_ADDR, *addr)?,
+                IpAddr::V6(_) => return Err(Error::Unsupported("Discovery with IPv6".to_owned())),
+            }
+
             socket
                 .send_to(probe_xml.as_bytes(), multi_socket_addr)
                 .await?;
