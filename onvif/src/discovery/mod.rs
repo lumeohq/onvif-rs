@@ -26,6 +26,9 @@ pub enum Error {
 
     #[error("(De)serialization error: {0}")]
     Serde(String),
+
+    #[error("Unsupported feature: {0}")]
+    Unsupported(String),
 }
 
 #[derive(Clone, Eq, Hash, PartialEq)]
@@ -43,121 +46,163 @@ impl Debug for Device {
     }
 }
 
-/// Discovers devices on a local network asynchronously using WS-discovery.
-///
-/// Internally it sends a multicast probe and waits for responses for a specified amount of time.
-/// The result is a stream of discovered devices.
-/// The stream is terminated after provided amount of time.
-///
-/// There are many different ways to iterate over and process the values in a `Stream`
-/// https://rust-lang.github.io/async-book/05_streams/02_iteration_and_concurrency.html
-///
-/// # Examples
-///
-/// You can access each element on the stream concurrently as soon as devices respond:
-///
-/// ```
-/// use onvif::discovery;
-/// use futures_util::stream::StreamExt; // to use for_each_concurrent
-///
-/// const MAX_CONCURRENT_JUMPERS: usize = 100;
-///
-/// async {
-///     discovery::discover(std::time::Duration::from_secs(1))
-///         .await
-///         .unwrap()
-///         .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| {
-///             async move {
-///                 println!("Device found: {:?}", addr);
-///             }
-///         })
-///         .await;
-/// };
-/// ```
-///
-/// Or you can await on a collection of unique devices found in one second:
-///
-/// ```
-/// use onvif::discovery;
-/// use futures_util::stream::StreamExt; // to use collect
-/// use std::collections::HashSet;
-///
-/// async {
-///     let devices = discovery::discover(std::time::Duration::from_secs(1))
-///         .await
-///         .unwrap()
-///         .collect::<HashSet<_>>()
-///         .await;
-///
-///     println!("Devices found: {:?}", devices);
-/// };
-/// ```
-pub async fn discover(duration: Duration) -> Result<impl Stream<Item = Device>, Error> {
-    let probe = Arc::new(build_probe());
-    let probe_xml = yaserde::ser::to_string(probe.as_ref()).map_err(Error::Serde)?;
+#[derive(Debug, Clone)]
+pub struct DiscoveryBuilder {
+    duration: Duration,
+    listen_address: IpAddr,
+}
 
-    debug!("Probe XML: {}", probe_xml);
+impl Default for DiscoveryBuilder {
+    fn default() -> Self {
+        Self {
+            duration: Duration::from_secs(5),
+            listen_address: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+        }
+    }
+}
 
-    let socket = {
-        const LOCAL_IPV4_ADDR: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
-        const LOCAL_PORT: u16 = 0;
+impl DiscoveryBuilder {
+    /// How long to listen for the responses from the network.
+    pub fn duration(&mut self, duration: Duration) -> &mut Self {
+        self.duration = duration;
+        self
+    }
 
-        const MULTI_IPV4_ADDR: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
-        const MULTI_PORT: u16 = 3702;
+    /// Address to listen on.
+    ///
+    /// By default, it is 0.0.0.0 which is fine for a single-NIC case. With multiple NICs, it's
+    /// problematic because 0.0.0.0 is routed to only one NIC, but you may want to run the discovery
+    /// on a specific network.
+    pub fn listen_address(&mut self, listen_address: IpAddr) -> &mut Self {
+        self.listen_address = listen_address;
+        self
+    }
 
-        let local_socket_addr = SocketAddr::new(IpAddr::V4(LOCAL_IPV4_ADDR), LOCAL_PORT);
-        let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
+    /// Discovers devices on a local network asynchronously using WS-discovery.
+    ///
+    /// Internally it sends a multicast probe and waits for responses for a specified amount of time.
+    /// The result is a stream of discovered devices.
+    /// The stream is terminated after provided amount of time.
+    ///
+    /// There are many different ways to iterate over and process the values in a `Stream`
+    /// https://rust-lang.github.io/async-book/05_streams/02_iteration_and_concurrency.html
+    ///
+    /// # Examples
+    ///
+    /// You can access each element on the stream concurrently as soon as devices respond:
+    ///
+    /// ```
+    /// use onvif::discovery;
+    /// use futures_util::stream::StreamExt; // to use for_each_concurrent
+    ///
+    /// const MAX_CONCURRENT_JUMPERS: usize = 100;
+    ///
+    /// async {
+    ///     discovery::DiscoveryBuilder::default().run()
+    ///         .await
+    ///         .unwrap()
+    ///         .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| {
+    ///             async move {
+    ///                 println!("Device found: {:?}", addr);
+    ///             }
+    ///         })
+    ///         .await;
+    /// };
+    /// ```
+    ///
+    /// Or you can await on a collection of unique devices found in one second:
+    ///
+    /// ```
+    /// use onvif::discovery;
+    /// use futures_util::stream::StreamExt; // to use collect
+    /// use std::collections::HashSet;
+    ///
+    /// async {
+    ///     let devices = discovery::DiscoveryBuilder::default().run()
+    ///         .await
+    ///         .unwrap()
+    ///         .collect::<HashSet<_>>()
+    ///         .await;
+    ///
+    ///     println!("Devices found: {:?}", devices);
+    /// };
+    /// ```
+    pub async fn run(&self) -> Result<impl Stream<Item = Device>, Error> {
+        let Self {
+            duration,
+            listen_address,
+        } = self;
 
-        let socket = UdpSocket::bind(local_socket_addr).await?;
-        socket.join_multicast_v4(MULTI_IPV4_ADDR, LOCAL_IPV4_ADDR)?;
-        socket
-            .send_to(probe_xml.as_bytes(), multi_socket_addr)
-            .await?;
+        let probe = Arc::new(build_probe());
+        let probe_xml = yaserde::ser::to_string(probe.as_ref()).map_err(Error::Serde)?;
 
-        socket
-    };
+        debug!("Probe XML: {}", probe_xml);
 
-    let (device_sender, device_receiver) = channel(32);
-    let device_receiver = ReceiverStream::new(device_receiver);
+        let socket = {
+            const LOCAL_PORT: u16 = 0;
 
-    let mut known_responses = HashSet::new();
+            const MULTI_IPV4_ADDR: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
+            const MULTI_PORT: u16 = 3702;
 
-    let produce_devices = async move {
-        while let Ok((xml, src)) = recv_string(&socket).await {
-            if !known_responses.insert(calculate_hash(&xml)) {
-                debug!("Duplicate response from {src}, skipping ...");
-                continue;
+            let local_socket_addr = SocketAddr::new(*listen_address, LOCAL_PORT);
+            let multi_socket_addr = SocketAddr::new(IpAddr::V4(MULTI_IPV4_ADDR), MULTI_PORT);
+
+            let socket = UdpSocket::bind(local_socket_addr).await?;
+
+            match listen_address {
+                IpAddr::V4(addr) => socket.join_multicast_v4(MULTI_IPV4_ADDR, *addr)?,
+                IpAddr::V6(_) => return Err(Error::Unsupported("Discovery with IPv6".to_owned())),
             }
 
-            debug!("Probe match XML: {}", xml,);
+            socket
+                .send_to(probe_xml.as_bytes(), multi_socket_addr)
+                .await?;
 
-            let envelope = match yaserde::de::from_str::<probe_matches::Envelope>(&xml) {
-                Ok(envelope) => envelope,
-                Err(e) => {
-                    debug!("Deserialization failed: {e}");
+            socket
+        };
+
+        let (device_sender, device_receiver) = channel(32);
+        let device_receiver = ReceiverStream::new(device_receiver);
+
+        let mut known_responses = HashSet::new();
+
+        let produce_devices = async move {
+            while let Ok((xml, src)) = recv_string(&socket).await {
+                if !known_responses.insert(calculate_hash(&xml)) {
+                    debug!("Duplicate response from {src}, skipping ...");
                     continue;
                 }
-            };
 
-            if envelope.header.relates_to != probe.header.message_id {
-                debug!("Unrelated message");
-                continue;
+                debug!("Probe match XML: {}", xml,);
+
+                let envelope = match yaserde::de::from_str::<probe_matches::Envelope>(&xml) {
+                    Ok(envelope) => envelope,
+                    Err(e) => {
+                        debug!("Deserialization failed: {e}");
+                        continue;
+                    }
+                };
+
+                if envelope.header.relates_to != probe.header.message_id {
+                    debug!("Unrelated message");
+                    continue;
+                }
+
+                if let Some(device) = device_from_envelope(envelope) {
+                    debug!("Found device {device:?}");
+                    // It's ok to ignore the sending error as user can drop the receiver soon
+                    // (for example, after the first device discovered).
+                    let _ = device_sender.send(device).await;
+                } else {
+                    debug!("No devices found");
+                }
             }
+        };
 
-            if let Some(device) = device_from_envelope(envelope) {
-                debug!("Found device {device:?}");
-                // It's ok to ignore the sending error as user can drop the receiver soon
-                // (for example, after the first device discovered).
-                let _ = device_sender.send(device).await;
-            } else {
-                debug!("No devices found");
-            }
-        }
-    };
+        tokio::spawn(timeout(*duration, produce_devices));
 
-    tokio::spawn(timeout(duration, produce_devices));
-
-    Ok(device_receiver)
+        Ok(device_receiver)
+    }
 }
 
 async fn recv_string(s: &UdpSocket) -> io::Result<(String, SocketAddr)> {
