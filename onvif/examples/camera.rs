@@ -111,7 +111,7 @@ impl Clients {
             if !url.as_str().starts_with(base_uri.as_str()) {
                 return Err(format!(
                     "Service URI {} is not within base URI {}",
-                    &s.x_addr, &base_uri
+                    url.as_str(), &base_uri
                 ));
             }
             let svc = Some(
@@ -121,10 +121,10 @@ impl Clients {
             );
             match s.namespace.as_str() {
                 "http://www.onvif.org/ver10/device/wsdl" => {
-                    if s.x_addr != devicemgmt_uri.as_str() {
+                    if url.as_str() != devicemgmt_uri.as_str() {
                         return Err(format!(
                             "advertised device mgmt uri {} not expected {}",
-                            &s.x_addr, &devicemgmt_uri
+                            url.as_str(), &devicemgmt_uri
                         ));
                     }
                 }
