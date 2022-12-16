@@ -111,7 +111,8 @@ impl Clients {
             if !url.as_str().starts_with(base_uri.as_str()) {
                 return Err(format!(
                     "Service URI {} is not within base URI {}",
-                    url.as_str(), &base_uri
+                    url.as_str(),
+                    &base_uri
                 ));
             }
             let svc = Some(
@@ -124,7 +125,8 @@ impl Clients {
                     if url.as_str() != devicemgmt_uri.as_str() {
                         return Err(format!(
                             "advertised device mgmt uri {} not expected {}",
-                            url.as_str(), &devicemgmt_uri
+                            url.as_str(),
+                            &devicemgmt_uri
                         ));
                     }
                 }
