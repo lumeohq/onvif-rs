@@ -10,7 +10,7 @@ impl UsernameToken {
     pub fn new(username: &str, password: &str) -> UsernameToken {
         let nonce = uuid::Uuid::new_v4().to_string();
         let created = chrono::Utc::now().to_rfc3339();
-        let concat = format!("{}{}{}", nonce, created, password);
+        let concat = format!("{nonce}{created}{password}");
 
         let digest = {
             let mut hasher = sha1::Sha1::new();
@@ -21,7 +21,7 @@ impl UsernameToken {
         UsernameToken {
             username: username.to_string(),
             nonce: base64::encode(&nonce),
-            digest: base64::encode(&digest),
+            digest: base64::encode(digest),
             created,
         }
     }
@@ -66,7 +66,7 @@ fn ws_username_token_example() {
     };
 
     assert_eq!(
-        base64::encode(&digest),
+        base64::encode(digest),
         "tuOSpGlFlIXsozq4HFNeeGeFLEI=".to_string()
     )
 }

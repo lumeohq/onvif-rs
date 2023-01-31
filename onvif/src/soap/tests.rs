@@ -26,8 +26,8 @@ fn test_soap() {
 
     let actual = soap(app_data, &None).unwrap();
 
-    println!("{}", actual);
-    println!("{}", expected);
+    println!("{actual}");
+    println!("{expected}");
 
     assert_xml_eq(actual.as_str(), expected);
 }
@@ -59,7 +59,7 @@ fn test_unsoap() {
 
     let actual = unsoap(input).unwrap();
 
-    println!("{:?}", actual);
+    println!("{actual:?}");
 
     let parsed: Book = yaserde::de::from_str(&actual).unwrap();
 

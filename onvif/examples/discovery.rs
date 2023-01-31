@@ -14,7 +14,7 @@ async fn main() {
         .await
         .unwrap()
         .for_each_concurrent(MAX_CONCURRENT_JUMPERS, |addr| async move {
-            println!("Device found: {:?}", addr);
+            println!("Device found: {addr:?}");
         })
         .await;
 }

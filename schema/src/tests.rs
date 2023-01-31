@@ -53,7 +53,7 @@ fn basic_deserialization() {
 
     let de = response.system_date_and_time;
 
-    println!("{:#?}", de);
+    println!("{de:#?}");
 
     assert_eq!(de.date_time_type, tt::SetDateTimeType::Ntp);
     assert!(!de.daylight_savings);
@@ -136,8 +136,8 @@ fn extend_base_serialization() {
 
     let actual = yaserde::ser::to_string(&model).unwrap();
 
-    println!("actual: {}", actual);
-    println!("expected: {}", expected);
+    println!("actual: {actual}");
+    println!("expected: {expected}");
 
     assert_xml_eq(actual.as_str(), expected);
 }
@@ -274,8 +274,8 @@ fn choice_serialization() {
 
     let actual = yaserde::ser::to_string(&model).unwrap();
 
-    println!("actual: {}", actual);
-    println!("expected: {}", expected);
+    println!("actual: {actual}");
+    println!("expected: {expected}");
 
     assert_xml_eq(actual.as_str(), expected);
 }

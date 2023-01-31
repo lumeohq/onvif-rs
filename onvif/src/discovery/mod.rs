@@ -268,9 +268,7 @@ fn test_xaddrs_extraction() {
                     </d:ProbeMatches>
                 </SOAP-ENV:Body>
             </SOAP-ENV:Envelope>
-            "#,
-            relates_to = relates_to,
-            xaddrs = xaddrs
+            "#
         )
     }
 

@@ -144,8 +144,8 @@ impl Clients {
 
 async fn get_capabilities(clients: &Clients) {
     match schema::devicemgmt::get_capabilities(&clients.devicemgmt, &Default::default()).await {
-        Ok(capabilities) => println!("{:#?}", capabilities),
-        Err(error) => println!("Failed to fetch capabilities: {}", error),
+        Ok(capabilities) => println!("{capabilities:#?}"),
+        Err(error) => println!("Failed to fetch capabilities: {error}"),
     }
 }
 
@@ -160,50 +160,50 @@ async fn get_device_information(clients: &Clients) -> Result<(), transport::Erro
 
 async fn get_service_capabilities(clients: &Clients) {
     match schema::event::get_service_capabilities(&clients.devicemgmt, &Default::default()).await {
-        Ok(capability) => println!("devicemgmt: {:#?}", capability),
-        Err(error) => println!("Failed to fetch devicemgmt: {}", error),
+        Ok(capability) => println!("devicemgmt: {capability:#?}"),
+        Err(error) => println!("Failed to fetch devicemgmt: {error}"),
     }
 
     if let Some(ref event) = clients.event {
         match schema::event::get_service_capabilities(event, &Default::default()).await {
-            Ok(capability) => println!("event: {:#?}", capability),
-            Err(error) => println!("Failed to fetch event: {}", error),
+            Ok(capability) => println!("event: {capability:#?}"),
+            Err(error) => println!("Failed to fetch event: {error}"),
         }
     }
     if let Some(ref deviceio) = clients.deviceio {
         match schema::event::get_service_capabilities(deviceio, &Default::default()).await {
-            Ok(capability) => println!("deviceio: {:#?}", capability),
-            Err(error) => println!("Failed to fetch deviceio: {}", error),
+            Ok(capability) => println!("deviceio: {capability:#?}"),
+            Err(error) => println!("Failed to fetch deviceio: {error}"),
         }
     }
     if let Some(ref media) = clients.media {
         match schema::event::get_service_capabilities(media, &Default::default()).await {
-            Ok(capability) => println!("media: {:#?}", capability),
-            Err(error) => println!("Failed to fetch media: {}", error),
+            Ok(capability) => println!("media: {capability:#?}"),
+            Err(error) => println!("Failed to fetch media: {error}"),
         }
     }
     if let Some(ref media2) = clients.media2 {
         match schema::event::get_service_capabilities(media2, &Default::default()).await {
-            Ok(capability) => println!("media2: {:#?}", capability),
-            Err(error) => println!("Failed to fetch media2: {}", error),
+            Ok(capability) => println!("media2: {capability:#?}"),
+            Err(error) => println!("Failed to fetch media2: {error}"),
         }
     }
     if let Some(ref imaging) = clients.imaging {
         match schema::event::get_service_capabilities(imaging, &Default::default()).await {
-            Ok(capability) => println!("imaging: {:#?}", capability),
-            Err(error) => println!("Failed to fetch imaging: {}", error),
+            Ok(capability) => println!("imaging: {capability:#?}"),
+            Err(error) => println!("Failed to fetch imaging: {error}"),
         }
     }
     if let Some(ref ptz) = clients.ptz {
         match schema::event::get_service_capabilities(ptz, &Default::default()).await {
-            Ok(capability) => println!("ptz: {:#?}", capability),
-            Err(error) => println!("Failed to fetch ptz: {}", error),
+            Ok(capability) => println!("ptz: {capability:#?}"),
+            Err(error) => println!("Failed to fetch ptz: {error}"),
         }
     }
     if let Some(ref analytics) = clients.analytics {
         match schema::event::get_service_capabilities(analytics, &Default::default()).await {
-            Ok(capability) => println!("analytics: {:#?}", capability),
-            Err(error) => println!("Failed to fetch analytics: {}", error),
+            Ok(capability) => println!("analytics: {capability:#?}"),
+            Err(error) => println!("Failed to fetch analytics: {error}"),
         }
     }
 }
@@ -212,7 +212,7 @@ async fn get_system_date_and_time(clients: &Clients) {
     let date =
         schema::devicemgmt::get_system_date_and_time(&clients.devicemgmt, &Default::default())
             .await;
-    println!("{:#?}", date);
+    println!("{date:#?}");
 }
 
 async fn get_stream_uris(clients: &Clients) -> Result<(), transport::Error> {
@@ -433,7 +433,7 @@ async fn get_status(clients: &Clients) -> Result<(), transport::Error> {
         let profile_token = schema::onvif::ReferenceToken(profile.token.0.clone());
         let status =
             &schema::ptz::get_status(ptz, &schema::ptz::GetStatus { profile_token }).await?;
-        println!("ptz status: {:#?}", status);
+        println!("ptz status: {status:#?}");
     }
     Ok(())
 }
@@ -464,22 +464,22 @@ async fn main() {
             get_device_information(&clients)
                 .await
                 .unwrap_or_else(|error| {
-                    println!("Error while fetching device information: {:#?}", error);
+                    println!("Error while fetching device information: {error:#?}");
                 });
             get_stream_uris(&clients).await.unwrap_or_else(|error| {
-                println!("Error while fetching stream urls: {:#?}", error);
+                println!("Error while fetching stream urls: {error:#?}");
             });
             get_snapshot_uris(&clients).await.unwrap_or_else(|error| {
-                println!("Error while fetching snapshot urls: {:#?}", error);
+                println!("Error while fetching snapshot urls: {error:#?}");
             });
             get_hostname(&clients).await.unwrap_or_else(|error| {
-                println!("Error while fetching hostname: {:#?}", error);
+                println!("Error while fetching hostname: {error:#?}");
             });
             get_analytics(&clients).await.unwrap_or_else(|error| {
-                println!("Error while fetching analytics: {:#?}", error);
+                println!("Error while fetching analytics: {error:#?}");
             });
             get_status(&clients).await.unwrap_or_else(|error| {
-                println!("Error while fetching status: {:#?}", error);
+                println!("Error while fetching status: {error:#?}");
             });
         }
     }

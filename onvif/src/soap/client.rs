@@ -186,8 +186,8 @@ impl Client {
             "About to make request. auth_type={:?}, redirections={}", auth_type, redirections
         );
 
-        let soap_msg = soap::soap(message, &username_token)
-            .map_err(|e| Error::Protocol(format!("{:?}", e)))?;
+        let soap_msg =
+            soap::soap(message, &username_token).map_err(|e| Error::Protocol(format!("{e:?}")))?;
 
         let mut request = self
             .client
@@ -224,14 +224,14 @@ impl Client {
                 .and_then(|text| {
                     debug!(self, "Response body: {}", text);
                     let response =
-                        soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{:?}", e)))?;
+                        soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{e:?}")))?;
                     if let Some(response_patcher) = &self.config.response_patcher {
                         match response_patcher(&response) {
                             Ok(patched) => {
                                 debug!(self, "Response (SOAP unwrapped, patched): {}", patched);
                                 Ok(patched)
                             }
-                            Err(e) => Err(Error::Protocol(format!("Patching failed: {}", e))),
+                            Err(e) => Err(Error::Protocol(format!("Patching failed: {e}"))),
                         }
                     } else {
                         Ok(response)
