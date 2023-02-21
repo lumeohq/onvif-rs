@@ -15,7 +15,7 @@ pub enum Error {
     EnvelopeNotFound,
     BodyNotFound,
     BodyIsEmpty,
-    Fault(soap_envelope::Fault),
+    Fault(Box<soap_envelope::Fault>),
     InternalError(String),
 }
 
@@ -63,7 +63,7 @@ pub fn unsoap(xml: &str) -> Result<String, Error> {
 
     if let Some(fault) = body.get_child("Fault") {
         let fault = deserialize_fault(fault)?;
-        return Err(Error::Fault(fault));
+        return Err(Error::Fault(Box::new(fault)));
     }
 
     body.children

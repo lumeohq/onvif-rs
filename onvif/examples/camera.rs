@@ -106,25 +106,25 @@ impl Clients {
         };
         let services =
             schema::devicemgmt::get_services(&out.devicemgmt, &Default::default()).await?;
-        for s in &services.service {
-            let url = Url::parse(&s.x_addr).map_err(|e| e.to_string())?;
-            if !url.as_str().starts_with(base_uri.as_str()) {
+        for service in &services.service {
+            let service_url = Url::parse(&service.x_addr).map_err(|e| e.to_string())?;
+            if !service_url.as_str().starts_with(base_uri.as_str()) {
                 return Err(format!(
                     "Service URI {} is not within base URI {}",
-                    &s.x_addr, &base_uri
+                    service_url, base_uri
                 ));
             }
             let svc = Some(
-                soap::client::ClientBuilder::new(&url)
+                soap::client::ClientBuilder::new(&service_url)
                     .credentials(creds.clone())
                     .build(),
             );
-            match s.namespace.as_str() {
+            match service.namespace.as_str() {
                 "http://www.onvif.org/ver10/device/wsdl" => {
-                    if s.x_addr != devicemgmt_uri.as_str() {
+                    if service_url != devicemgmt_uri {
                         return Err(format!(
                             "advertised device mgmt uri {} not expected {}",
-                            &s.x_addr, &devicemgmt_uri
+                            service_url, devicemgmt_uri
                         ));
                     }
                 }
@@ -135,7 +135,7 @@ impl Clients {
                 "http://www.onvif.org/ver20/imaging/wsdl" => out.imaging = svc,
                 "http://www.onvif.org/ver20/ptz/wsdl" => out.ptz = svc,
                 "http://www.onvif.org/ver20/analytics/wsdl" => out.analytics = svc,
-                _ => debug!("unknown service: {:?}", s),
+                _ => debug!("unknown service: {:?}", service),
             }
         }
         Ok(out)
