@@ -620,3 +620,102 @@ fn extension_inside_extension() {
 
     let _ = yaserde::de::from_str::<tt::SecurityCapabilities>(ser).unwrap();
 }
+
+#[tokio::test]
+async fn operation_pull_messages() {
+    let req: event::PullMessages = Default::default();
+
+    let transport = FakeTransport {
+        response: r#"
+        <tev:PullMessagesResponse>
+        <tev:CurrentTime>
+            2023-09-26T07:55:11Z
+            </tev:CurrentTime>
+        <tev:TerminationTime>
+            2023-09-26T07:56:05Z
+            </tev:TerminationTime>
+        <wsnt:NotificationMessage>
+            <wsnt:Topic
+                Dialect="http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet">
+                tns1:RuleEngine/CellMotionDetector/Motion
+                </wsnt:Topic>
+            <wsnt:Message>
+                <tt:Message
+                    UtcTime="2023-09-26T07:55:05Z"
+                    PropertyOperation="Initialized">
+                    <tt:Source>
+                        <tt:SimpleItem
+                            Name="VideoSourceConfigurationToken"
+                            Value="00000"/>
+                        <tt:SimpleItem
+                            Name="VideoAnalyticsConfigurationToken"
+                            Value="00000"/>
+                        <tt:SimpleItem
+                            Name="Rule"
+                            Value="00000"/>
+                        </tt:Source>
+                    <tt:Data>
+                        <tt:SimpleItem
+                            Name="IsMotion"
+                            Value="true"/>
+                        </tt:Data>
+                    </tt:Message>
+                </wsnt:Message>
+            </wsnt:NotificationMessage>
+        </tev:PullMessagesResponse>
+        "#
+        .into(),
+    };
+
+    let resp = event::pull_messages(&transport, &req).await.unwrap();
+
+    assert_eq!(
+        resp.notification_message[0].message.msg.source.simple_item[0].name,
+        "VideoSourceConfigurationToken"
+    );
+    assert_eq!(
+        resp.notification_message[0].message.msg.source.simple_item[0].value,
+        "00000"
+    );
+    assert_eq!(
+        resp.notification_message[0].message.msg.data.simple_item[0].name,
+        "IsMotion"
+    );
+    assert_eq!(
+        resp.notification_message[0].message.msg.data.simple_item[0].value,
+        "true"
+    );
+}
+
+#[tokio::test]
+async fn operation_create_pullpoint_subscription() {
+    let req: event::CreatePullPointSubscription = Default::default();
+
+    let transport = FakeTransport {
+        response: r#"
+        <tev:CreatePullPointSubscriptionResponse>
+            <tev:SubscriptionReference>
+                <wsa5:Address>
+                    http://192.168.88.108/onvif/Subscription?Idx=162
+                </wsa5:Address>
+            </tev:SubscriptionReference>
+            <wsnt:CurrentTime>
+                2023-09-26T07:55:05Z
+            </wsnt:CurrentTime>
+            <wsnt:TerminationTime>
+                2023-09-26T07:56:05Z
+            </wsnt:TerminationTime>
+        </tev:CreatePullPointSubscriptionResponse>
+        "#
+        .into(),
+    };
+
+    let resp = event::create_pull_point_subscription(&transport, &req)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        resp.subscription_reference.address,
+        "http://192.168.88.108/onvif/Subscription?Idx=162"
+    );
+}
