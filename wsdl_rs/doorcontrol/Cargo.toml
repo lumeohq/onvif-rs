@@ -8,7 +8,7 @@ license = "MIT"
 transport = { path = "../../transport" }
 types = { path = "../../xsd_rs/types" }
 validate = { path = "../../validate" }
-xml-rs = "0.8.3"
+xml-rs = "=0.8.3"
 xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
 xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
 yaserde = "0.7.1"

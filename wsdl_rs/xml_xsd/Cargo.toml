@@ -5,6 +5,6 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-xml-rs = "0.8.3"
+xml-rs = "=0.8.3"
 yaserde = "0.7.1"
 yaserde_derive = "0.7.1"
