@@ -9,7 +9,7 @@ b_2 = { path = "../../wsdl_rs/b_2" }
 common = { path = "../common" }
 soap_envelope = { path = "../../xsd_rs/soap_envelope" }
 validate = { path = "../../validate" }
-xml-rs = "0.8.3"
+xml-rs = "=0.8.3"
 xmlmime = { path = "../../xsd_rs/xmlmime" }
 xop = { path = "../../xsd_rs/xop" }
 xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
