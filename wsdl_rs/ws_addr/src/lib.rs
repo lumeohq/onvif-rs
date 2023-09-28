@@ -14,7 +14,7 @@ pub type EndpointReference = EndpointReferenceType;
 )]
 pub struct EndpointReferenceType {
     #[yaserde(prefix = "tns", rename = "Address")]
-    pub address: AttributedURIType,
+    pub address: String,
 
     #[yaserde(prefix = "tns", rename = "ReferenceParameters")]
     pub reference_parameters: Option<ReferenceParameters>,
