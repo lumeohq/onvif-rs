@@ -406,25 +406,32 @@ pub struct DeleteProfileResponse {}
 
 impl Validate for DeleteProfileResponse {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-    prefix = "tr2",
-    namespace = "tr2: http://www.onvif.org/ver20/media/wsdl"
-)]
-pub struct GetConfiguration {
-    // Token of the requested configuration.
-    #[yaserde(prefix = "tr2", rename = "ConfigurationToken")]
-    pub configuration_token: Option<tt::ReferenceToken>,
+macro_rules! config {
+    ($name:ident) => {
+        #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+        #[yaserde(
+            prefix = "tr2",
+            namespace = "tr2: http://www.onvif.org/ver20/media/wsdl"
+        )]
+        pub struct $name {
+            // fields
+            // Token of the requested configuration.
+            #[yaserde(prefix = "tr2", rename = "ConfigurationToken")]
+            pub configuration_token: Option<tt::ReferenceToken>,
 
-    // Contains the token of an existing media profile the configurations shall
-    // be compatible with.
-    #[yaserde(prefix = "tr2", rename = "ProfileToken")]
-    pub profile_token: Option<tt::ReferenceToken>,
+            // Contains the token of an existing media profile the configurations shall
+            // be compatible with.
+            #[yaserde(prefix = "tr2", rename = "ProfileToken")]
+            pub profile_token: Option<tt::ReferenceToken>,
+        }
+    };
 }
+
+config!(GetConfiguration);
 
 impl Validate for GetConfiguration {}
 
-pub type GetVideoEncoderConfigurations = GetConfiguration;
+config!(GetVideoEncoderConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -439,7 +446,7 @@ pub struct GetVideoEncoderConfigurationsResponse {
 
 impl Validate for GetVideoEncoderConfigurationsResponse {}
 
-pub type GetVideoSourceConfigurations = GetConfiguration;
+config!(GetVideoSourceConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -454,7 +461,7 @@ pub struct GetVideoSourceConfigurationsResponse {
 
 impl Validate for GetVideoSourceConfigurationsResponse {}
 
-pub type GetAudioEncoderConfigurations = GetConfiguration;
+config!(GetAudioEncoderConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -469,7 +476,7 @@ pub struct GetAudioEncoderConfigurationsResponse {
 
 impl Validate for GetAudioEncoderConfigurationsResponse {}
 
-pub type GetAudioSourceConfigurations = GetConfiguration;
+config!(GetAudioSourceConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -484,7 +491,7 @@ pub struct GetAudioSourceConfigurationsResponse {
 
 impl Validate for GetAudioSourceConfigurationsResponse {}
 
-pub type GetAnalyticsConfigurations = GetConfiguration;
+config!(GetAnalyticsConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -499,7 +506,7 @@ pub struct GetAnalyticsConfigurationsResponse {
 
 impl Validate for GetAnalyticsConfigurationsResponse {}
 
-pub type GetMetadataConfigurations = GetConfiguration;
+config!(GetMetadataConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -514,7 +521,7 @@ pub struct GetMetadataConfigurationsResponse {
 
 impl Validate for GetMetadataConfigurationsResponse {}
 
-pub type GetAudioOutputConfigurations = GetConfiguration;
+config!(GetAudioOutputConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -529,7 +536,7 @@ pub struct GetAudioOutputConfigurationsResponse {
 
 impl Validate for GetAudioOutputConfigurationsResponse {}
 
-pub type GetAudioDecoderConfigurations = GetConfiguration;
+config!(GetAudioDecoderConfigurations);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -664,7 +671,7 @@ pub struct SetAudioDecoderConfiguration {
 impl Validate for SetAudioDecoderConfiguration {}
 
 pub type SetAudioDecoderConfigurationResponse = SetConfigurationResponse;
-pub type GetVideoSourceConfigurationOptions = GetConfiguration;
+config!(GetVideoSourceConfigurationOptions);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -683,7 +690,7 @@ pub struct GetVideoSourceConfigurationOptionsResponse {
 
 impl Validate for GetVideoSourceConfigurationOptionsResponse {}
 
-pub type GetVideoEncoderConfigurationOptions = GetConfiguration;
+config!(GetVideoEncoderConfigurationOptions);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -697,7 +704,7 @@ pub struct GetVideoEncoderConfigurationOptionsResponse {
 
 impl Validate for GetVideoEncoderConfigurationOptionsResponse {}
 
-pub type GetAudioSourceConfigurationOptions = GetConfiguration;
+config!(GetAudioSourceConfigurationOptions);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -716,7 +723,7 @@ pub struct GetAudioSourceConfigurationOptionsResponse {
 
 impl Validate for GetAudioSourceConfigurationOptionsResponse {}
 
-pub type GetAudioEncoderConfigurationOptions = GetConfiguration;
+config!(GetAudioEncoderConfigurationOptions);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -735,7 +742,7 @@ pub struct GetAudioEncoderConfigurationOptionsResponse {
 
 impl Validate for GetAudioEncoderConfigurationOptionsResponse {}
 
-pub type GetMetadataConfigurationOptions = GetConfiguration;
+config!(GetMetadataConfigurationOptions);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -754,7 +761,7 @@ pub struct GetMetadataConfigurationOptionsResponse {
 
 impl Validate for GetMetadataConfigurationOptionsResponse {}
 
-pub type GetAudioOutputConfigurationOptions = GetConfiguration;
+config!(GetAudioOutputConfigurationOptions);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
@@ -773,7 +780,7 @@ pub struct GetAudioOutputConfigurationOptionsResponse {
 
 impl Validate for GetAudioOutputConfigurationOptionsResponse {}
 
-pub type GetAudioDecoderConfigurationOptions = GetConfiguration;
+config!(GetAudioDecoderConfigurationOptions);
 
 #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
 #[yaserde(
