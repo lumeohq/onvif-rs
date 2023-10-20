@@ -11,7 +11,3 @@ fn without_whitespaces(
         .into_iter()
         .filter(|e| !matches!(e, Ok(xml::reader::XmlEvent::Whitespace(_))))
 }
-
-pub fn type_of<T>(_: &T) -> &str {
-    std::any::type_name::<T>()
-}
