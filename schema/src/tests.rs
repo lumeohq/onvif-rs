@@ -620,3 +620,76 @@ fn extension_inside_extension() {
 
     let _ = yaserde::de::from_str::<tt::SecurityCapabilities>(ser).unwrap();
 }
+
+#[test]
+#[cfg(feature = "media2")]
+fn media2_configs_name_serialization() {
+    pub fn type_of<T>(_: &T) -> &str {
+        std::any::type_name::<T>()
+    }
+
+    assert_eq!(
+        "media2::GetConfiguration",
+        type_of(&media2::GetConfiguration::default())
+    );
+    assert_eq!(
+        "media2::GetVideoEncoderConfigurations",
+        type_of(&media2::GetVideoEncoderConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetVideoSourceConfigurations",
+        type_of(&media2::GetVideoSourceConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetAudioEncoderConfigurations",
+        type_of(&media2::GetAudioEncoderConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetAudioSourceConfigurations",
+        type_of(&media2::GetAudioSourceConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetAnalyticsConfigurations",
+        type_of(&media2::GetAnalyticsConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetMetadataConfigurations",
+        type_of(&media2::GetMetadataConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetAudioOutputConfigurations",
+        type_of(&media2::GetAudioOutputConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetAudioDecoderConfigurations",
+        type_of(&media2::GetAudioDecoderConfigurations::default())
+    );
+    assert_eq!(
+        "media2::GetVideoSourceConfigurationOptions",
+        type_of(&media2::GetVideoSourceConfigurationOptions::default())
+    );
+    assert_eq!(
+        "media2::GetVideoEncoderConfigurationOptions",
+        type_of(&media2::GetVideoEncoderConfigurationOptions::default())
+    );
+    assert_eq!(
+        "media2::GetAudioSourceConfigurationOptions",
+        type_of(&media2::GetAudioSourceConfigurationOptions::default())
+    );
+    assert_eq!(
+        "media2::GetAudioEncoderConfigurationOptions",
+        type_of(&media2::GetAudioEncoderConfigurationOptions::default())
+    );
+    assert_eq!(
+        "media2::GetMetadataConfigurationOptions",
+        type_of(&media2::GetMetadataConfigurationOptions::default())
+    );
+    assert_eq!(
+        "media2::GetAudioOutputConfigurationOptions",
+        type_of(&media2::GetAudioOutputConfigurationOptions::default())
+    );
+    assert_eq!(
+        "media2::GetAudioDecoderConfigurationOptions",
+        type_of(&media2::GetAudioDecoderConfigurationOptions::default())
+    );
+}
