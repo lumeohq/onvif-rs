@@ -26,7 +26,7 @@ impl UsernameToken {
 
         UsernameToken {
             username: username.to_string(),
-            nonce: base64::encode(&nonce),
+            nonce: base64::encode(nonce),
             digest: base64::encode(digest),
             created,
         }
