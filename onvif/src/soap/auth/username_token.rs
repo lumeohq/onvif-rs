@@ -8,19 +8,25 @@ pub struct UsernameToken {
 
 impl UsernameToken {
     pub fn new(username: &str, password: &str) -> UsernameToken {
-        let nonce = uuid::Uuid::new_v4().to_string();
-        let created = chrono::Utc::now().to_rfc3339();
-        let concat = format!("{}{}{}", nonce, created, password);
+        let uuid = uuid::Uuid::new_v4();
+        let nonce = uuid.as_bytes();
+        let created = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+
+        let mut concat = Vec::with_capacity(nonce.len() + created.len() + password.len());
+
+        concat.extend_from_slice(nonce);
+        concat.extend_from_slice(created.as_bytes());
+        concat.extend_from_slice(password.as_bytes());
 
         let digest = {
             let mut hasher = sha1::Sha1::new();
-            hasher.update(concat.as_bytes());
+            hasher.update(&concat);
             hasher.digest().bytes()
         };
 
         UsernameToken {
             username: username.to_string(),
-            nonce: base64::encode(&nonce),
+            nonce: base64::encode(nonce),
             digest: base64::encode(digest),
             created,
         }
