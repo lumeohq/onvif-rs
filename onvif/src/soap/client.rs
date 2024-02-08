@@ -34,20 +34,29 @@ pub struct Client {
 
 #[derive(Clone)]
 pub struct ClientBuilder {
+    client: Option<reqwest::Client>,
     config: Config,
 }
 
 impl ClientBuilder {
+    const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
+
     pub fn new(uri: &Url) -> Self {
         Self {
+            client: None,
             config: Config {
                 uri: uri.clone(),
                 credentials: None,
                 response_patcher: None,
                 auth_type: AuthType::Any,
-                timeout: Duration::from_secs(5),
+                timeout: ClientBuilder::DEFAULT_TIMEOUT,
             },
         }
+    }
+
+    pub fn http_client(mut self, client: reqwest::Client) -> Self {
+        self.client = Some(client);
+        self
     }
 
     pub fn credentials(mut self, credentials: Option<Credentials>) -> Self {
@@ -71,10 +80,25 @@ impl ClientBuilder {
     }
 
     pub fn build(self) -> Client {
+        let client = if let Some(client) = self.client {
+            client
+        } else {
+            ClientBuilder::default_http_client_builder()
+                .timeout(self.config.timeout)
+                .build()
+                .unwrap()
+        };
+
+        Client {
+            client,
+            config: self.config,
+        }
+    }
+
+    pub fn default_http_client_builder() -> reqwest::ClientBuilder {
         #[allow(unused_mut)]
-        let mut client_builder = reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .timeout(self.config.timeout);
+        let mut client_builder =
+            reqwest::Client::builder().redirect(reqwest::redirect::Policy::none());
 
         #[cfg(feature = "tls")]
         {
@@ -86,10 +110,7 @@ impl ClientBuilder {
                 .danger_accept_invalid_certs(true);
         }
 
-        Client {
-            client: client_builder.build().unwrap(),
-            config: self.config,
-        }
+        client_builder
     }
 }
 
