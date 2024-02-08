@@ -39,7 +39,7 @@ pub struct ClientBuilder {
 }
 
 impl ClientBuilder {
-    const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
+    pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 
     pub fn new(uri: &Url) -> Self {
         Self {
