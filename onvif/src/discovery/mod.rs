@@ -33,6 +33,8 @@ pub enum Error {
 
 #[derive(Clone, Eq, Hash, PartialEq)]
 pub struct Device {
+    /// The WS-Discovery UUID / address reference
+    pub address: String,
     pub name: Option<String>,
     pub urls: Vec<Url>,
 }
@@ -42,6 +44,7 @@ impl Debug for Device {
         f.debug_struct("Device")
             .field("name", &self.name)
             .field("url", &DisplayList(&self.urls))
+            .field("address", &self.address)
             .finish()
     }
 }
@@ -226,8 +229,13 @@ fn device_from_envelope(envelope: probe_matches::Envelope) -> Option<Device> {
 
     let name = onvif_probe_match.name();
     let urls = onvif_probe_match.x_addrs();
+    let address = onvif_probe_match.endpoint_reference_address();
 
-    Some(Device { name, urls })
+    Some(Device {
+        name,
+        urls,
+        address,
+    })
 }
 
 fn build_probe() -> probe::Envelope {
@@ -245,7 +253,9 @@ fn build_probe() -> probe::Envelope {
 
 #[test]
 fn test_xaddrs_extraction() {
-    fn make_xml(relates_to: &str, xaddrs: &str) -> String {
+    const DEVICE_ADDRESS: &str = "an address";
+
+    let make_xml = |relates_to: &str, xaddrs: &str| -> String {
         format!(
             r#"<?xml version="1.0" encoding="UTF-8"?>
             <SOAP-ENV:Envelope
@@ -262,6 +272,9 @@ fn test_xaddrs_extraction() {
                             <d:XAddrs>http://something.else</d:XAddrs>
                         </d:ProbeMatch>
                         <d:ProbeMatch>
+                            <wsa:EndpointReference>
+                                <wsa:Address>{device_address}</wsa:Address>
+                            </wsa:EndpointReference>
                             <d:Scopes>onvif://www.onvif.org/name/MyCamera2000</d:Scopes>
                             <d:XAddrs>{xaddrs}</d:XAddrs>
                         </d:ProbeMatch>
@@ -270,9 +283,10 @@ fn test_xaddrs_extraction() {
             </SOAP-ENV:Envelope>
             "#,
             relates_to = relates_to,
-            xaddrs = xaddrs
+            xaddrs = xaddrs,
+            device_address = DEVICE_ADDRESS
         )
-    }
+    };
 
     let our_uuid = "uuid:84ede3de-7dec-11d0-c360-F01234567890";
     let bad_uuid = "uuid:84ede3de-7dec-11d0-c360-F00000000000";
@@ -298,9 +312,10 @@ fn test_xaddrs_extraction() {
             urls: vec![
                 Url::parse("http://addr_20").unwrap(),
                 Url::parse("http://addr_21").unwrap(),
-                Url::parse("http://addr_22").unwrap()
+                Url::parse("http://addr_22").unwrap(),
             ],
-            name: Some("MyCamera2000".to_string())
+            name: Some("MyCamera2000".to_string()),
+            address: DEVICE_ADDRESS.to_string(),
         }]
     );
 }
