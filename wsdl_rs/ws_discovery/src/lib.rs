@@ -139,7 +139,16 @@ pub mod probe_matches {
 
     impl ProbeMatch {
         pub fn types(&self) -> Vec<&str> {
-            self.types.split_whitespace().collect()
+            self.types
+                .split_whitespace()
+                .map(|t: &str| {
+                    // Remove WSDL prefixes
+                    match t.find(':') {
+                        Some(idx) => t.split_at(idx + 1).1,
+                        None => t,
+                    }
+                })
+                .collect()
         }
 
         pub fn scopes(&self) -> Vec<Url> {
@@ -221,5 +230,7 @@ pub mod probe_matches {
                 Url::parse("http://10.0.0.200:80/onvif/device_service").unwrap(),
             ]
         );
+
+        assert_eq!(de.types(), vec!["NetworkVideoTransmitter", "Device"]);
     }
 }
