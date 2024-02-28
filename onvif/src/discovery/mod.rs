@@ -35,7 +35,9 @@ pub enum Error {
 pub struct Device {
     /// The WS-Discovery UUID / address reference
     pub address: String,
+    pub hardware: Option<String>,
     pub name: Option<String>,
+    pub types: Vec<String>,
     pub urls: Vec<Url>,
 }
 
@@ -229,12 +231,20 @@ fn device_from_envelope(envelope: probe_matches::Envelope) -> Option<Device> {
 
     let name = onvif_probe_match.name();
     let urls = onvif_probe_match.x_addrs();
+    let hardware = onvif_probe_match.hardware();
     let address = onvif_probe_match.endpoint_reference_address();
+    let types = onvif_probe_match
+        .types()
+        .into_iter()
+        .map(Into::into)
+        .collect();
 
     Some(Device {
         name,
         urls,
         address,
+        hardware,
+        types,
     })
 }
 
@@ -315,7 +325,9 @@ fn test_xaddrs_extraction() {
                 Url::parse("http://addr_22").unwrap(),
             ],
             name: Some("MyCamera2000".to_string()),
+            hardware: None,
             address: DEVICE_ADDRESS.to_string(),
+            types: vec![]
         }]
     );
 }
