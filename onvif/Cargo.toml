@@ -14,6 +14,7 @@ base64 = "0.13.0"
 bigdecimal = "0.3.0"
 chrono = "0.4.19"
 digest_auth = "0.3.0"
+futures = "0.3.30"
 futures-core = "0.3.8"
 num-bigint = "0.4.2"
 reqwest = { version = "0.11.20", default-features = false }
