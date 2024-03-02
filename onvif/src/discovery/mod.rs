@@ -33,13 +33,20 @@ pub enum Error {
     Unsupported(String),
 }
 
-// TODO
+/// How to discover the devices on the network. Officially, only [DiscoveryMode::Multicast] (the
+/// default) is supported by all onvif devices. However, it is said that sending unicast packets
+/// can work.
 #[derive(Debug, Clone)]
 pub enum DiscoveryMode {
     /// The normal WS-Discovery Mode
     Multicast,
+    /// The unicast approach
     Unicast {
+        /// The network IP address. Must be a valid network address, otherwise the behavior
+        /// will be undefined
         network: Ipv4Addr,
+        /// The network mask, written out in "dotted notation". Must be a valid network mask,
+        /// otherwise the behavior will be undefined.
         network_mask: Ipv4Addr,
     },
 }
@@ -103,6 +110,7 @@ impl DiscoveryBuilder {
     }
 
     /// Set the discovery mode. See [DiscoveryMode] for a description of how this works.
+    /// By default, the multicast mode is chosen.
     pub fn discovery_mode(&mut self, discovery_mode: DiscoveryMode) -> &mut Self {
         self.discovery_mode = discovery_mode;
         self
@@ -314,15 +322,14 @@ impl DiscoveryBuilder {
         } = self;
 
         match discovery_mode {
-            DiscoveryMode::Multicast => self.run_multicast(duration, listen_address).await,
+            DiscoveryMode::Multicast => self.run_multicast(duration, listen_address),
             DiscoveryMode::Unicast {
                 network,
                 network_mask,
             } => {
                 self.run_unicast(duration, listen_address, network, network_mask)
-                    .await
             }
-        }
+        }.await
     }
 }
 
