@@ -126,7 +126,7 @@ impl DiscoveryBuilder {
         let probe = Arc::new(build_probe());
         let probe_xml = yaserde::ser::to_string(probe.as_ref()).map_err(Error::Serde)?;
 
-        debug!("Probe XML: {}", probe_xml);
+        debug!("Unicast Probe XML: {}. Since you are using unicast, some devices might not be detected", probe_xml);
 
         let message_id = Arc::new(probe.header.message_id.clone());
         let payload = Arc::new(probe_xml.as_bytes().to_vec());
@@ -182,7 +182,7 @@ impl DiscoveryBuilder {
                     }
                 },
             ))
-                .await
+            .await
         };
 
         tokio::spawn(timeout(*duration, produce_devices));
@@ -202,12 +202,17 @@ impl DiscoveryBuilder {
 
         let socket = {
             let local_socket_addr = SocketAddr::new(*listen_address, Self::LOCAL_PORT);
-            let multi_socket_addr = SocketAddr::new(IpAddr::V4(Self::WS_DISCOVERY_BROADCAST_ADDR), Self::MULTI_PORT);
+            let multi_socket_addr = SocketAddr::new(
+                IpAddr::V4(Self::WS_DISCOVERY_BROADCAST_ADDR),
+                Self::MULTI_PORT,
+            );
 
             let socket = UdpSocket::bind(local_socket_addr).await?;
 
             match listen_address {
-                IpAddr::V4(addr) => socket.join_multicast_v4(Self::WS_DISCOVERY_BROADCAST_ADDR, *addr)?,
+                IpAddr::V4(addr) => {
+                    socket.join_multicast_v4(Self::WS_DISCOVERY_BROADCAST_ADDR, *addr)?
+                }
                 IpAddr::V6(_) => return Err(Error::Unsupported("Discovery with IPv6".to_owned())),
             }
 
@@ -314,7 +319,7 @@ impl DiscoveryBuilder {
     ///     println!("Devices found: {:?}", devices);
     /// };
     /// ```
-    pub async fn run(&self) -> Result<impl Stream<Item=Device>, Error> {
+    pub async fn run(&self) -> Result<impl Stream<Item = Device>, Error> {
         let Self {
             duration,
             listen_address,
@@ -326,10 +331,9 @@ impl DiscoveryBuilder {
             DiscoveryMode::Unicast {
                 network,
                 network_mask,
-            } => {
-                self.run_unicast(duration, listen_address, network, network_mask)
-            }
-        }.await
+            } => self.run_unicast(duration, listen_address, network, network_mask),
+        }
+        .await
     }
 }
 
@@ -384,10 +388,10 @@ fn build_probe() -> probe::Envelope {
     }
 }
 
+use crate::discovery::network_enumeration::enumerate_network_v4;
 use std::iter::Iterator;
 use std::net::Ipv6Addr;
 use tokio_stream::StreamExt;
-use crate::discovery::network_enumeration::enumerate_network_v4;
 
 #[tokio::test]
 async fn test_unicast() {
