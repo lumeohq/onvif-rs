@@ -327,13 +327,12 @@ impl DiscoveryBuilder {
         } = self;
 
         match discovery_mode {
-            DiscoveryMode::Multicast => self.run_multicast(duration, listen_address),
+            DiscoveryMode::Multicast => self.run_multicast(duration, listen_address).await,
             DiscoveryMode::Unicast {
                 network,
                 network_mask,
-            } => self.run_unicast(duration, listen_address, network, network_mask),
+            } => self.run_unicast(duration, listen_address, network, network_mask).await,
         }
-        .await
     }
 }
 
