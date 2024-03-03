@@ -331,7 +331,10 @@ impl DiscoveryBuilder {
             DiscoveryMode::Unicast {
                 network,
                 network_mask,
-            } => self.run_unicast(duration, listen_address, network, network_mask).await,
+            } => {
+                self.run_unicast(duration, listen_address, network, network_mask)
+                    .await
+            }
         }
     }
 }
