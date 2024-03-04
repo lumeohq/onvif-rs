@@ -1,7 +1,9 @@
 mod network_enumeration;
 
+use crate::discovery::network_enumeration::enumerate_network_v4;
 use futures_core::stream::Stream;
 use schema::ws_discovery::{probe, probe_matches};
+use std::iter::Iterator;
 use std::{
     collections::HashSet,
     fmt::{Debug, Formatter},
@@ -155,7 +157,7 @@ impl DiscoveryBuilder {
             futures::future::join_all(unicast_requests.iter().map(
                 |(sock, addr, device_sender, payload, message_id)| async move {
                     sock.send_to(payload, addr).await.ok()?;
-                    let (xml, _) = recv_string(&sock).await.ok()?;
+                    let (xml, _) = recv_string(sock).await.ok()?;
 
                     debug!("Probe match XML: {}", xml);
 
@@ -390,34 +392,35 @@ fn build_probe() -> probe::Envelope {
     }
 }
 
-use crate::discovery::network_enumeration::enumerate_network_v4;
-use std::iter::Iterator;
-use std::net::Ipv6Addr;
-use tokio_stream::StreamExt;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio_stream::StreamExt;
 
-#[tokio::test]
-async fn test_unicast() {
-    let devices = DiscoveryBuilder::default()
-        .discovery_mode(DiscoveryMode::Unicast {
-            network: Ipv4Addr::new(192, 168, 1, 0),
-            network_mask: Ipv4Addr::new(255, 255, 255, 0),
-        })
-        .run()
-        .await
-        .unwrap()
-        .collect::<Vec<_>>()
-        .await;
+    /// This test serves more as an example of how the unicast discovery works.
+    #[tokio::test]
+    async fn test_unicast() {
+        let devices = DiscoveryBuilder::default()
+            .discovery_mode(DiscoveryMode::Unicast {
+                network: Ipv4Addr::new(192, 168, 1, 0),
+                network_mask: Ipv4Addr::new(255, 255, 255, 0),
+            })
+            .run()
+            .await
+            .unwrap()
+            .collect::<Vec<_>>()
+            .await;
 
-    println!("Devices found: {:?}", devices);
-}
+        println!("Devices found: {:?}", devices);
+    }
 
-#[test]
-fn test_xaddrs_extraction() {
-    const DEVICE_ADDRESS: &str = "an address";
+    #[test]
+    fn test_xaddrs_extraction() {
+        const DEVICE_ADDRESS: &str = "an address";
 
-    let make_xml = |relates_to: &str, xaddrs: &str| -> String {
-        format!(
-            r#"<?xml version="1.0" encoding="UTF-8"?>
+        let make_xml = |relates_to: &str, xaddrs: &str| -> String {
+            format!(
+                r#"<?xml version="1.0" encoding="UTF-8"?>
             <SOAP-ENV:Envelope
                         xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
                         xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
@@ -442,42 +445,43 @@ fn test_xaddrs_extraction() {
                 </SOAP-ENV:Body>
             </SOAP-ENV:Envelope>
             "#,
-            relates_to = relates_to,
-            xaddrs = xaddrs,
-            device_address = DEVICE_ADDRESS
-        )
-    };
+                relates_to = relates_to,
+                xaddrs = xaddrs,
+                device_address = DEVICE_ADDRESS
+            )
+        };
 
-    let our_uuid = "uuid:84ede3de-7dec-11d0-c360-F01234567890";
-    let bad_uuid = "uuid:84ede3de-7dec-11d0-c360-F00000000000";
+        let our_uuid = "uuid:84ede3de-7dec-11d0-c360-F01234567890";
+        let bad_uuid = "uuid:84ede3de-7dec-11d0-c360-F00000000000";
 
-    let input = vec![
-        make_xml(our_uuid, "http://addr_20 http://addr_21 http://addr_22"),
-        make_xml(bad_uuid, "http://addr_30 http://addr_31"),
-    ];
+        let input = vec![
+            make_xml(our_uuid, "http://addr_20 http://addr_21 http://addr_22"),
+            make_xml(bad_uuid, "http://addr_30 http://addr_31"),
+        ];
 
-    let actual = input
-        .iter()
-        .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(xml).ok())
-        .filter(|envelope| envelope.header.relates_to == our_uuid)
-        .filter_map(device_from_envelope)
-        .collect::<Vec<_>>();
+        let actual = input
+            .iter()
+            .filter_map(|xml| yaserde::de::from_str::<probe_matches::Envelope>(xml).ok())
+            .filter(|envelope| envelope.header.relates_to == our_uuid)
+            .filter_map(device_from_envelope)
+            .collect::<Vec<_>>();
 
-    assert_eq!(actual.len(), 1);
+        assert_eq!(actual.len(), 1);
 
-    // OK: message UUID matches and addr responds
-    assert_eq!(
-        actual,
-        &[Device {
-            urls: vec![
-                Url::parse("http://addr_20").unwrap(),
-                Url::parse("http://addr_21").unwrap(),
-                Url::parse("http://addr_22").unwrap(),
-            ],
-            name: Some("MyCamera2000".to_string()),
-            hardware: None,
-            address: DEVICE_ADDRESS.to_string(),
-            types: vec![],
-        }]
-    );
+        // OK: message UUID matches and addr responds
+        assert_eq!(
+            actual,
+            &[Device {
+                urls: vec![
+                    Url::parse("http://addr_20").unwrap(),
+                    Url::parse("http://addr_21").unwrap(),
+                    Url::parse("http://addr_22").unwrap(),
+                ],
+                name: Some("MyCamera2000".to_string()),
+                hardware: None,
+                address: DEVICE_ADDRESS.to_string(),
+                types: vec![],
+            }]
+        );
+    }
 }

@@ -4,7 +4,7 @@ use std::net::Ipv4Addr;
 fn octets_to_u32(octets: [u8; 4]) -> u32 {
     (octets[0] as u32) << (3 * 8)
         | (octets[1] as u32) << (2 * 8)
-        | (octets[2] as u32) << (1 * 8)
+        | (octets[2] as u32) << 8
         | (octets[3] as u32)
 }
 
