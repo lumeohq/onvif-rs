@@ -1,6 +1,7 @@
 mod network_enumeration;
 
 use crate::discovery::network_enumeration::enumerate_network_v4;
+use futures::stream::{self, StreamExt};
 use futures_core::stream::Stream;
 use schema::ws_discovery::{probe, probe_matches};
 use std::iter::Iterator;
@@ -94,6 +95,7 @@ impl DiscoveryBuilder {
     const LOCAL_PORT: u16 = 0;
     const MULTI_PORT: u16 = 3702;
     const WS_DISCOVERY_BROADCAST_ADDR: Ipv4Addr = Ipv4Addr::new(239, 255, 255, 250);
+    const MAX_CONCURRENT_SOCK: usize = 32;
 
     /// How long to listen for the responses from the network.
     pub fn duration(&mut self, duration: Duration) -> &mut Self {
@@ -138,56 +140,82 @@ impl DiscoveryBuilder {
 
         let mut unicast_requests = vec![];
 
+        // Prepare the list of UDP queries to execute.
         for target_address in enumerate_network_v4(*network, *network_mask) {
-            let local_socket_addr = SocketAddr::new(*listen_address, Self::LOCAL_PORT);
+            let local_sock_addr = SocketAddr::new(*listen_address, Self::LOCAL_PORT);
             let target_sock_addr = SocketAddr::new(IpAddr::V4(target_address), Self::MULTI_PORT);
 
-            let socket = UdpSocket::bind(local_socket_addr).await?;
-
             unicast_requests.push((
-                socket,
+                local_sock_addr,
                 target_sock_addr,
-                device_sender.clone(),
                 payload.clone(),
                 message_id.clone(),
             ));
         }
 
+        let total_socks = unicast_requests.len();
+        let batches = total_socks / Self::MAX_CONCURRENT_SOCK;
+
+        let max_time_per_sock =
+            Duration::from_secs(((duration.as_secs() as usize) / batches) as u64);
+
         let produce_devices = async move {
-            futures::future::join_all(unicast_requests.iter().map(
-                |(sock, addr, device_sender, payload, message_id)| async move {
-                    sock.send_to(payload, addr).await.ok()?;
-                    let (xml, _) = recv_string(sock).await.ok()?;
+            let futures = unicast_requests
+                .iter()
+                .map(
+                    |(local_sock_addr, target_sock_addr, payload, message_id)| async move {
+                        let socket = UdpSocket::bind(local_sock_addr).await.ok()?;
 
-                    debug!("Probe match XML: {}", xml);
+                        socket.send_to(payload, target_sock_addr).await.ok()?;
+                        let (xml, _) = timeout(max_time_per_sock, recv_string(&socket))
+                            .await
+                            .ok()?
+                            .ok()?;
 
-                    let envelope = match yaserde::de::from_str::<probe_matches::Envelope>(&xml) {
-                        Ok(envelope) => envelope,
-                        Err(e) => {
-                            debug!("Deserialization failed: {e}");
+                        debug!("Probe match XML: {}", xml);
+
+                        let envelope = match yaserde::de::from_str::<probe_matches::Envelope>(&xml)
+                        {
+                            Ok(envelope) => envelope,
+                            Err(e) => {
+                                debug!("Deserialization failed: {e}");
+                                return None;
+                            }
+                        };
+
+                        if envelope.header.relates_to != **message_id {
+                            debug!("Unrelated message");
                             return None;
                         }
-                    };
 
-                    if envelope.header.relates_to != **message_id {
-                        debug!("Unrelated message");
-                        return None;
-                    }
+                        if let Some(device) = device_from_envelope(envelope) {
+                            debug!("Found device {device:?}");
+                            Some(device)
+                        } else {
+                            None
+                        }
+                    },
+                )
+                .collect::<Vec<_>>();
 
-                    if let Some(device) = device_from_envelope(envelope) {
-                        debug!("Found device {device:?}");
-                        // It's ok to ignore the sending error as user can drop the receiver soon
-                        // (for example, after the first device discovered).
-                        Some(device_sender.send(device).await)
-                    } else {
-                        None
+            let mut stream = stream::iter(futures).buffer_unordered(Self::MAX_CONCURRENT_SOCK);
+
+            // Gets stopped by the timeout below, executing in a background task, but we can
+            // stop early as well
+            while let Some(device_or_empty) = stream.next().await {
+                if let Some(device) = device_or_empty {
+                    // It's ok to ignore the sending error as user can drop the receiver soon
+                    // (for example, after the first device discovered).
+                    if device_sender.send(device).await.is_err() {
+                        debug!("Failure to send to the device sender; Ignoring on purpose.")
                     }
-                },
-            ))
-            .await
+                }
+            }
         };
 
-        tokio::spawn(timeout(*duration, produce_devices));
+        // Give a grace of 100ms since we divided the time equally but some sockets will need a little more.
+        let global_timeout_duration = *duration + Duration::from_millis(100);
+        tokio::spawn(timeout(global_timeout_duration, produce_devices));
 
         Ok(device_receiver)
     }
