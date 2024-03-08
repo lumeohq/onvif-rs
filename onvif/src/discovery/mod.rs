@@ -154,10 +154,9 @@ impl DiscoveryBuilder {
         }
 
         let total_socks = unicast_requests.len();
-        let batches = total_socks / Self::MAX_CONCURRENT_SOCK;
+        let batches = (total_socks / Self::MAX_CONCURRENT_SOCK) as f64;
 
-        let max_time_per_sock =
-            Duration::from_secs(((duration.as_secs() as usize) / batches) as u64);
+        let max_time_per_sock = Duration::from_secs_f64(duration.as_secs_f64() / batches);
 
         let produce_devices = async move {
             let futures = unicast_requests
