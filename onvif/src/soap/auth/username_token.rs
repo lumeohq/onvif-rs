@@ -7,10 +7,22 @@ pub struct UsernameToken {
 }
 
 impl UsernameToken {
-    pub fn new(username: &str, password: &str) -> UsernameToken {
+    pub fn new(
+        username: &str,
+        password: &str,
+        fix_time_gap: Option<chrono::Duration>,
+    ) -> UsernameToken {
         let uuid = uuid::Uuid::new_v4();
         let nonce = uuid.as_bytes();
-        let created = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+
+        let mut created = chrono::Utc::now();
+        if let Some(time_gap) = fix_time_gap {
+            created = match created.checked_add_signed(time_gap) {
+                Some(t) => t,
+                None => chrono::Utc::now(),
+            };
+        }
+        let created = created.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
 
         let mut concat = Vec::with_capacity(nonce.len() + created.len() + password.len());
 
