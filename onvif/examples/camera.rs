@@ -1,7 +1,8 @@
-use onvif::soap;
+use chrono::{NaiveDate, Utc};
+use onvif::soap::{self, client::AuthType};
 use schema::{self, transport};
 use structopt::StructOpt;
-use tracing::debug;
+use tracing::{debug, warn};
 use url::Url;
 
 #[derive(StructOpt)]
@@ -23,6 +24,14 @@ struct Args {
     /// Service specific path
     #[structopt(global = true, long, default_value = "onvif/device_service")]
     service_path: String,
+
+    /// Auto fix time gap between PC and the camera
+    #[structopt(short = "t", long)]
+    fix_time: bool,
+
+    /// Authorization type [Any(Default), Digest, UsernameToken]
+    #[structopt(short = "a", long, default_value = "Any")]
+    auth_type: String,
 
     #[structopt(subcommand)]
     cmd: Cmd,
@@ -92,9 +101,15 @@ impl Clients {
             .as_ref()
             .ok_or_else(|| "--uri must be specified.".to_string())?;
         let devicemgmt_uri = base_uri.join(&args.service_path).unwrap();
+        let auth_type = match args.auth_type.to_ascii_lowercase().as_str() {
+            "digest" => AuthType::Digest,
+            "usernametoken" => AuthType::UsernameToken,
+            _ => AuthType::Any,
+        };
         let mut out = Self {
             devicemgmt: soap::client::ClientBuilder::new(&devicemgmt_uri)
                 .credentials(creds.clone())
+                .auth_type(auth_type.clone())
                 .build(),
             imaging: None,
             ptz: None,
@@ -103,6 +118,36 @@ impl Clients {
             media: None,
             media2: None,
             analytics: None,
+        };
+
+        let time_gap = if args.fix_time {
+            let device_time =
+                schema::devicemgmt::get_system_date_and_time(&out.devicemgmt, &Default::default())
+                    .await?
+                    .system_date_and_time;
+
+            if let Some(utc_time) = &device_time.utc_date_time {
+                let pc_time = Utc::now();
+                let date = &utc_time.date;
+                let t = &utc_time.time;
+                let device_time =
+                    NaiveDate::from_ymd_opt(date.year, date.month as _, date.day as _)
+                        .unwrap()
+                        .and_hms_opt(t.hour as _, t.minute as _, t.second as _)
+                        .unwrap()
+                        .and_utc();
+
+                let diff = device_time - pc_time;
+                if diff.num_seconds().abs() > 60 {
+                    out.devicemgmt.set_fix_time_gap(Some(diff));
+                }
+                Some(diff)
+            } else {
+                warn!("GetSystemDateAndTimeResponse doesn't have utc_data_time value!");
+                None
+            }
+        } else {
+            None
         };
         let services =
             schema::devicemgmt::get_services(&out.devicemgmt, &Default::default()).await?;
@@ -117,6 +162,8 @@ impl Clients {
             let svc = Some(
                 soap::client::ClientBuilder::new(&service_url)
                     .credentials(creds.clone())
+                    .auth_type(auth_type.clone())
+                    .fix_time_gap(time_gap)
                     .build(),
             );
             match service.namespace.as_str() {

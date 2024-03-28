@@ -50,6 +50,7 @@ impl ClientBuilder {
                 response_patcher: None,
                 auth_type: AuthType::Any,
                 timeout: ClientBuilder::DEFAULT_TIMEOUT,
+                fix_time_gap: None,
             },
         }
     }
@@ -76,6 +77,11 @@ impl ClientBuilder {
 
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.config.timeout = timeout;
+        self
+    }
+
+    pub fn fix_time_gap(mut self, time_gap: Option<chrono::Duration>) -> Self {
+        self.config.fix_time_gap = time_gap;
         self
     }
 
@@ -121,6 +127,7 @@ struct Config {
     response_patcher: Option<ResponsePatcher>,
     auth_type: AuthType,
     timeout: Duration,
+    fix_time_gap: Option<chrono::Duration>,
 }
 
 #[derive(Clone, Debug)]
@@ -314,6 +321,10 @@ impl Client {
         self.config
             .credentials
             .as_ref()
-            .map(|c| UsernameToken::new(&c.username, &c.password))
+            .map(|c| UsernameToken::new(&c.username, &c.password, self.config.fix_time_gap))
+    }
+
+    pub fn set_fix_time_gap(&mut self, time_gap: Option<chrono::Duration>) {
+        self.config.fix_time_gap = time_gap;
     }
 }
