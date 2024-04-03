@@ -1,5 +1,4 @@
 pub mod probe {
-
     use yaserde_derive::YaSerialize;
 
     #[derive(Default, Eq, PartialEq, Debug, YaSerialize)]
@@ -56,8 +55,22 @@ pub mod probe {
     }
 }
 
-pub mod probe_matches {
+pub mod endpoint_reference {
+    use yaserde_derive::YaDeserialize;
 
+    #[derive(Default, Eq, PartialEq, Debug, YaDeserialize)]
+    #[yaserde(
+        prefix = "wsa",
+        namespace = "wsa: http://schemas.xmlsoap.org/ws/2004/08/addressing"
+    )]
+    pub struct EndpointReference {
+        #[yaserde(prefix = "wsa", rename = "Address")]
+        pub address: String,
+    }
+}
+
+pub mod probe_matches {
+    use crate::endpoint_reference::EndpointReference;
     use percent_encoding::percent_decode_str;
     use url::Url;
     use yaserde_derive::YaDeserialize;
@@ -65,9 +78,13 @@ pub mod probe_matches {
     #[derive(Default, Eq, PartialEq, Debug, YaDeserialize)]
     #[yaserde(
         prefix = "d",
-        namespace = "d: http://schemas.xmlsoap.org/ws/2005/04/discovery"
+        namespace = "d: http://schemas.xmlsoap.org/ws/2005/04/discovery",
+        namespace = "wsa: http://schemas.xmlsoap.org/ws/2004/08/addressing"
     )]
     pub struct ProbeMatch {
+        #[yaserde(prefix = "wsa", rename = "EndpointReference")]
+        pub endpoint_reference: EndpointReference,
+
         #[yaserde(prefix = "d", rename = "Types")]
         pub types: String,
 
@@ -122,7 +139,16 @@ pub mod probe_matches {
 
     impl ProbeMatch {
         pub fn types(&self) -> Vec<&str> {
-            self.types.split_whitespace().collect()
+            self.types
+                .split_whitespace()
+                .map(|t: &str| {
+                    // Remove WSDL prefixes
+                    match t.find(':') {
+                        Some(idx) => t.split_at(idx + 1).1,
+                        None => t,
+                    }
+                })
+                .collect()
         }
 
         pub fn scopes(&self) -> Vec<Url> {
@@ -139,6 +165,10 @@ pub mod probe_matches {
 
         pub fn hardware(&self) -> Option<String> {
             self.find_in_scopes("onvif://www.onvif.org/hardware/")
+        }
+
+        pub fn endpoint_reference_address(&self) -> String {
+            self.endpoint_reference.address.to_string()
         }
 
         pub fn find_in_scopes(&self, prefix: &str) -> Option<String> {
@@ -197,8 +227,10 @@ pub mod probe_matches {
             de.x_addrs(),
             vec![
                 Url::parse("http://192.168.0.100:80/onvif/device_service").unwrap(),
-                Url::parse("http://10.0.0.200:80/onvif/device_service").unwrap()
+                Url::parse("http://10.0.0.200:80/onvif/device_service").unwrap(),
             ]
         );
+
+        assert_eq!(de.types(), vec!["NetworkVideoTransmitter", "Device"]);
     }
 }
