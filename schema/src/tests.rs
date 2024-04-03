@@ -20,6 +20,7 @@ impl transport::Transport for FakeTransport {
 }
 
 #[test]
+#[cfg(feature = "devicemgmt")]
 fn basic_deserialization() {
     let response = r#"
         <?xml version="1.0" encoding="UTF-8"?>
@@ -66,6 +67,7 @@ fn basic_deserialization() {
     assert_eq!(de.utc_date_time.as_ref().unwrap().time.second, 9);
 }
 
+#[cfg(feature = "devicemgmt")]
 #[test]
 fn basic_serialization() {
     let expected = r#"
@@ -327,6 +329,7 @@ fn duration_deserialization() {
 }
 
 #[tokio::test]
+#[cfg(feature = "devicemgmt")]
 async fn operation_get_system_date_and_time() {
     let req: devicemgmt::GetSystemDateAndTime = Default::default();
 
@@ -369,6 +372,7 @@ async fn operation_get_system_date_and_time() {
 }
 
 #[tokio::test]
+#[cfg(feature = "devicemgmt")]
 async fn operation_get_device_information() {
     let req: devicemgmt::GetDeviceInformation = Default::default();
 
@@ -622,32 +626,20 @@ fn extension_inside_extension() {
 }
 
 #[tokio::test]
+#[cfg(feature = "event")]
 async fn operation_pull_messages() {
     let req: event::PullMessages = Default::default();
 
     let transport = FakeTransport {
         response: r#"
-        <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-            <s:Envelope
-            xmlns:sc="http://www.w3.org/2003/05/soap-encoding"
-            xmlns:s="http://www.w3.org/2003/05/soap-envelope"
-            xmlns:tt="http://www.onvif.org/ver10/schema"
-            xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
-            xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
-            xmlns:wsa5="http://www.w3.org/2005/08/addressing"
-            xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
-            xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
-            xmlns:tns1="http://www.onvif.org/ver10/topics">
-            <s:Header>
-                <wsa5:Action>
-                    http://www.onvif.org/ver10/events/wsdl/PullPointSubscription/PullMessagesResponse
-                    </wsa5:Action>
-                <wsa5:To>
-                    http://192.168.88.108/onvif/Subscription?Idx=5
-                    </wsa5:To>
-                </s:Header>
-            <s:Body>
-                <tev:PullMessagesResponse>
+                <tev:PullMessagesResponse
+                    xmlns:tt="http://www.onvif.org/ver10/schema"
+                    xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+                    xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
+                    xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+                    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+                    xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
+                    xmlns:tns1="http://www.onvif.org/ver10/topics">
                     <tev:CurrentTime>
                         2023-09-28T16:01:15Z
                         </tev:CurrentTime>
@@ -683,13 +675,16 @@ async fn operation_pull_messages() {
                             </wsnt:Message>
                         </wsnt:NotificationMessage>
                     </tev:PullMessagesResponse>
-                </s:Body>
-            </s:Envelope>    
         "#
         .into(),
     };
 
-    let resp = event::pull_messages(&transport, &req).await.unwrap();
+    let response = event::pull_messages(&transport, &req).await;
+
+    let resp = match response {
+        Ok(resp) => resp,
+        Err(err) => panic!("Error: {:?}", err),
+    };
 
     assert_eq!(
         resp.notification_message[0].message.msg.source.simple_item[0].name,
@@ -710,46 +705,28 @@ async fn operation_pull_messages() {
 }
 
 #[tokio::test]
+#[cfg(feature = "event")]
 async fn operation_create_pullpoint_subscription() {
     let req: event::CreatePullPointSubscription = Default::default();
 
     let transport = FakeTransport {
         response: r#"
-        <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-        <s:Envelope
-            xmlns:sc="http://www.w3.org/2003/05/soap-encoding"
-            xmlns:s="http://www.w3.org/2003/05/soap-envelope"
-            xmlns:tt="http://www.onvif.org/ver10/schema"
-            xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
-            xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
-            xmlns:wsa5="http://www.w3.org/2005/08/addressing"
-            xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
-            xmlns:wstop="http://docs.oasis-open.org/wsn/t-1"
-            xmlns:tns1="http://www.onvif.org/ver10/topics">
-            <s:Header>
-                <wsa5:Action>
-                    http://www.onvif.org/ver10/events/wsdl/EventPortType/CreatePullPointSubscriptionResponse
-                    </wsa5:Action>
-                <wsa5:To>
-                    http://192.168.88.108/onvif/event_service
-                    </wsa5:To>
-                </s:Header>
-            <s:Body>
-                <tev:CreatePullPointSubscriptionResponse>
-                    <tev:SubscriptionReference>
-                        <wsa5:Address>
-                            http://192.168.88.108/onvif/Subscription?Idx=5
-                            </wsa5:Address>
-                        </tev:SubscriptionReference>
-                    <wsnt:CurrentTime>
-                        2023-09-28T16:01:15Z
-                        </wsnt:CurrentTime>
-                    <wsnt:TerminationTime>
-                        2023-09-28T16:11:15Z
-                        </wsnt:TerminationTime>
-                    </tev:CreatePullPointSubscriptionResponse>
-                </s:Body>
-            </s:Envelope>
+            <tev:CreatePullPointSubscriptionResponse
+                xmlns:tev="http://www.onvif.org/ver10/events/wsdl"
+                xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+                xmlns:wsa5="http://www.w3.org/2005/08/addressing">
+                <tev:SubscriptionReference>
+                    <wsa5:Address>
+                        http://192.168.88.108/onvif/Subscription?Idx=5
+                        </wsa5:Address>
+                    </tev:SubscriptionReference>
+                <wsnt:CurrentTime>
+                    2023-09-28T16:01:15Z
+                    </wsnt:CurrentTime>
+                <wsnt:TerminationTime>
+                    2023-09-28T16:11:15Z
+                    </wsnt:TerminationTime>
+                </tev:CreatePullPointSubscriptionResponse>
         "#
         .into(),
     };
