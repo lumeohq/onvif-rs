@@ -481,7 +481,7 @@ mod tests {
         let our_uuid = "uuid:84ede3de-7dec-11d0-c360-F01234567890";
         let bad_uuid = "uuid:84ede3de-7dec-11d0-c360-F00000000000";
 
-        let input = vec![
+        let input = [
             make_xml(our_uuid, "http://addr_20 http://addr_21 http://addr_22"),
             make_xml(bad_uuid, "http://addr_30 http://addr_31"),
         ];
