@@ -27,6 +27,9 @@ impl Validate for QueryExpressionType {}
 pub struct TopicExpressionType {
     #[yaserde(attribute, rename = "Dialect")]
     pub dialect: String,
+
+    #[yaserde(text)]
+    pub inner_text: String,
 }
 
 impl Validate for TopicExpressionType {}
@@ -36,7 +39,10 @@ impl Validate for TopicExpressionType {}
     prefix = "wsnt",
     namespace = "wsnt: http://docs.oasis-open.org/wsn/b-2"
 )]
-pub struct FilterType {}
+pub struct FilterType {
+    #[yaserde(prefix = "wsnt", rename = "TopicExpression")]
+    pub topic_expression: Option<TopicExpressionType>,
+}
 
 impl Validate for FilterType {}
 
@@ -131,15 +137,54 @@ pub struct NotificationMessageHolderType {
 
 impl Validate for NotificationMessageHolderType {}
 
+#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+pub struct SimpleItemType {
+    // Item name.
+    #[yaserde(attribute, rename = "Name")]
+    pub name: String,
+
+    // Item value. The type is defined in the corresponding description.
+    #[yaserde(attribute, rename = "Value")]
+    pub value: String,
+}
+
 pub mod notification_message_holder_type {
     use super::*;
+
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct DataType {
+        #[yaserde(prefix = "tt", rename = "SimpleItem")]
+        pub simple_item: Vec<SimpleItemType>,
+    }
+
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct SourceType {
+        #[yaserde(prefix = "tt", rename = "SimpleItem")]
+        pub simple_item: Vec<SimpleItemType>,
+    }
+
+    #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
+    #[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
+    pub struct MessageTypeInner {
+        #[yaserde(prefix = "tt", rename = "Source")]
+        pub source: SourceType,
+
+        #[yaserde(prefix = "tt", rename = "Data")]
+        pub data: DataType,
+    }
 
     #[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
     #[yaserde(
         prefix = "wsnt",
         namespace = "wsnt: http://docs.oasis-open.org/wsn/b-2"
     )]
-    pub struct MessageType {}
+    pub struct MessageType {
+        #[yaserde(prefix = "tt", rename = "Message")]
+        pub msg: MessageTypeInner,
+    }
 
     impl Validate for MessageType {}
 }

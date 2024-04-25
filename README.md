@@ -20,7 +20,7 @@ Cargo.toml:
 onvif = { git = "https://github.com/lumeohq/onvif-rs" }
 ```
 
-## Troubleshooting 
+## Troubleshooting
 
 If you have an issue with OpenSSL build under Ubuntu, perform the following actions:
 
@@ -41,6 +41,7 @@ cargo run --example discovery
 ```
 
 To [inspect and control a camera](onvif/examples/camera.rs):
+
 ```shell script
 cargo run --example camera -- help
 
@@ -51,6 +52,12 @@ cargo run --example camera -- set-hostname \
     --uri=http://192.168.0.2:8000 --username=admin --password=qwerty cam2
 
 cargo run --example camera -- get-stream-uris --uri=http://192.168.0.2:8000
+```
+
+To [pull events](onvif/examples/event.rs) from a camera, adjust credentials in event.rs and run:
+
+```shell script
+cargo run --example event
 ```
 
 ## Dependencies
