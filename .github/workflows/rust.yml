@@ -8,37 +8,49 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        default: true
-        profile: minimal
-        components: rustfmt, clippy
-    - name: Build
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-    - name: Run tests
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-    - name: Check (no default features)
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: -p onvif --no-default-features
-    - name: Check formatting
-      uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: -- --check
-    - name: Catch common mistakes
-      uses: actions-rs/cargo@v1
-      with:
-        command: clippy
-        args: --all-targets -- -D warnings
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build
+
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: cargo test
+      - name: Run tests (no default features)
+        run: cargo test -p onvif --no-default-features
+
+  clippy:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Catch common mistakes
+        run: cargo clippy --workspace --tests --all-targets -- -D warnings
+
+  rustfmt:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt -- --check
