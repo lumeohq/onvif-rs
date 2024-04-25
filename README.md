@@ -54,7 +54,7 @@ cargo run --example camera -- set-hostname \
 cargo run --example camera -- get-stream-uris --uri=http://192.168.0.2:8000
 ```
 
-To [pull events](onvif/examples/event.rs) from a camera:
+To [pull events](onvif/examples/event.rs) from a camera, adjust credentials in event.rs and run:
 
 ```shell script
 cargo run --example event

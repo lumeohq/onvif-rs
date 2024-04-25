@@ -1,12 +1,10 @@
 // This example pulls messages related to the RuleEngine topic.
 // RuleEngine topic consists of events related to motion detection.
-// Tested with Dahua camera.
+// Tested on Dahua, uniview, reolink and axis ip cameras.
 // Don't forget to set the camera's IP address, username and password.
 
 use onvif::soap::client::{ClientBuilder, Credentials};
-use schema::event::{
-    self, CreatePullPointSubscription, CreatePullPointSubscriptionResponse, PullMessages,
-};
+use schema::event::{self, CreatePullPointSubscription, PullMessages};
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -41,7 +39,6 @@ async fn main() {
         event_service_url: format!("http://{}/onvif/event_service", camera_ip),
     };
 
-    let camera_sub: CreatePullPointSubscriptionResponse;
     let creds: Credentials = Credentials {
         username: camera.username.to_string(),
         password: camera.password.to_string(),
@@ -61,7 +58,7 @@ async fn main() {
     };
     let create_pull_puint_sub_response =
         event::create_pull_point_subscription(&event_client, &create_pull_sub_request).await;
-    camera_sub = match create_pull_puint_sub_response {
+    let camera_sub = match create_pull_puint_sub_response {
         Ok(sub) => sub,
         Err(e) => {
             println!("Error: {:?}", e);
@@ -97,7 +94,7 @@ async fn main() {
                 continue;
             }
         };
-        if msg.notification_message.len() > 0 {
+        if !msg.notification_message.is_empty() {
             println!("Notification Message: {:?}", msg.notification_message[0]);
         } else {
             println!("No new notification message");
