@@ -214,7 +214,7 @@ impl Client {
             "About to make request. auth_type={:?}, redirections={}", auth_type, redirections
         );
 
-        let soap_msg = soap::soap(message, &username_token)
+        let soap_msg = soap::soap(message, &username_token, &uri)
             .map_err(|e| Error::Protocol(format!("{:?}", e)))?;
 
         let mut request = self
