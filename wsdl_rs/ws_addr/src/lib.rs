@@ -4,6 +4,7 @@ use std::str::FromStr;
 use validate::Validate;
 use xsd_macro_utils::*;
 use yaserde_derive::{YaDeserialize, YaSerialize};
+use xsd_macro_utils::UtilsDefaultSerde;
 
 pub type EndpointReference = EndpointReferenceType;
 
@@ -85,14 +86,11 @@ pub type From = EndpointReferenceType;
 pub type FaultTo = EndpointReferenceType;
 pub type To = AttributedURIType;
 pub type Action = AttributedURIType;
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(
-    prefix = "tns",
-    namespace = "tns: http://www.w3.org/2005/08/addressing"
-)]
-pub struct AttributedURIType {}
 
-impl Validate for AttributedURIType {}
+
+
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct AttributedURIType(pub String);
 
 pub type IsReferenceParameter = bool;
 #[derive(PartialEq, Debug, UtilsUnionSerDe)]
