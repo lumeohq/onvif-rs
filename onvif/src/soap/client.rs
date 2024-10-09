@@ -12,19 +12,8 @@ use std::{
     sync::Arc,
     time::Duration,
 };
+use tracing::{debug, instrument};
 use url::Url;
-
-macro_rules! event {
-    ($lvl:expr, $self:ident, $($arg:tt)+) => {
-        tracing::event!($lvl, "{}: {}", $self.config.uri, format_args!($($arg)+))
-    };
-}
-
-macro_rules! debug {
-    ($($arg:tt)+) => {
-        event!(tracing::Level::DEBUG, $($arg)+)
-    }
-}
 
 #[derive(Clone)]
 pub struct Client {
@@ -162,13 +151,14 @@ enum RequestAuthType {
 
 #[async_trait]
 impl Transport for Client {
+    #[instrument(skip_all, fields(uri = self.config.uri.as_str()))]
     async fn request(&self, message: &str) -> Result<String, Error> {
         match self.config.auth_type {
             AuthType::Any => {
                 match self.request_with_digest(message).await {
                     Ok(success) => Ok(success),
                     Err(Error::Authorization(e)) => {
-                        debug!(self, "Failed to authorize with Digest auth: {}. Trying UsernameToken auth ...", e);
+                        debug!("Failed to authorize with Digest auth: {e}. Trying UsernameToken auth ...");
                         self.request_with_username_token(message).await
                     }
                     Err(e) => Err(e),
@@ -209,13 +199,10 @@ impl Client {
             _ => None,
         };
 
-        debug!(
-            self,
-            "About to make request. auth_type={:?}, redirections={}", auth_type, redirections
-        );
+        debug!(?auth_type, %redirections, "About to make request.");
 
-        let soap_msg = soap::soap(message, &username_token)
-            .map_err(|e| Error::Protocol(format!("{:?}", e)))?;
+        let soap_msg =
+            soap::soap(message, &username_token).map_err(|e| Error::Protocol(format!("{e:?}")))?;
 
         let mut request = self
             .client
@@ -227,10 +214,10 @@ impl Client {
                 .add_headers(request)
                 .map_err(|e| Error::Authorization(e.to_string()))?;
 
-            debug!(self, "Digest headers added");
+            debug!("Digest headers added");
         }
 
-        debug!(self, "Request body: {}", soap_msg);
+        debug!("Request body: {soap_msg}");
 
         let response = request.body(soap_msg).send().await.map_err(|e| match e {
             e if e.is_connect() => Error::Connection(e.to_string()),
@@ -242,7 +229,7 @@ impl Client {
 
         let status = response.status();
 
-        debug!(self, "Response status: {}", status);
+        debug!("Response status: {status}");
 
         if status.is_success() {
             response
@@ -250,16 +237,16 @@ impl Client {
                 .await
                 .map_err(|e| Error::Protocol(e.to_string()))
                 .and_then(|text| {
-                    debug!(self, "Response body: {}", text);
+                    debug!("Response body: {text}");
                     let response =
-                        soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{:?}", e)))?;
+                        soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{e:?}")))?;
                     if let Some(response_patcher) = &self.config.response_patcher {
                         match response_patcher(&response) {
                             Ok(patched) => {
-                                debug!(self, "Response (SOAP unwrapped, patched): {}", patched);
+                                debug!("Response (SOAP unwrapped, patched): {patched}");
                                 Ok(patched)
                             }
-                            Err(e) => Err(Error::Protocol(format!("Patching failed: {}", e))),
+                            Err(e) => Err(Error::Protocol(format!("Patching failed: {e}"))),
                         }
                     } else {
                         Ok(response)
@@ -272,7 +259,7 @@ impl Client {
                 }
                 _ => {
                     if let Ok(text) = response.text().await {
-                        debug!(self, "Got Unauthorized with body: {}", text);
+                        debug!("Got Unauthorized with body: {text}");
                     }
 
                     return Err(Error::Authorization("Unauthorized".to_string()));
@@ -291,13 +278,13 @@ impl Client {
 
             let new_url = Client::get_redirect_location(&response)?;
 
-            debug!(self, "Redirecting to {} ...", new_url);
+            debug!("Redirecting to {new_url} ...");
 
             self.request_recursive(message, &new_url, auth_type, redirections + 1)
                 .await
         } else {
             if let Ok(text) = response.text().await {
-                debug!(self, "Got HTTP error with body: {}", text);
+                debug!("Got HTTP error with body: {text}");
                 if let Err(soap::Error::Fault(f)) = soap::unsoap(&text) {
                     if f.is_unauthorized() {
                         return Err(Error::Authorization("Unauthorized".to_string()));
