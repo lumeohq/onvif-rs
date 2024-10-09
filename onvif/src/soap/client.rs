@@ -12,7 +12,7 @@ use std::{
     sync::Arc,
     time::Duration,
 };
-use tracing::{debug, instrument};
+use tracing::{debug, instrument, trace};
 use url::Url;
 
 #[derive(Clone)]
@@ -217,7 +217,7 @@ impl Client {
             debug!("Digest headers added");
         }
 
-        debug!("Request body: {soap_msg}");
+        trace!("Request body: {soap_msg}");
 
         let response = request.body(soap_msg).send().await.map_err(|e| match e {
             e if e.is_connect() => Error::Connection(e.to_string()),
@@ -237,13 +237,13 @@ impl Client {
                 .await
                 .map_err(|e| Error::Protocol(e.to_string()))
                 .and_then(|text| {
-                    debug!("Response body: {text}");
+                    trace!("Response body: {text}");
                     let response =
                         soap::unsoap(&text).map_err(|e| Error::Protocol(format!("{e:?}")))?;
                     if let Some(response_patcher) = &self.config.response_patcher {
                         match response_patcher(&response) {
                             Ok(patched) => {
-                                debug!("Response (SOAP unwrapped, patched): {patched}");
+                                trace!("Response (SOAP unwrapped, patched): {patched}");
                                 Ok(patched)
                             }
                             Err(e) => Err(Error::Protocol(format!("Patching failed: {e}"))),
@@ -259,7 +259,7 @@ impl Client {
                 }
                 _ => {
                     if let Ok(text) = response.text().await {
-                        debug!("Got Unauthorized with body: {text}");
+                        trace!("Got Unauthorized with body: {text}");
                     }
 
                     return Err(Error::Authorization("Unauthorized".to_string()));
@@ -284,7 +284,7 @@ impl Client {
                 .await
         } else {
             if let Ok(text) = response.text().await {
-                debug!("Got HTTP error with body: {text}");
+                trace!("Got HTTP error with body: {text}");
                 if let Err(soap::Error::Fault(f)) = soap::unsoap(&text) {
                     if f.is_unauthorized() {
                         return Err(Error::Authorization("Unauthorized".to_string()));
