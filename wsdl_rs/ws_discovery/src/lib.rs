@@ -188,8 +188,7 @@ pub mod probe_matches {
 
     #[test]
     fn probe_match() {
-        let ser = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+        let ser = r#"<?xml version="1.0" encoding="utf-8"?>
         <wsd:ProbeMatch xmlns:wsd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
                         xmlns:dn="http://www.onvif.org/ver10/network/wsdl"
                         xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
