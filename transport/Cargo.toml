@@ -5,6 +5,6 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-async-trait = "0.1.42"
-thiserror = "1.0.23"
-yaserde = "0.7.1"
+async-trait = "0.1"
+thiserror = "1"
+yaserde = "0.7"

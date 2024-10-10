@@ -5,8 +5,8 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-percent-encoding = "2.1.0"
-url = "2.2.1"
-xml-rs = "=0.8.3"
-yaserde = "0.7.1"
-yaserde_derive = "0.7.1"
+percent-encoding = "2"
+url = "2"
+xml-rs = "0.8"
+yaserde = "0.7"
+yaserde_derive = "0.7"

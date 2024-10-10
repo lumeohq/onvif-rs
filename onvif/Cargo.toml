@@ -9,36 +9,36 @@ license = "MIT"
 tls = ["reqwest/native-tls"]
 
 [dependencies]
-async-recursion = "0.3.1"
-async-trait = "0.1.41"
-base64 = "0.13.0"
-bigdecimal = "0.3.0"
-chrono = "0.4.19"
-digest_auth = "0.3.0"
-futures = "0.3.30"
-futures-core = "0.3.8"
-futures-util = "0.3.30"
-num-bigint = "0.4.2"
-reqwest = { version = "0.12.3", default-features = false }
+async-recursion = "0.3"
+async-trait = "0.1"
+base64 = "0.13"
+bigdecimal = "0.3"
+chrono = "0.4"
+digest_auth = "0.3"
+futures = "0.3"
+futures-core = "0.3"
+futures-util = "0.3"
+num-bigint = "0.4"
+reqwest = { version = "0.12", default-features = false }
 schema = { version = "0.1.0", path = "../schema", default-features = false, features = ["analytics", "devicemgmt", "event", "media", "ptz"] }
-sha1 = "0.6.0"
+sha1 = "0.6"
 thiserror = "1.0"
 tokio = { version = "1", default-features = false, features = ["net", "sync", "time"] }
 tokio-stream = "0.1"
-tracing = "0.1.26"
-url = "2.2.0"
-uuid = { version = "0.8.1", features = ["v4"] }
-xml-rs = "=0.8.3"
-xmltree = "0.10.2"
+tracing = "0.1"
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+xml-rs = "0.8"
+xmltree = "0.10"
 xsd-macro-utils = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
 xsd-types = { git = "https://github.com/lumeohq/xsd-parser-rs", rev = "7f3d433" }
-yaserde = "0.7.1"
-yaserde_derive = "0.7.1"
+yaserde = "0.7"
+yaserde_derive = "0.7"
 
 [dev-dependencies]
-dotenv = "0.15.0"
-futures-util = "0.3.8"
-structopt = "0.3.21"
-tokio = { version = "1.0.1", features = ["full"] }
-tracing-subscriber = "0.2.20"
+dotenv = "0.15"
+futures-util = "0.3"
+structopt = "0.3"
+tokio = { version = "1", features = ["full"] }
+tracing-subscriber = "0.2"
 b_2 = { path = "../wsdl_rs/b_2" }
