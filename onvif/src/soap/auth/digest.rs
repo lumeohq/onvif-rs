@@ -1,6 +1,8 @@
 use crate::soap::client::Credentials;
+use nonzero_ext::nonzero;
 use reqwest::{RequestBuilder, Response};
 use std::fmt::{Debug, Formatter};
+use std::num::NonZeroU8;
 use thiserror::Error;
 use url::Url;
 
@@ -22,8 +24,10 @@ pub struct Digest {
 
 enum State {
     Default,
-    Got401(reqwest::Response),
-    Got401Twice,
+    Got401 {
+        response: Response,
+        count: NonZeroU8,
+    },
 }
 
 impl Digest {
@@ -37,29 +41,55 @@ impl Digest {
 }
 
 impl Digest {
+    /// Call this when the authentication was successful.
+    pub fn set_success(&mut self) {
+        if let State::Got401 { count, .. } = &mut self.state {
+            // We always store at least one request, so it's never zero.
+            *count = nonzero!(1_u8);
+        }
+    }
+
+    /// Call this when received 401 Unauthorized.
     pub fn set_401(&mut self, response: Response) {
-        match self.state {
-            State::Default => self.state = State::Got401(response),
-            State::Got401(_) => self.state = State::Got401Twice,
-            State::Got401Twice => {}
+        self.state = match self.state {
+            State::Default => State::Got401 {
+                response,
+                count: nonzero!(1_u8),
+            },
+            State::Got401 { count, .. } => State::Got401 {
+                response,
+                count: count.saturating_add(1),
+            },
         }
     }
 
     pub fn is_failed(&self) -> bool {
-        matches!(self.state, State::Got401Twice)
+        match &self.state {
+            State::Default => false,
+            // Possible scenarios:
+            // - We've got 401 with a challenge for the first time, we calculate the answer, then
+            //   we get 200 OK. So, a single 401 is never a failure.
+            // - After successful auth the count is 1 because we always store at least one request,
+            //   and the caller decided to reuse the same challenge for multiple requests. But at
+            //   some point, we'll get a 401 with a new challenge and `stale=true`.
+            //   So, we'll get a second 401, and this is also not a failure because after
+            //   calculating the answer to the challenge, we'll get a 200 OK, and will reset the
+            //   counter in `set_success()`.
+            // - Three 401's in a row is certainly a failure.
+            State::Got401 { count, .. } => count.get() >= 3,
+        }
     }
 
     pub fn add_headers(&self, mut request: RequestBuilder) -> Result<RequestBuilder, Error> {
         match &self.state {
             State::Default => Ok(request),
-            State::Got401(response) => {
+            State::Got401 { response, .. } => {
                 let creds = self.creds.as_ref().ok_or(Error::NoCredentials)?;
 
                 request = request.header("Authorization", digest_auth(response, creds, &self.uri)?);
 
                 Ok(request)
             }
-            State::Got401Twice => Err(Error::InvalidState),
         }
     }
 }
@@ -94,10 +124,11 @@ impl Debug for Digest {
 
 impl Debug for State {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            State::Default => "FirstRequest",
-            State::Got401(_) => "Got401",
-            State::Got401Twice => "Got401Twice",
-        })
+        match self {
+            State::Default => write!(f, "FirstRequest")?,
+            State::Got401 { count, .. } => write!(f, "Got401({count})")?,
+        };
+
+        Ok(())
     }
 }

@@ -19,6 +19,7 @@ futures = "0.3"
 futures-core = "0.3"
 futures-util = "0.3"
 num-bigint = "0.4"
+nonzero_ext = "0.3"
 reqwest = { version = "0.12", default-features = false }
 schema = { version = "0.1.0", path = "../schema", default-features = false, features = ["analytics", "devicemgmt", "event", "media", "ptz"] }
 sha1 = "0.6"

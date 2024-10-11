@@ -6,7 +6,9 @@ use crate::soap::{
 };
 use async_recursion::async_recursion;
 use async_trait::async_trait;
+use futures_util::lock::Mutex;
 use schema::transport::{Error, Transport};
+use std::ops::DerefMut;
 use std::{
     fmt::{Debug, Formatter},
     sync::Arc,
@@ -19,6 +21,7 @@ use url::Url;
 pub struct Client {
     client: reqwest::Client,
     config: Config,
+    digest_auth_state: Arc<Mutex<Digest>>,
 }
 
 #[derive(Clone)]
@@ -84,9 +87,12 @@ impl ClientBuilder {
                 .unwrap()
         };
 
+        let digest = Digest::new(&self.config.uri, &self.config.credentials);
+
         Client {
             client,
             config: self.config,
+            digest_auth_state: Arc::new(Mutex::new(digest)),
         }
     }
 
@@ -144,8 +150,8 @@ impl Debug for Credentials {
 pub type ResponsePatcher = Arc<dyn Fn(&str) -> Result<String, String> + Send + Sync>;
 
 #[derive(Debug)]
-enum RequestAuthType {
-    Digest(Digest),
+enum RequestAuthType<'a> {
+    Digest(&'a mut Digest),
     UsernameToken,
 }
 
@@ -172,8 +178,8 @@ impl Transport for Client {
 
 impl Client {
     async fn request_with_digest(&self, message: &str) -> Result<String, Error> {
-        let mut auth_type =
-            RequestAuthType::Digest(Digest::new(&self.config.uri, &self.config.credentials));
+        let mut guard = self.digest_auth_state.lock().await;
+        let mut auth_type = RequestAuthType::Digest(guard.deref_mut());
 
         self.request_recursive(message, &self.config.uri, &mut auth_type, 0)
             .await
@@ -232,6 +238,10 @@ impl Client {
         debug!("Response status: {status}");
 
         if status.is_success() {
+            if let RequestAuthType::Digest(digest) = auth_type {
+                digest.set_success();
+            }
+
             response
                 .text()
                 .await
