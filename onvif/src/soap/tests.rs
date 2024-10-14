@@ -11,8 +11,7 @@ fn test_soap() {
         </my:Book>
         "#;
 
-    let expected = r#"
-        <?xml version="1.0" encoding="UTF-8"?>
+    let expected = r#"<?xml version="1.0" encoding="UTF-8"?>
         <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
                     xmlns:my="http://www.example.my/schema">
             <s:Body>
@@ -44,8 +43,7 @@ fn test_unsoap() {
         pub pages: i32,
     }
 
-    let input = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let input = r#"<?xml version="1.0" encoding="utf-8"?>
         <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
                     xmlns:my="http://www.example.my/schema">
             <s:Body>
@@ -69,8 +67,7 @@ fn test_unsoap() {
 
 #[test]
 fn test_get_fault() {
-    let response = r#"
-        <?xml version="1.0" ?>
+    let response = r#"<?xml version="1.0" ?>
         <soapenv:Fault
             xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
             xmlns:ter="http://www.onvif.org/ver10/error"

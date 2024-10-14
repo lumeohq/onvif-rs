@@ -22,8 +22,7 @@ impl transport::Transport for FakeTransport {
 #[test]
 #[cfg(feature = "devicemgmt")]
 fn basic_deserialization() {
-    let response = r#"
-        <?xml version="1.0" encoding="UTF-8"?>
+    let response = r#"<?xml version="1.0" encoding="utf-8"?>
         <tds:GetSystemDateAndTimeResponse
             xmlns:tt="http://www.onvif.org/ver10/schema"
             xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
@@ -70,8 +69,7 @@ fn basic_deserialization() {
 #[cfg(feature = "devicemgmt")]
 #[test]
 fn basic_serialization() {
-    let expected = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <tds:GetSystemDateAndTime xmlns:tds="http://www.onvif.org/ver10/device/wsdl" />
         "#;
 
@@ -126,8 +124,7 @@ fn extend_base_serialization() {
         ..Default::default()
     };
 
-    let expected = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <tt:VideoSourceConfiguration xmlns:tt="http://www.onvif.org/ver10/schema" token="123abc">
             <tt:SourceToken>456cde</tt:SourceToken>
             <tt:Bounds x="1" y="2" width="3" height="4" />
@@ -256,8 +253,7 @@ fn choice_serialization() {
         ]),
     };
 
-    let expected = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <tt:ColorOptions xmlns:tt="http://www.onvif.org/ver10/schema">
             <ColorspaceRange>
                 <tt:X><tt:Min>0.1</tt:Min><tt:Max>0.11</tt:Max></tt:X>
@@ -294,8 +290,7 @@ fn duration_serialization() {
         },
     };
 
-    let expected = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <tt:MediaUri xmlns:tt="http://www.onvif.org/ver10/schema">
             <tt:Uri>http://a/b/c</tt:Uri>
             <tt:InvalidAfterConnect>false</tt:InvalidAfterConnect>
@@ -399,8 +394,7 @@ async fn operation_get_device_information() {
 
 #[test]
 fn probe_serialization() {
-    let expected = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <s:Envelope
                 xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery"
                 xmlns:s="http://www.w3.org/2003/05/soap-envelope"
@@ -439,8 +433,7 @@ fn probe_match_deserialization() {
     // Following XML was taken from ONVIF guide
     // https://www.onvif.org/wp-content/uploads/2016/12/ONVIF_WG-APG-Application_Programmers_Guide-1.pdf
 
-    let ser = r#"
-        <?xml version="1.0" encoding="UTF-8"?>
+    let ser = r#"<?xml version="1.0" encoding="utf-8"?>
         <SOAP-ENV:Envelope
                     xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
                     xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
@@ -510,8 +503,7 @@ fn string_list_serialization() {
         ])),
     };
 
-    let expected = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <tt:FocusOptions20Extension xmlns:tt="http://www.onvif.org/ver10/schema">
             <tt:AFModes>Auto Manual</tt:AFModes>
         </tt:FocusOptions20Extension>
@@ -545,8 +537,7 @@ fn string_list_deserialization() {
 fn float_list_serialization() {
     let model = tt::FloatAttrList(vec![1.0, 2.3, 3.99]);
 
-    let expected = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <FloatAttrList>1 2.3 3.99</FloatAttrList>
         "#;
 
@@ -557,8 +548,7 @@ fn float_list_serialization() {
 
 #[test]
 fn float_list_deserialization() {
-    let ser = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let ser = r#"<?xml version="1.0" encoding="utf-8"?>
         <FloatAttrList>1 2.3 3.99</FloatAttrList>
         "#;
 
@@ -570,8 +560,7 @@ fn float_list_deserialization() {
 #[test]
 fn nested_structs_with_same_named_attributes() {
     // https://github.com/media-io/yaserde/issues/12#issuecomment-601235031
-    let ser = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let ser = r#"<?xml version="1.0" encoding="utf-8"?>
         <tt:Profile token="a" xmlns:tt="http://www.onvif.org/ver10/schema">
             <tt:PTZConfiguration token="b" />
         </tt:Profile>
@@ -587,8 +576,7 @@ fn nested_structs_with_same_named_attributes() {
 fn nested_structs_with_same_named_fields() {
     // There was an issue in yaserde which is now fixed
     // https://github.com/media-io/yaserde/issues/51
-    let ser = r#"
-        <?xml version="1.0" encoding="utf-8"?>
+    let ser = r#"<?xml version="1.0" encoding="utf-8"?>
         <tt:Profile xmlns:tt="http://www.onvif.org/ver10/schema">
             <tt:Extension />
         </tt:Profile>
@@ -610,8 +598,7 @@ fn extension_inside_extension() {
     // https://github.com/media-io/yaserde/issues/76
     // If field `extension` in `SecurityCapabilitiesExtension` is uncommented accidentally
     // then this test will fail. Also note that there's a bunch of such cases in `onvif.rs`.
-    let ser = r#"
-    <?xml version="1.0" encoding="utf-8"?>
+    let ser = r#"<?xml version="1.0" encoding="utf-8"?>
     <tt:SecurityCapabilities xmlns:tt="http://www.onvif.org/ver10/schema">
         <tt:Extension>
             <tt:TLS1.0>false</tt:TLS1.0>
