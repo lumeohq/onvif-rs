@@ -219,7 +219,7 @@ impl Client {
         debug!(?auth_type, %redirections, "About to make request.");
 
         let soap_msg =
-            soap::soap(message, &username_token).map_err(|e| Error::Protocol(format!("{e:?}")))?;
+            soap::soap(message, &username_token, &uri).map_err(|e| Error::Protocol(format!("{e:?}")))?;
 
         let mut request = self
             .client
