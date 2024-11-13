@@ -41,6 +41,7 @@ impl ClientBuilder {
                 credentials: None,
                 response_patcher: None,
                 auth_type: AuthType::Any,
+                reuse_digest_auth_headers: false,
                 timeout: ClientBuilder::DEFAULT_TIMEOUT,
                 fix_time_gap: None,
             },
@@ -67,6 +68,11 @@ impl ClientBuilder {
         self
     }
 
+    pub fn reuse_digest_auth_headers(mut self, reuse_digest_auth_headers: bool) -> Self {
+        self.config.reuse_digest_auth_headers = reuse_digest_auth_headers;
+        self
+    }
+
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.config.timeout = timeout;
         self
@@ -87,7 +93,11 @@ impl ClientBuilder {
                 .unwrap()
         };
 
-        let digest = Digest::new(&self.config.uri, &self.config.credentials);
+        let digest = Digest::new(
+            &self.config.uri,
+            &self.config.credentials,
+            self.config.reuse_digest_auth_headers,
+        );
 
         Client {
             client,
@@ -121,6 +131,7 @@ struct Config {
     credentials: Option<Credentials>,
     response_patcher: Option<ResponsePatcher>,
     auth_type: AuthType,
+    reuse_digest_auth_headers: bool,
     timeout: Duration,
     fix_time_gap: Option<chrono::Duration>,
 }
