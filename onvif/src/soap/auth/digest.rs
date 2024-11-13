@@ -20,6 +20,7 @@ pub struct Digest {
     creds: Option<Credentials>,
     uri: Url,
     state: State,
+    reuse_headers: bool,
 }
 
 enum State {
@@ -31,11 +32,12 @@ enum State {
 }
 
 impl Digest {
-    pub fn new(uri: &Url, creds: &Option<Credentials>) -> Self {
+    pub fn new(uri: &Url, creds: &Option<Credentials>, reuse_headers: bool) -> Self {
         Self {
             creds: creds.clone(),
             uri: uri.clone(),
             state: State::Default,
+            reuse_headers,
         }
     }
 }
@@ -43,6 +45,12 @@ impl Digest {
 impl Digest {
     /// Call this when the authentication was successful.
     pub fn set_success(&mut self) {
+        if !self.reuse_headers {
+            // Since we don't need to preserve the headers, reset all the state to default.
+            *self = Self::new(&self.uri, &self.creds, self.reuse_headers);
+            return;
+        }
+
         if let State::Got401 { count, .. } = &mut self.state {
             // We always store at least one request, so it's never zero.
             *count = nonzero!(1_u8);
