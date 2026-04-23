@@ -1,3 +1,4 @@
+#![expect(non_local_definitions)]
 pub mod probe {
     use yaserde_derive::YaSerialize;
 
