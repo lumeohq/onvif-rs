@@ -1,4 +1,5 @@
 use base64::Engine;
+use sha1::Digest;
 
 #[derive(Default, Debug, Clone)]
 pub struct UsernameToken {
@@ -35,7 +36,7 @@ impl UsernameToken {
         let digest = {
             let mut hasher = sha1::Sha1::new();
             hasher.update(&concat);
-            hasher.digest().bytes()
+            hasher.finalize()
         };
 
         UsernameToken {
@@ -84,7 +85,7 @@ fn ws_username_token_example() {
     let digest = {
         let mut hasher = sha1::Sha1::new();
         hasher.update(&concat);
-        hasher.digest().bytes()
+        hasher.finalize()
     };
 
     assert_eq!(

@@ -22,7 +22,7 @@ num-bigint = "0.4"
 nonzero_ext = "0.3"
 reqwest = { version = "0.13", default-features = false }
 schema = { version = "0.1.0", path = "../schema", default-features = false, features = ["analytics", "devicemgmt", "event", "media", "ptz"] }
-sha1 = "0.6"
+sha1 = "0.11"
 thiserror = "2"
 tokio = { version = "1", default-features = false, features = ["net", "sync", "time"] }
 tokio-stream = "0.1"
