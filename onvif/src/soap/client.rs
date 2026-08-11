@@ -280,7 +280,7 @@ impl Client {
                 }
                 _ => {
                     if let Ok(text) = response.text().await {
-                        trace!("Got Unauthorized with body: {text}");
+                        debug!("Got Unauthorized with body: {text}");
                     }
 
                     return Err(Error::Authorization("Unauthorized".to_string()));
@@ -305,7 +305,7 @@ impl Client {
                 .await
         } else {
             if let Ok(text) = response.text().await {
-                trace!("Got HTTP error with body: {text}");
+                debug!("Got HTTP error with body: {text}");
                 if let Err(soap::Error::Fault(f)) = soap::unsoap(&text) {
                     if f.is_unauthorized() {
                         return Err(Error::Authorization("Unauthorized".to_string()));
