@@ -32,6 +32,7 @@ fn test_soap() {
 }
 
 #[test]
+#[expect(non_local_definitions)]
 fn test_unsoap() {
     #[derive(Default, Eq, PartialEq, Debug, YaDeserialize)]
     #[yaserde(prefix = "my", namespace = "my: http://www.example.my/schema")]

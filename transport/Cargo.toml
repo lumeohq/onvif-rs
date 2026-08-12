@@ -6,5 +6,5 @@ license = "MIT"
 
 [dependencies]
 async-trait = "0.1"
-thiserror = "1"
+thiserror = "2"
 yaserde = "0.7"

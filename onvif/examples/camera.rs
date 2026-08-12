@@ -199,7 +199,7 @@ async fn get_capabilities(clients: &Clients) {
 async fn get_device_information(clients: &Clients) -> Result<(), transport::Error> {
     println!(
         "{:#?}",
-        &schema::devicemgmt::get_device_information(&clients.devicemgmt, &Default::default())
+        schema::devicemgmt::get_device_information(&clients.devicemgmt, &Default::default())
             .await?
     );
     Ok(())
@@ -291,8 +291,8 @@ async fn get_stream_uris(clients: &Clients) -> Result<(), transport::Error> {
     )
     .await?;
     for (p, resp) in profiles.profiles.iter().zip(responses.iter()) {
-        println!("token={} name={}", &p.token.0, &p.name.0);
-        println!("    {}", &resp.media_uri.uri);
+        println!("token={} name={}", p.token.0, p.name.0);
+        println!("    {}", resp.media_uri.uri);
         if let Some(ref v) = p.video_encoder_configuration {
             println!(
                 "    {:?}, {}x{}",
@@ -334,8 +334,8 @@ async fn get_snapshot_uris(clients: &Clients) -> Result<(), transport::Error> {
     )
     .await?;
     for (p, resp) in profiles.profiles.iter().zip(responses.iter()) {
-        println!("token={} name={}", &p.token.0, &p.name.0);
-        println!("    snapshot_uri={}", &resp.media_uri.uri);
+        println!("token={} name={}", p.token.0, p.name.0);
+        println!("    snapshot_uri={}", resp.media_uri.uri);
     }
     Ok(())
 }
@@ -375,12 +375,9 @@ async fn enable_analytics(clients: &Clients) -> Result<(), transport::Error> {
     }
     let mut c = config.configurations.pop().unwrap();
     let token_str = c.token.0.clone();
-    println!("{:#?}", &c);
+    println!("{:#?}", c);
     if c.analytics != Some(true) || c.events.is_none() {
-        println!(
-            "Enabling analytics in metadata configuration {}",
-            &token_str
-        );
+        println!("Enabling analytics in metadata configuration {token_str}");
         c.analytics = Some(true);
         c.events = Some(schema::onvif::EventSubscription {
             filter: None,
@@ -395,10 +392,7 @@ async fn enable_analytics(clients: &Clients) -> Result<(), transport::Error> {
         )
         .await?;
     } else {
-        println!(
-            "Analytics already enabled in metadata configuration {}",
-            &token_str
-        );
+        println!("Analytics already enabled in metadata configuration {token_str}");
     }
 
     let profiles = schema::media::get_profiles(media_client, &Default::default()).await?;
@@ -445,7 +439,7 @@ async fn get_analytics(clients: &Clients) -> Result<(), transport::Error> {
         schema::media::get_video_analytics_configurations(media_client, &Default::default())
             .await?;
 
-    println!("{:#?}", &config);
+    println!("{config:#?}");
     let c = match config.configurations.first() {
         Some(c) => c,
         None => return Ok(()),
@@ -458,7 +452,7 @@ async fn get_analytics(clients: &Clients) -> Result<(), transport::Error> {
             },
         )
         .await?;
-        println!("{:#?}", &mods);
+        println!("{mods:#?}");
     }
 
     Ok(())

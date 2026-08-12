@@ -1,3 +1,6 @@
+use base64::Engine;
+use sha1::Digest;
+
 #[derive(Default, Debug, Clone)]
 pub struct UsernameToken {
     pub username: String,
@@ -33,13 +36,13 @@ impl UsernameToken {
         let digest = {
             let mut hasher = sha1::Sha1::new();
             hasher.update(&concat);
-            hasher.digest().bytes()
+            hasher.finalize()
         };
 
         UsernameToken {
             username: username.to_string(),
-            nonce: base64::encode(nonce),
-            digest: base64::encode(digest),
+            nonce: base64::engine::general_purpose::STANDARD.encode(nonce),
+            digest: base64::engine::general_purpose::STANDARD.encode(digest),
             created,
         }
     }
@@ -67,7 +70,9 @@ fn ws_username_token_example() {
     // Example from App guide (6.1.1.3 ONVIF::AuthenticatingByWS-UsernameToken)
     // https://www.onvif.org/wp-content/uploads/2016/12/ONVIF_WG-APG-Application_Programmers_Guide-1.pdf
 
-    let nonce = base64::decode("LKqI6G/AikKCQrN0zqZFlg==").unwrap();
+    let nonce = base64::engine::general_purpose::STANDARD
+        .decode("LKqI6G/AikKCQrN0zqZFlg==")
+        .unwrap();
     let date = "2010-09-16T07:50:45Z";
     let password = "userpassword";
 
@@ -80,11 +85,11 @@ fn ws_username_token_example() {
     let digest = {
         let mut hasher = sha1::Sha1::new();
         hasher.update(&concat);
-        hasher.digest().bytes()
+        hasher.finalize()
     };
 
     assert_eq!(
-        base64::encode(digest),
+        base64::engine::general_purpose::STANDARD.encode(digest),
         "tuOSpGlFlIXsozq4HFNeeGeFLEI=".to_string()
     )
 }

@@ -1,3 +1,4 @@
+#![expect(non_local_definitions)]
 use onvif as tt;
 use validate::Validate;
 use yaserde_derive::{YaDeserialize, YaSerialize};
