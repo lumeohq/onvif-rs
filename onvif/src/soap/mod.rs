@@ -6,6 +6,7 @@ mod tests;
 use auth::username_token::UsernameToken;
 use schema::soap_envelope;
 use xmltree::{Element, Namespace, XMLNode};
+use url::Url;
 
 const SOAP_URI: &str = "http://www.w3.org/2003/05/soap-envelope";
 
@@ -24,11 +25,12 @@ pub struct Response {
     pub response: Option<String>,
 }
 
-pub fn soap(xml: &str, username_token: &Option<UsernameToken>) -> Result<String, Error> {
+pub fn soap(xml: &str, username_token: &Option<UsernameToken>, uri: &Url) -> Result<String, Error> {
     let app_data = parse(xml)?;
 
     let mut namespaces = app_data.namespaces.clone().unwrap_or_else(Namespace::empty);
     namespaces.put("s", SOAP_URI);
+    namespaces.put("a", "http://www.w3.org/2005/08/addressing");
 
     let mut body = Element::new("Body");
     body.prefix = Some("s".to_string());
@@ -44,6 +46,10 @@ pub fn soap(xml: &str, username_token: &Option<UsernameToken>) -> Result<String,
         header
             .children
             .push(XMLNode::Element(parse(&username_token.to_xml())?));
+        let mut to_el = Element::new("To");
+        to_el.prefix = Some("a".to_string());
+        to_el.children.push(XMLNode::Text(uri.as_str().to_owned()));
+        header.children.push(XMLNode::Element(to_el));
         envelope.children.push(XMLNode::Element(header));
     }
 
