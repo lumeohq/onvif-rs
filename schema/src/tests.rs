@@ -800,3 +800,94 @@ async fn operation_create_pullpoint_subscription() {
         "http://192.168.88.108/onvif/Subscription?Idx=5"
     );
 }
+
+#[test]
+fn osd_configuration_deserialization() {
+    let ser = r#"
+        <tt:OSD token="OSD_1" xmlns:tt="http://www.onvif.org/ver10/schema">
+            <tt:VideoSourceConfigurationToken>V_SRC_CFG_000</tt:VideoSourceConfigurationToken>
+            <tt:Type>Text</tt:Type>
+            <tt:Position><tt:Type>UpperLeft</tt:Type></tt:Position>
+            <tt:TextString>
+                <tt:Type>DateAndTime</tt:Type>
+                <tt:DateFormat>yyyy-MM-dd</tt:DateFormat>
+                <tt:TimeFormat>HH:mm:ss</tt:TimeFormat>
+            </tt:TextString>
+        </tt:OSD>
+        "#;
+
+    let de: tt::Osdconfiguration = yaserde::de::from_str(ser).unwrap();
+
+    assert_eq!(de.token, common::ReferenceToken("OSD_1".to_string()));
+    assert_eq!(
+        de.video_source_configuration_token,
+        tt::Osdreference("V_SRC_CFG_000".to_string())
+    );
+    assert_eq!(de._type, tt::Osdtype::Text);
+    assert_eq!(de.text_string.unwrap()._type, "DateAndTime");
+}
+
+#[test]
+fn osd_configuration_serialization() {
+    let model = tt::Osdconfiguration {
+        token: common::ReferenceToken("OSD_1".to_string()),
+        video_source_configuration_token: tt::Osdreference("V_SRC_CFG_000".to_string()),
+        _type: tt::Osdtype::Text,
+        position: tt::OsdposConfiguration {
+            _type: "UpperLeft".to_string(),
+            ..Default::default()
+        },
+        text_string: Some(tt::OsdtextConfiguration {
+            _type: "DateAndTime".to_string(),
+            date_format: Some("yyyy-MM-dd".to_string()),
+            time_format: Some("HH:mm:ss".to_string()),
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+
+    let expected = r#"<?xml version="1.0" encoding="utf-8"?>
+        <tt:Osdconfiguration xmlns:tt="http://www.onvif.org/ver10/schema" token="OSD_1">
+            <tt:VideoSourceConfigurationToken>V_SRC_CFG_000</tt:VideoSourceConfigurationToken>
+            <tt:Type>Text</tt:Type>
+            <tt:Position><tt:Type>UpperLeft</tt:Type></tt:Position>
+            <tt:TextString>
+                <tt:Type>DateAndTime</tt:Type>
+                <tt:DateFormat>yyyy-MM-dd</tt:DateFormat>
+                <tt:TimeFormat>HH:mm:ss</tt:TimeFormat>
+            </tt:TextString>
+        </tt:Osdconfiguration>
+        "#;
+
+    let actual = yaserde::ser::to_string(&model).unwrap();
+
+    println!("actual: {}", actual);
+    println!("expected: {}", expected);
+
+    assert_xml_eq(actual.as_str(), expected);
+}
+
+#[test]
+#[cfg(feature = "media")]
+fn get_osds_response_deserialization() {
+    let ser = r#"
+        <trt:GetOSDsResponse
+            xmlns:trt="http://www.onvif.org/ver10/media/wsdl"
+            xmlns:tt="http://www.onvif.org/ver10/schema">
+            <trt:OSDs token="OSD_1">
+                <tt:VideoSourceConfigurationToken>V_SRC_CFG_000</tt:VideoSourceConfigurationToken>
+                <tt:Type>Text</tt:Type>
+                <tt:Position><tt:Type>UpperLeft</tt:Type></tt:Position>
+                <tt:TextString><tt:Type>DateAndTime</tt:Type></tt:TextString>
+            </trt:OSDs>
+        </trt:GetOSDsResponse>
+        "#;
+
+    let de: media::GetOSDsResponse = yaserde::de::from_str(ser).unwrap();
+
+    assert_eq!(de.os_ds.len(), 1);
+    assert_eq!(
+        de.os_ds[0].video_source_configuration_token,
+        tt::Osdreference("V_SRC_CFG_000".to_string())
+    );
+}
