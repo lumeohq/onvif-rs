@@ -171,16 +171,23 @@ impl Transport for Client {
     #[instrument(skip_all, fields(uri = self.config.uri.as_str()))]
     async fn request(&self, message: &str) -> Result<String, Error> {
         match self.config.auth_type {
-            AuthType::Any => {
-                match self.request_with_digest(message).await {
-                    Ok(success) => Ok(success),
-                    Err(Error::Authorization(e)) => {
-                        debug!("Failed to authorize with Digest auth: {e}. Trying UsernameToken auth ...");
-                        self.request_with_username_token(message).await
-                    }
-                    Err(e) => Err(e),
+            AuthType::Any => match self.request_with_digest(message).await {
+                Ok(success) => Ok(success),
+                Err(Error::Authorization(digest_error)) => {
+                    debug!("Failed to authorize with Digest auth: {digest_error}. Trying UsernameToken auth ...");
+                    self.request_with_username_token(message)
+                        .await
+                        .map_err(|error| match error {
+                            Error::Authorization(username_token_error) => {
+                                Error::Authorization(format!(
+                                    "Digest: {digest_error}, UsernameToken: {username_token_error}"
+                                ))
+                            }
+                            error => error,
+                        })
                 }
-            }
+                Err(e) => Err(e),
+            },
             AuthType::Digest => self.request_with_digest(message).await,
             AuthType::UsernameToken => self.request_with_username_token(message).await,
         }
@@ -236,12 +243,15 @@ impl Client {
 
         trace!("Request body: {soap_msg}");
 
-        let response = request.body(soap_msg).send().await.map_err(|e| match e {
-            e if e.is_connect() => Error::Connection(e.to_string()),
-            e if e.is_timeout() => Error::Timeout(e.to_string()),
-            e if e.is_redirect() => Error::Redirection(e.to_string()),
-            e if e.is_decode() || e.is_body() => Error::Protocol(e.to_string()),
-            e => Error::Other(e.to_string()),
+        let response = request.body(soap_msg).send().await.map_err(|e| {
+            let message = error_chain(&e);
+            match e {
+                e if e.is_connect() => Error::Connection(message),
+                e if e.is_timeout() => Error::Timeout(message),
+                e if e.is_redirect() => Error::Redirection(message),
+                e if e.is_decode() || e.is_body() => Error::Protocol(message),
+                _ => Error::Other(message),
+            }
         })?;
 
         let status = response.status();
@@ -289,7 +299,7 @@ impl Client {
                         debug!("Got Unauthorized with body: {text}");
                     }
 
-                    return Err(Error::Authorization("Unauthorized".to_string()));
+                    return Err(Error::Authorization(status.to_string()));
                 }
             }
 
@@ -310,16 +320,23 @@ impl Client {
             self.request_recursive(message, &new_url, auth_type, redirections + 1)
                 .await
         } else {
-            if let Ok(text) = response.text().await {
-                debug!("Got HTTP error with body: {text}");
-                if let Err(soap::Error::Fault(f)) = soap::unsoap(&text) {
-                    if f.is_unauthorized() {
-                        return Err(Error::Authorization("Unauthorized".to_string()));
-                    }
-                }
-            }
+            let text = response.text().await.unwrap_or_default();
+            debug!("Got HTTP error with body: {text}");
 
-            Err(Error::Other(status.to_string()))
+            let Err(soap::Error::Fault(fault)) = soap::unsoap(&text) else {
+                return Err(Error::Other(status.to_string()));
+            };
+
+            let message = match &fault.code.subcode {
+                Some(subcode) => format!("{status} ({})", subcode.value),
+                None => status.to_string(),
+            };
+
+            if fault.is_unauthorized() {
+                Err(Error::Authorization(message))
+            } else {
+                Err(Error::Other(message))
+            }
         }
     }
 
@@ -341,4 +358,11 @@ impl Client {
     pub fn set_fix_time_gap(&mut self, time_gap: Option<chrono::Duration>) {
         self.config.fix_time_gap = time_gap;
     }
+}
+
+fn error_chain(error: &(dyn std::error::Error + 'static)) -> String {
+    std::iter::successors(Some(error), |error| error.source())
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(": ")
 }

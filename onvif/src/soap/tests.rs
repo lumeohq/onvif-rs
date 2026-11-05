@@ -186,6 +186,70 @@ async fn digest_auth_survives_requests_failing_with_400() {
     assert!(result.is_ok(), "{:?}", result);
 }
 
+#[tokio::test]
+async fn authorization_error_reports_digest_and_username_token_results() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let uri = device_uri(&listener);
+    let challenge = "WWW-Authenticate: Digest realm=\"test\", qop=\"auth\", nonce=\"nonce\"\r\n";
+    let response = http_response("401 Unauthorized", challenge, "");
+    tokio::spawn(serve_fixed_response(listener, response));
+
+    let client = ClientBuilder::new(&uri)
+        .credentials(Some(credentials()))
+        .build();
+
+    let error = client.request("<Good/>").await.unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "Authorization failed: Digest: 401 Unauthorized, UsernameToken: 401 Unauthorized"
+    );
+}
+
+#[tokio::test]
+async fn http_error_reports_fault_subcode() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let uri = device_uri(&listener);
+    let fault = r#"<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:ter="http://www.onvif.org/ver10/error">
+        <s:Body>
+            <s:Fault>
+                <s:Code>
+                    <s:Value>s:Sender</s:Value>
+                    <s:Subcode><s:Value>ter:InvalidArgVal</s:Value></s:Subcode>
+                </s:Code>
+                <s:Reason><s:Text xml:lang="en">No such profile</s:Text></s:Reason>
+            </s:Fault>
+        </s:Body>
+    </s:Envelope>"#;
+    let response = http_response("400 Bad Request", "", fault);
+    tokio::spawn(serve_fixed_response(listener, response));
+
+    let client = ClientBuilder::new(&uri).build();
+
+    let error = client.request("<Good/>").await.unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "Other: 400 Bad Request (ter:InvalidArgVal)"
+    );
+}
+
+#[tokio::test]
+async fn connection_error_includes_the_cause() {
+    // A bound socket that does not listen keeps the port taken, and connections to it are refused.
+    let socket = tokio::net::TcpSocket::new_v4().unwrap();
+    socket.bind("127.0.0.1:0".parse().unwrap()).unwrap();
+    let uri = format!(
+        "http://{}/onvif/device_service",
+        socket.local_addr().unwrap()
+    )
+    .parse()
+    .unwrap();
+
+    let client = ClientBuilder::new(&uri).build();
+
+    let error = client.request("<Good/>").await.unwrap_err().to_string();
+    assert!(error.contains("Connection refused"), "{}", error);
+}
+
 fn device_uri(listener: &TcpListener) -> Url {
     let address = listener.local_addr().unwrap();
     format!("http://{address}/onvif/device_service")
@@ -197,6 +261,14 @@ fn credentials() -> Credentials {
     Credentials {
         username: "admin".to_string(),
         password: "password".to_string(),
+    }
+}
+
+async fn serve_fixed_response(listener: TcpListener, response: String) {
+    loop {
+        let (mut stream, _) = listener.accept().await.unwrap();
+        read_request(&mut stream).await;
+        stream.write_all(response.as_bytes()).await.unwrap();
     }
 }
 
