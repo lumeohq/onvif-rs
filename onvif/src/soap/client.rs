@@ -248,6 +248,12 @@ impl Client {
 
         debug!("Response status: {status}");
 
+        if !status.is_success() && status != reqwest::StatusCode::UNAUTHORIZED {
+            if let RequestAuthType::Digest(digest) = auth_type {
+                digest.discard_challenge();
+            }
+        }
+
         if status.is_success() {
             if let RequestAuthType::Digest(digest) = auth_type {
                 digest.set_success();
