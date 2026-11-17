@@ -45,7 +45,8 @@ pub mod probe {
         prefix = "s",
         namespace = "s: http://www.w3.org/2003/05/soap-envelope",
         namespace = "d: http://schemas.xmlsoap.org/ws/2005/04/discovery",
-        namespace = "w: http://schemas.xmlsoap.org/ws/2004/08/addressing"
+        namespace = "w: http://schemas.xmlsoap.org/ws/2004/08/addressing",
+        namespace = "dn: http://www.onvif.org/ver10/network/wsdl"
     )]
     pub struct Envelope {
         #[yaserde(prefix = "s", rename = "Header")]
