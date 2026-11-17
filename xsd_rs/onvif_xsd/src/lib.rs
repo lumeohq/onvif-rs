@@ -8784,9 +8784,10 @@ pub struct ProfileStatusExtension {}
 
 impl Validate for ProfileStatusExtension {}
 
-#[derive(Default, PartialEq, Debug, YaSerialize, YaDeserialize)]
-#[yaserde(prefix = "tt", namespace = "tt: http://www.onvif.org/ver10/schema")]
-pub struct Osdreference {}
+// Codegen emits an empty struct for simpleContent extensions, dropping the token
+// https://github.com/lumeohq/xsd-parser-rs/issues/83
+#[derive(Default, PartialEq, Debug, UtilsTupleIo, UtilsDefaultSerde)]
+pub struct Osdreference(pub String);
 
 impl Validate for Osdreference {}
 
