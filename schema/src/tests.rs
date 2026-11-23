@@ -397,6 +397,7 @@ fn probe_serialization() {
     let expected = r#"<?xml version="1.0" encoding="utf-8"?>
         <s:Envelope
                 xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+                xmlns:dn="http://www.onvif.org/ver10/network/wsdl"
                 xmlns:s="http://www.w3.org/2003/05/soap-envelope"
                 xmlns:w="http://schemas.xmlsoap.org/ws/2004/08/addressing">
             <s:Header>
